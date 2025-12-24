@@ -27,8 +27,8 @@
       --clap: rgba(255,255,255,0.88);
 
       --shaker: rgba(186, 140, 255, 0.90);
-      --ch: rgba(124,255,178,0.92);     /* closed hat */
-      --oh: rgba(255, 210, 120, 0.92);  /* open hat */
+      --ch: rgba(124,255,178,0.92);
+      --oh: rgba(255, 210, 120, 0.92);
 
       --rollBg: rgba(0,0,0,.18);
       --rollStrip: rgba(0,0,0,.32);
@@ -106,6 +106,7 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
+      flex-wrap:wrap;
     }
     .title{
       font-size:13px;
@@ -149,6 +150,16 @@
     }
     .hint{color:var(--muted); font-size:12px; margin-top:10px; line-height:1.35}
 
+    /* --- DAW Top bar controls --- */
+    .topControls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .topControls .pill input[type="range"]{ width: 160px; }
+
     /* --- Mute/Solo buttons --- */
     .msBtns{display:flex; gap:6px; align-items:center}
     .msBtn{
@@ -189,6 +200,7 @@
       justify-content:space-between;
       gap:10px;
       margin-bottom: 10px;
+      flex-wrap:wrap;
     }
     .mixerTitle{
       font-size:12px;
@@ -217,6 +229,7 @@
       justify-content:space-between;
       gap:8px;
       margin-bottom: 8px;
+      flex-wrap:wrap;
     }
     .stripName{
       font-weight: 800;
@@ -227,12 +240,33 @@
       overflow:hidden;
       text-overflow: ellipsis;
     }
-    .stripRow{
+    .stripMeta{
       display:flex;
       gap:8px;
       align-items:center;
-      justify-content:space-between;
+      justify-content:flex-end;
+      flex-wrap:wrap;
     }
+
+    .volPill{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.20);
+    }
+    .volPill label{
+      font-size: 12px;
+      color: var(--muted);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .volPill input[type="range"]{
+      width: 120px;
+    }
+
     .stripKnobs{
       display:flex;
       gap:8px;
@@ -489,18 +523,13 @@
   </p>
 
   <div class="wrap">
+    <!-- DAW / Transport + Mixer -->
     <div class="card">
       <div class="hd">
-        <div class="title">Transport</div>
-        <div class="btnRow">
-          <button id="playBtn">Play</button>
-          <button id="pauseBtn" disabled>Pause</button>
-          <button id="stopBtn" disabled>Stop</button>
-        </div>
-      </div>
+        <div class="title">DAW</div>
 
-      <div class="bd">
-        <div class="btnRow" style="margin-bottom:10px;">
+        <!-- ✅ BPM + Loop moved to top header -->
+        <div class="topControls">
           <div class="pill">
             <span style="min-width:38px;">BPM</span>
             <input id="bpm" type="range" min="70" max="180" value="115"/>
@@ -512,56 +541,23 @@
             <input id="resolution" type="range" min="0" max="2" step="1" value="2"/>
             <span id="resolutionLabel" class="kbd">1/64</span>
           </div>
-        </div>
 
-        <!-- Volume + Mute/Solo -->
-        <div class="btnRow" style="margin-bottom:10px;">
-          <div class="pill" data-bus="piano">
-            <span>Piano</span>
-            <input id="pianoVol" type="range" min="0" max="1" step="0.01" value="0.35"/>
-            <div class="msBtns">
-              <button class="msBtn mute" id="pianoMute" type="button">M</button>
-              <button class="msBtn solo" id="pianoSolo" type="button">S</button>
-            </div>
-          </div>
-
-          <div class="pill" data-bus="synth">
-            <span>Synth</span>
-            <input id="synthVol" type="range" min="0" max="1" step="0.01" value="0.32"/>
-            <div class="msBtns">
-              <button class="msBtn mute" id="synthMute" type="button">M</button>
-              <button class="msBtn solo" id="synthSolo" type="button">S</button>
-            </div>
-          </div>
-
-          <div class="pill" data-bus="bass">
-            <span>Bass</span>
-            <input id="bassVol" type="range" min="0" max="1" step="0.01" value="0.40"/>
-            <div class="msBtns">
-              <button class="msBtn mute" id="bassMute" type="button">M</button>
-              <button class="msBtn solo" id="bassSolo" type="button">S</button>
-            </div>
-          </div>
-
-          <div class="pill" data-bus="drum">
-            <span>Drum Bus</span>
-            <input id="drumVol" type="range" min="0" max="1" step="0.01" value="0.85"/>
-            <div class="msBtns">
-              <button class="msBtn mute" id="drumMute" type="button">M</button>
-              <button class="msBtn solo" id="drumSolo" type="button">S</button>
-            </div>
+          <div class="btnRow" style="gap:8px;">
+            <button id="playBtn">Play</button>
+            <button id="pauseBtn" disabled>Pause</button>
+            <button id="stopBtn" disabled>Stop</button>
           </div>
         </div>
+      </div>
 
-        <!-- ✅ Compact Mixer Strip -->
+      <div class="bd">
+        <!-- ✅ Mixer (vol sliders moved into strips) -->
         <div class="mixer">
           <div class="mixerTop">
             <div class="mixerTitle">Mixer</div>
-            <div class="btnRow" style="gap:8px;">
-              <div class="pill" style="padding:6px 10px;">
-                <span>Reverb</span>
-                <span class="kbd" id="rvLabel">Return</span>
-              </div>
+            <div class="pill" style="padding:6px 10px;">
+              <span>Resolution</span>
+              <span class="kbd" id="groupText">1/64</span>
             </div>
           </div>
 
@@ -570,30 +566,33 @@
             <div class="strip">
               <div class="stripHd">
                 <div class="stripName">Piano</div>
+                <div class="stripMeta">
+                  <div class="volPill">
+                    <label for="pianoVol">Vol</label>
+                    <input id="pianoVol" type="range" min="0" max="1" step="0.01" value="0.35"/>
+                  </div>
+                  <div class="msBtns">
+                    <button class="msBtn mute" id="pianoMute" type="button">M</button>
+                    <button class="msBtn solo" id="pianoSolo" type="button">S</button>
+                  </div>
+                </div>
               </div>
-              <div class="stripRow">
-                <div class="stripKnobs">
-                  <div class="kCol">
-                    <div class="knob" id="pianoPanKnob" style="--knobFill:var(--knobFillPiano);--knobGlow:var(--knobGlowPiano);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Pan</div>
-                    <div class="kMiniVal" id="pianoPanVal">0</div>
-                  </div>
-                  <div class="kCol">
-                    <div class="knob" id="pianoLpfKnob" style="--knobFill:var(--knobFillPiano);--knobGlow:var(--knobGlowPiano);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">LPF</div>
-                    <div class="kMiniVal" id="pianoLpfVal">100</div>
-                  </div>
-                  <div class="kCol">
-                    <div class="knob" id="pianoSendKnob" style="--knobFill:var(--knobFillPiano);--knobGlow:var(--knobGlowPiano);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Verb</div>
-                    <div class="kMiniVal" id="pianoSendVal">10</div>
-                  </div>
+
+              <div class="stripKnobs">
+                <div class="kCol">
+                  <div class="knob" id="pianoPanKnob" style="--knobFill:var(--knobFillPiano);--knobGlow:var(--knobGlowPiano);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Pan</div>
+                  <div class="kMiniVal" id="pianoPanVal">0</div>
+                </div>
+                <div class="kCol">
+                  <div class="knob" id="pianoLpfKnob" style="--knobFill:var(--knobFillPiano);--knobGlow:var(--knobGlowPiano);"><div class="knobDot"></div></div>
+                  <div class="kLbl">LPF</div>
+                  <div class="kMiniVal" id="pianoLpfVal">100</div>
+                </div>
+                <div class="kCol">
+                  <div class="knob" id="pianoSendKnob" style="--knobFill:var(--knobFillPiano);--knobGlow:var(--knobGlowPiano);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Verb</div>
+                  <div class="kMiniVal" id="pianoSendVal">10</div>
                 </div>
               </div>
             </div>
@@ -602,30 +601,33 @@
             <div class="strip">
               <div class="stripHd">
                 <div class="stripName">Synth</div>
+                <div class="stripMeta">
+                  <div class="volPill">
+                    <label for="synthVol">Vol</label>
+                    <input id="synthVol" type="range" min="0" max="1" step="0.01" value="0.32"/>
+                  </div>
+                  <div class="msBtns">
+                    <button class="msBtn mute" id="synthMute" type="button">M</button>
+                    <button class="msBtn solo" id="synthSolo" type="button">S</button>
+                  </div>
+                </div>
               </div>
-              <div class="stripRow">
-                <div class="stripKnobs">
-                  <div class="kCol">
-                    <div class="knob" id="synthPanKnob" style="--knobFill:var(--knobFillSynth);--knobGlow:var(--knobGlowSynth);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Pan</div>
-                    <div class="kMiniVal" id="synthPanVal">0</div>
-                  </div>
-                  <div class="kCol">
-                    <div class="knob" id="synthLpfKnob" style="--knobFill:var(--knobFillSynth);--knobGlow:var(--knobGlowSynth);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">LPF</div>
-                    <div class="kMiniVal" id="synthLpfVal">100</div>
-                  </div>
-                  <div class="kCol">
-                    <div class="knob" id="synthSendKnob" style="--knobFill:var(--knobFillSynth);--knobGlow:var(--knobGlowSynth);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Verb</div>
-                    <div class="kMiniVal" id="synthSendVal">14</div>
-                  </div>
+
+              <div class="stripKnobs">
+                <div class="kCol">
+                  <div class="knob" id="synthPanKnob" style="--knobFill:var(--knobFillSynth);--knobGlow:var(--knobGlowSynth);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Pan</div>
+                  <div class="kMiniVal" id="synthPanVal">0</div>
+                </div>
+                <div class="kCol">
+                  <div class="knob" id="synthLpfKnob" style="--knobFill:var(--knobFillSynth);--knobGlow:var(--knobGlowSynth);"><div class="knobDot"></div></div>
+                  <div class="kLbl">LPF</div>
+                  <div class="kMiniVal" id="synthLpfVal">100</div>
+                </div>
+                <div class="kCol">
+                  <div class="knob" id="synthSendKnob" style="--knobFill:var(--knobFillSynth);--knobGlow:var(--knobGlowSynth);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Verb</div>
+                  <div class="kMiniVal" id="synthSendVal">14</div>
                 </div>
               </div>
             </div>
@@ -634,30 +636,33 @@
             <div class="strip">
               <div class="stripHd">
                 <div class="stripName">Bass</div>
+                <div class="stripMeta">
+                  <div class="volPill">
+                    <label for="bassVol">Vol</label>
+                    <input id="bassVol" type="range" min="0" max="1" step="0.01" value="0.40"/>
+                  </div>
+                  <div class="msBtns">
+                    <button class="msBtn mute" id="bassMute" type="button">M</button>
+                    <button class="msBtn solo" id="bassSolo" type="button">S</button>
+                  </div>
+                </div>
               </div>
-              <div class="stripRow">
-                <div class="stripKnobs">
-                  <div class="kCol">
-                    <div class="knob" id="bassPanKnob" style="--knobFill:var(--knobFillBass);--knobGlow:var(--knobGlowBass);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Pan</div>
-                    <div class="kMiniVal" id="bassPanVal">0</div>
-                  </div>
-                  <div class="kCol">
-                    <div class="knob" id="bassLpfKnob" style="--knobFill:var(--knobFillBass);--knobGlow:var(--knobGlowBass);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">LPF</div>
-                    <div class="kMiniVal" id="bassLpfVal">100</div>
-                  </div>
-                  <div class="kCol">
-                    <div class="knob" id="bassSendKnob" style="--knobFill:var(--knobFillBass);--knobGlow:var(--knobGlowBass);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Verb</div>
-                    <div class="kMiniVal" id="bassSendVal">6</div>
-                  </div>
+
+              <div class="stripKnobs">
+                <div class="kCol">
+                  <div class="knob" id="bassPanKnob" style="--knobFill:var(--knobFillBass);--knobGlow:var(--knobGlowBass);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Pan</div>
+                  <div class="kMiniVal" id="bassPanVal">0</div>
+                </div>
+                <div class="kCol">
+                  <div class="knob" id="bassLpfKnob" style="--knobFill:var(--knobFillBass);--knobGlow:var(--knobGlowBass);"><div class="knobDot"></div></div>
+                  <div class="kLbl">LPF</div>
+                  <div class="kMiniVal" id="bassLpfVal">100</div>
+                </div>
+                <div class="kCol">
+                  <div class="knob" id="bassSendKnob" style="--knobFill:var(--knobFillBass);--knobGlow:var(--knobGlowBass);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Verb</div>
+                  <div class="kMiniVal" id="bassSendVal">6</div>
                 </div>
               </div>
             </div>
@@ -666,58 +671,56 @@
             <div class="strip">
               <div class="stripHd">
                 <div class="stripName">Drums</div>
+                <div class="stripMeta">
+                  <div class="volPill">
+                    <label for="drumVol">Vol</label>
+                    <input id="drumVol" type="range" min="0" max="1" step="0.01" value="0.85"/>
+                  </div>
+                  <div class="msBtns">
+                    <button class="msBtn mute" id="drumMute" type="button">M</button>
+                    <button class="msBtn solo" id="drumSolo" type="button">S</button>
+                  </div>
+                </div>
               </div>
-              <div class="stripRow">
-                <div class="stripKnobs">
-                  <div class="kCol">
-                    <div class="knob" id="drumPanKnob" style="--knobFill:var(--knobFillDrum);--knobGlow:var(--knobGlowDrum);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Pan</div>
-                    <div class="kMiniVal" id="drumPanVal">0</div>
-                  </div>
-                  <div class="kCol">
-                    <div class="knob" id="drumLpfKnob" style="--knobFill:var(--knobFillDrum);--knobGlow:var(--knobGlowDrum);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">LPF</div>
-                    <div class="kMiniVal" id="drumLpfVal">100</div>
-                  </div>
-                  <div class="kCol">
-                    <div class="knob" id="drumSendKnob" style="--knobFill:var(--knobFillDrum);--knobGlow:var(--knobGlowDrum);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Verb</div>
-                    <div class="kMiniVal" id="drumSendVal">18</div>
-                  </div>
+
+              <div class="stripKnobs">
+                <div class="kCol">
+                  <div class="knob" id="drumPanKnob" style="--knobFill:var(--knobFillDrum);--knobGlow:var(--knobGlowDrum);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Pan</div>
+                  <div class="kMiniVal" id="drumPanVal">0</div>
+                </div>
+                <div class="kCol">
+                  <div class="knob" id="drumLpfKnob" style="--knobFill:var(--knobFillDrum);--knobGlow:var(--knobGlowDrum);"><div class="knobDot"></div></div>
+                  <div class="kLbl">LPF</div>
+                  <div class="kMiniVal" id="drumLpfVal">100</div>
+                </div>
+                <div class="kCol">
+                  <div class="knob" id="drumSendKnob" style="--knobFill:var(--knobFillDrum);--knobGlow:var(--knobGlowDrum);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Verb</div>
+                  <div class="kMiniVal" id="drumSendVal">18</div>
                 </div>
               </div>
             </div>
 
-            <!-- FX Return Strip (global) -->
+            <!-- FX Return Strip -->
             <div class="strip" style="grid-column: 1 / -1;">
               <div class="stripHd">
                 <div class="stripName">FX Return</div>
               </div>
-              <div class="stripRow" style="justify-content:flex-start;">
-                <div class="stripKnobs">
-                  <div class="kCol">
-                    <div class="knob" id="rvReturnKnob" style="--knobFill:var(--knobFillFx);--knobGlow:var(--knobGlowFx);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Return</div>
-                    <div class="kMiniVal" id="rvReturnVal">22</div>
-                  </div>
-                  <div class="kCol">
-                    <div class="knob" id="rvSizeKnob" style="--knobFill:var(--knobFillFx);--knobGlow:var(--knobGlowFx);">
-                      <div class="knobDot"></div>
-                    </div>
-                    <div class="kLbl">Size</div>
-                    <div class="kMiniVal" id="rvSizeVal">45</div>
-                  </div>
+              <div class="stripKnobs" style="justify-content:flex-start;">
+                <div class="kCol">
+                  <div class="knob" id="rvReturnKnob" style="--knobFill:var(--knobFillFx);--knobGlow:var(--knobGlowFx);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Return</div>
+                  <div class="kMiniVal" id="rvReturnVal">22</div>
                 </div>
+                <div class="kCol">
+                  <div class="knob" id="rvSizeKnob" style="--knobFill:var(--knobFillFx);--knobGlow:var(--knobGlowFx);"><div class="knobDot"></div></div>
+                  <div class="kLbl">Size</div>
+                  <div class="kMiniVal" id="rvSizeVal">45</div>
+                </div>
+
                 <div class="hint" style="margin:0 0 0 10px; max-width:520px;">
-                  Pan = -100..100 • LPF = brightness • Verb = send level • Size regenerates reverb IR (no assets).
+                  Pan = -100..100 • LPF = brightness • Verb = send • Size regenerates IR (no assets).
                 </div>
               </div>
             </div>
@@ -733,18 +736,18 @@
 
         <p class="hint">
           <span class="kbd">Space</span> toggles Play/Pause (desktop).<br/>
-          Auto demo loads from <span class="kbd">MIDI/</span> on GitHub Pages (relative paths).<br/>
-          Mapping: <span class="kbd">pluck → Bass</span>, <span class="kbd">chords → Piano</span>, <span class="kbd">arp → Synth</span>.
+          Demo loads from <span class="kbd">MIDI/</span> on GitHub Pages via relative paths.
         </p>
       </div>
     </div>
 
+    <!-- Drum Sequencer -->
     <div class="card">
       <div class="hd">
         <div class="title">Drum Sequencer</div>
         <div class="pill">
           <span>Loop</span>
-          <span class="kbd" id="groupText">1/64</span>
+          <span class="kbd" id="groupText2">1/64</span>
         </div>
       </div>
       <div class="bd">
@@ -752,6 +755,7 @@
       </div>
     </div>
 
+    <!-- Piano Roll -->
     <div class="card" style="grid-column: 1 / -1;">
       <div class="hd">
         <div class="title">Piano Roll</div>
@@ -765,25 +769,19 @@
           <div class="trKnobs" aria-label="Transpose knobs">
             <div class="trGroup" data-inst="piano">
               <div class="trLabel">P Tr</div>
-              <div class="knob trKnob" id="pianoTrKnob" style="--knobFill:var(--knobFillPiano);--knobGlow:var(--knobGlowPiano);">
-                <div class="knobDot"></div>
-              </div>
+              <div class="knob trKnob" id="pianoTrKnob" style="--knobFill:var(--knobFillPiano);--knobGlow:var(--knobGlowPiano);"><div class="knobDot"></div></div>
               <div class="knobVal trVal" id="pianoTrVal">0</div>
             </div>
 
             <div class="trGroup" data-inst="synth">
               <div class="trLabel">S Tr</div>
-              <div class="knob trKnob" id="synthTrKnob" style="--knobFill:var(--knobFillSynth);--knobGlow:var(--knobGlowSynth);">
-                <div class="knobDot"></div>
-              </div>
+              <div class="knob trKnob" id="synthTrKnob" style="--knobFill:var(--knobFillSynth);--knobGlow:var(--knobGlowSynth);"><div class="knobDot"></div></div>
               <div class="knobVal trVal" id="synthTrVal">0</div>
             </div>
 
             <div class="trGroup" data-inst="bass">
               <div class="trLabel">B Tr</div>
-              <div class="knob trKnob" id="bassTrKnob" style="--knobFill:var(--knobFillBass);--knobGlow:var(--knobGlowBass);">
-                <div class="knobDot"></div>
-              </div>
+              <div class="knob trKnob" id="bassTrKnob" style="--knobFill:var(--knobFillBass);--knobGlow:var(--knobGlowBass);"><div class="knobDot"></div></div>
               <div class="knobVal trVal" id="bassTrVal">0</div>
             </div>
           </div>
@@ -863,7 +861,7 @@
   // Reverb (global send/return)
   let rvConvolver = null;
   let rvReturnGain = null;
-  let rvInput = null;   // sum of sends
+  let rvInput = null;
   let rvSize = 45;      // 0..100
   let rvReturn = 22;    // 0..100
 
@@ -891,8 +889,12 @@
   const resEl = document.getElementById("resolution");
   const resLabel = document.getElementById("resolutionLabel");
   const resText = document.getElementById("resText");
-  const groupText = document.getElementById("groupText");
 
+  // groups labels (mixer + drum header)
+  const groupText = document.getElementById("groupText");
+  const groupText2 = document.getElementById("groupText2");
+
+  // ✅ vol sliders now live in mixer strips (same ids, JS unchanged)
   const pianoVol = document.getElementById("pianoVol");
   const synthVol = document.getElementById("synthVol");
   const bassVol  = document.getElementById("bassVol");
@@ -1008,7 +1010,6 @@
   function bindKnob({knobEl, valEl, min, max, step, initial, onChange, format, dblClickReset}){
     let value = initial;
     const valueToPct = (v) => (v - min) / (max - min);
-    const pctToValue = (p) => min + p * (max - min);
 
     function setValue(v){
       v = clamp(v, min, max);
@@ -1031,8 +1032,8 @@
     const onMove = (e) => {
       if (!active || e.pointerId !== pid) return;
       e.preventDefault();
-      const dy = startY - e.clientY;          // up increases
-      const delta = (dy / 120) * (max - min); // 120px = full range
+      const dy = startY - e.clientY;
+      const delta = (dy / 120) * (max - min);
       setValue(startVal + delta);
     };
     const onUp = (e) => {
@@ -1050,10 +1051,10 @@
       knobEl.addEventListener("dblclick", (e) => { e.preventDefault(); setValue(dblClickReset); });
     }
 
-    return { get:()=>value, set:setValue, toPct:valueToPct };
+    return { get:()=>value, set:setValue };
   }
 
-  // Transpose knobs (existing behavior)
+  // Transpose knobs
   function semitoneToPct(v){ return (clamp(v, -24, 24) + 24) / 48; }
   function setTranspose(inst, val){
     const v = clamp(Math.round(Number(val)), -24, 24);
@@ -1095,8 +1096,7 @@
     knobEl.addEventListener("dblclick", (e)=>{e.preventDefault(); setTranspose(inst,0);});
   }
 
-  // Audio graph: busGain -> LPF -> Pan -> master
-  // and busGain -> sendGain -> rvInput -> convolver -> returnGain -> master
+  // Apply mute/solo to bus gains
   function applyBusRouting(){
     if (!pianoBus) return;
     const anySolo = Object.values(busState).some(b => b.solo);
@@ -1131,7 +1131,7 @@
     });
   }
 
-  // LPF mapping: 0..100 => 200..18000 (exp curve)
+  // LPF mapping
   function lpfCutoffFromPct(pct01){
     const min = 200;
     const max = 18000;
@@ -1140,7 +1140,6 @@
   }
 
   function makeImpulseResponse(decaySeconds){
-    // Stereo noise burst with exponential decay
     const sr = ctx.sampleRate;
     const len = Math.max(1, Math.floor(sr * decaySeconds));
     const buffer = ctx.createBuffer(2, len, sr);
@@ -1149,7 +1148,7 @@
       const data = buffer.getChannelData(ch);
       for (let i=0; i<len; i++){
         const t = i / len;
-        const env = Math.pow(1 - t, 2.8);      // nice tail
+        const env = Math.pow(1 - t, 2.8);
         data[i] = (Math.random()*2 - 1) * env;
       }
     }
@@ -1159,8 +1158,6 @@
   function setReverbSize(size0to100){
     rvSize = clamp(Math.round(size0to100), 0, 100);
     if (!ctx || !rvConvolver) return;
-
-    // map 0..100 => 0.6..6.0 seconds
     const decay = 0.6 + (rvSize/100) * 5.4;
     rvConvolver.buffer = makeImpulseResponse(decay);
   }
@@ -1168,7 +1165,6 @@
   function setReverbReturn(v0to100){
     rvReturn = clamp(Math.round(v0to100), 0, 100);
     if (!rvReturnGain) return;
-    // 0..100 => 0..0.55 (safe)
     rvReturnGain.gain.value = (rvReturn/100) * 0.55;
   }
 
@@ -1177,18 +1173,17 @@
     const m = mix[inst];
     if (!m || !m.pan || !m.lpf || !m.send) return;
 
-    // Pan: -100..100 => -1..1
     m.pan.pan.value = clamp(m.panVal/100, -1, 1);
 
-    // LPF: 0..100 -> cutoff
     const pct = clamp(m.lpfVal/100, 0, 1);
     m.lpf.frequency.setValueAtTime(lpfCutoffFromPct(pct), ctx.currentTime);
     m.lpf.Q.value = 0.7;
 
-    // Send: 0..100 => 0..1 with curve
     const s = clamp(m.sendVal/100, 0, 1);
     m.send.gain.value = s*s;
   }
+
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
 
   function ensureAudio(){
     if (ctx) return;
@@ -1199,14 +1194,12 @@
     master.gain.value = 0.9;
     master.connect(ctx.destination);
 
-    // Main bus gains (mute/solo writes here)
     pianoBus = ctx.createGain();
     synthBus = ctx.createGain();
     bassBus  = ctx.createGain();
     drumBus  = ctx.createGain();
 
-    // Reverb bus
-    rvInput = ctx.createGain();      // sum of sends
+    rvInput = ctx.createGain();
     rvConvolver = ctx.createConvolver();
     rvReturnGain = ctx.createGain();
 
@@ -1214,24 +1207,19 @@
     rvConvolver.connect(rvReturnGain);
     rvReturnGain.connect(master);
 
-    // initial IR + return level
     rvConvolver.buffer = makeImpulseResponse(0.6 + (rvSize/100)*5.4);
     setReverbReturn(rvReturn);
 
-    // Per-track inserts and sends
     function wireBus(inst, busGain){
       const lpf = ctx.createBiquadFilter();
       lpf.type = "lowpass";
-
       const pan = ctx.createStereoPanner();
       const send = ctx.createGain();
 
-      // dry path
       busGain.connect(lpf);
       lpf.connect(pan);
       pan.connect(master);
 
-      // send path (post-mute/solo since it taps busGain output)
       busGain.connect(send);
       send.connect(rvInput);
 
@@ -1247,14 +1235,12 @@
     wireBus("bass",  bassBus);
     wireBus("drum",  drumBus);
 
-    // Drum row gains connect into drumBus
     for (const k of drumKeys){
       drumGains[k] = ctx.createGain();
       drumGains[k].gain.value = 1;
       drumGains[k].connect(drumBus);
     }
 
-    // Volume sliders update routing (respects mute/solo)
     pianoVol.addEventListener("input", applyBusRouting);
     synthVol.addEventListener("input", applyBusRouting);
     bassVol.addEventListener("input", applyBusRouting);
@@ -1273,72 +1259,52 @@
     if (ctx.state !== "running") await ctx.resume();
   }
 
-  // --- Mixer Knobs binders ---
+  // Mixer Knobs
   function bindTrackMixer(inst){
     const els = knobEls[inst];
     const m = mix[inst];
 
-    // Pan (-100..100)
     bindKnob({
-      knobEl: els.panK,
-      valEl: els.panV,
+      knobEl: els.panK, valEl: els.panV,
       min: -100, max: 100, step: 1,
-      initial: m.panVal,
-      dblClickReset: 0,
-      format: (v)=> String(v),
+      initial: m.panVal, dblClickReset: 0,
       onChange: (v)=>{ m.panVal = v; applyMixerNodes(inst); }
     });
 
-    // LPF (0..100) where 100 = bright/open
     bindKnob({
-      knobEl: els.lpfK,
-      valEl: els.lpfV,
+      knobEl: els.lpfK, valEl: els.lpfV,
       min: 0, max: 100, step: 1,
-      initial: m.lpfVal,
-      dblClickReset: 100,
-      format: (v)=> String(v),
+      initial: m.lpfVal, dblClickReset: 100,
       onChange: (v)=>{ m.lpfVal = v; applyMixerNodes(inst); }
     });
 
-    // Send (0..100)
     bindKnob({
-      knobEl: els.sndK,
-      valEl: els.sndV,
+      knobEl: els.sndK, valEl: els.sndV,
       min: 0, max: 100, step: 1,
-      initial: m.sendVal,
-      dblClickReset: 0,
-      format: (v)=> String(v),
+      initial: m.sendVal, dblClickReset: 0,
       onChange: (v)=>{ m.sendVal = v; applyMixerNodes(inst); }
     });
   }
 
   function bindReverbKnobs(){
     bindKnob({
-      knobEl: knobEls.rv.retK,
-      valEl: knobEls.rv.retV,
+      knobEl: knobEls.rv.retK, valEl: knobEls.rv.retV,
       min: 0, max: 100, step: 1,
-      initial: rvReturn,
-      dblClickReset: 20,
-      format: (v)=> String(v),
+      initial: rvReturn, dblClickReset: 20,
       onChange: (v)=>{ setReverbReturn(v); }
     });
-
     bindKnob({
-      knobEl: knobEls.rv.sizK,
-      valEl: knobEls.rv.sizV,
+      knobEl: knobEls.rv.sizK, valEl: knobEls.rv.sizV,
       min: 0, max: 100, step: 1,
-      initial: rvSize,
-      dblClickReset: 45,
-      format: (v)=> String(v),
+      initial: rvSize, dblClickReset: 45,
       onChange: (v)=>{ setReverbSize(v); }
     });
   }
 
-  // --- Instruments ---
+  // Instruments
   function midiToHz(midi){
     return 440 * Math.pow(2, (midi - 69) / 12);
   }
-
   function playVoice(freq, time, dur, bus, wave, peak, cutoff){
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -1379,7 +1345,7 @@
     playVoice(hz, now, 0.12, pianoBus, "square", 0.18, 4200);
   }
 
-  // --- Drum synthesis ---
+  // Drum synthesis
   let noiseBuf = null;
   function getNoiseBuffer(){
     if (noiseBuf) return noiseBuf;
@@ -1404,7 +1370,6 @@
     osc.connect(gain).connect(out);
     osc.start(time); osc.stop(time + 0.16);
   }
-
   function playSnare(time){
     const out = drumGains.snare;
     const src = ctx.createBufferSource();
@@ -1420,7 +1385,6 @@
     src.connect(bp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.12);
   }
-
   function playClap(time){
     const out = drumGains.clap;
     const src = ctx.createBufferSource();
@@ -1436,7 +1400,6 @@
     src.connect(bp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.09);
   }
-
   function playShaker(time){
     const out = drumGains.shaker;
     const src = ctx.createBufferSource();
@@ -1452,7 +1415,6 @@
     src.connect(bp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.08);
   }
-
   function playCH(time){
     const out = drumGains.ch;
     const src = ctx.createBufferSource();
@@ -1466,11 +1428,7 @@
     gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
     src.connect(hp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.06);
-
-    // "choke" OH a tiny bit (simple DAW-ish behavior)
-    // (optional, but it helps)
   }
-
   function playOH(time){
     const out = drumGains.oh;
     const src = ctx.createBufferSource();
@@ -1486,7 +1444,7 @@
     src.start(time); src.stop(time + 0.22);
   }
 
-  // --- Sequencer data helpers ---
+  // Sequencer helpers
   function rangesOverlap(aStart, aLen, bStart, bLen){
     const aEnd = aStart + aLen;
     const bEnd = bStart + bLen;
@@ -1521,7 +1479,7 @@
     return cssVar("--pianoNote");
   }
 
-  // Demo drums (same “nice spot” version)
+  // Demo drums
   function setDemoDrumsFromAudioAnalysis(){
     for (const k of drumKeys) project.drums[k].fill(false);
 
@@ -1556,7 +1514,6 @@
 
   async function importMidiIntoGrid(arrayBuffer, targetGrid){
     const midi = new Midi(arrayBuffer);
-
     const quarter = 60 / bpm;
     const toStep = (t) => clamp(Math.round((t / quarter) * 4), 0, MASTER_STEPS-1);
     const toLen  = (d) => clamp(Math.max(1, Math.round((d / quarter) * 4)), 1, MASTER_STEPS);
@@ -1604,7 +1561,7 @@
     drawRoll(-1);
   }
 
-  // --- Drum UI ---
+  // Drum UI
   function knobStyleForValue(v){
     const pct = clamp(v, 0, 100) / 100;
     return knobStyleForPercent(pct);
@@ -1819,7 +1776,7 @@
     });
   }
 
-  // --- Piano roll drawing/editing (unchanged core) ---
+  // Piano roll drawing/editing (same)
   const KEY_PAD = 128;
   function isBlackKey(midi){
     const pc = midi % 12;
@@ -2025,7 +1982,7 @@
     noteDrag.pointerId = null;
   });
 
-  // ABSOLUTE BPM playback (unchanged)
+  // ABSOLUTE BPM playback
   function secondsPerStep(){
     const quarter = 60 / bpm;
     return quarter / 4;
@@ -2081,14 +2038,12 @@
   async function startFromCurrentStep(){
     await ensureRunning();
 
-    // per-drum row gains from knobs
     for (const k of drumKeys){
       const vv = project.drumVols[k] ?? 100;
       const x = vv / 100;
       drumGains[k].gain.value = x * x;
     }
 
-    // make sure mixer values are applied
     applyMixerNodes("piano");
     applyMixerNodes("synth");
     applyMixerNodes("bass");
@@ -2154,6 +2109,7 @@
     resLabel.textContent = label;
     resText.textContent = label;
     groupText.textContent = label;
+    groupText2.textContent = label;
     buildDrumGrid();
     drawRoll(-1);
   }
@@ -2185,7 +2141,7 @@
     midiFileInput.value = "";
   });
 
-  // Init values + visuals
+  // Init
   bpm = 115;
   bpmEl.value = "115";
   bpmLabel.textContent = "115";
@@ -2196,8 +2152,8 @@
   resLabel.textContent = initialOpt.label;
   resText.textContent = initialOpt.label;
   groupText.textContent = initialOpt.label;
+  groupText2.textContent = initialOpt.label;
 
-  // init transpose knob visuals
   setTranspose("piano", 0);
   setTranspose("synth", 0);
   setTranspose("bass", 0);
@@ -2205,7 +2161,6 @@
   attachTransposeKnob(synthTrKnob, "synth");
   attachTransposeKnob(bassTrKnob, "bass");
 
-  // init mixer knob visuals (no audio needed)
   bindTrackMixer("piano");
   bindTrackMixer("synth");
   bindTrackMixer("bass");
@@ -2215,7 +2170,6 @@
   buildDrumGrid();
   drawRoll(-1);
 
-  // Auto demo load
   (async () => {
     try{
       await loadDemoFromMidiFolder();
