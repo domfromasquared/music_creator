@@ -87,7 +87,7 @@
       background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
       border:1px solid rgba(255,255,255,.07);
       border-radius: 14px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
       overflow:hidden;
     }
     .card .hd{
@@ -266,12 +266,12 @@
     .cell.on.hat{  background: linear-gradient(180deg, var(--hat),  rgba(124,255,178,0.30)); border-color: rgba(124,255,178,0.65); }
     .cell.on.snare{background: linear-gradient(180deg, var(--snare),rgba(88,166,255,0.30)); border-color: rgba(88,166,255,0.65); }
     .cell.on.clap{ background: linear-gradient(180deg, var(--clap), rgba(255,255,255,0.18)); border-color: rgba(255,255,255,0.45); }
-    .cell.beatDivider{ box-shadow: inset -2px 0 0 var(--beatDivider); }
-    .cell.playhead{ outline: 2px solid var(--playheadOutline); outline-offset: 1px; }
+    .cell.beatDivider{ box-shadow: inset -2px 0 0 rgba(255,255,255,0.18); }
+    .cell.playhead{ outline: 2px solid rgba(255,255,255,0.30); outline-offset: 1px; }
     .cell.drag-hover{
-      outline: 2px solid var(--dragOutline);
+      outline: 2px solid rgba(255,255,255,0.45);
       outline-offset: -2px;
-      box-shadow: inset 0 0 0 999px var(--dragFill);
+      box-shadow: inset 0 0 0 999px rgba(255,255,255,0.10);
     }
 
     /* Piano roll */
@@ -322,13 +322,8 @@
       user-select:none;
       white-space:nowrap;
     }
-    .trKnob{
-      width:30px;
-      height:30px;
-    }
-    .trVal{
-      width: 42px;
-    }
+    .trKnob{ width:30px; height:30px; }
+    .trVal{ width: 42px; }
 
     .rollWrap{
       background: rgba(0,0,0,.22);
@@ -429,7 +424,6 @@
             <div class="tab" data-roll="bass">Bass</div>
           </div>
 
-          <!-- ✅ Transpose knobs (sound only) -->
           <div class="trKnobs" aria-label="Transpose knobs">
             <div class="trGroup" data-inst="piano">
               <div class="trLabel">P Tr</div>
@@ -466,7 +460,6 @@
     </div>
   </div>
 
-  <!-- MIDI parser -->
   <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.js"></script>
 
 <script>
@@ -478,22 +471,19 @@
   ];
   const MASTER_STEPS = 64;
 
-  // C3 -> C5
-  const ROLL_BASE_MIDI = 48;
-  const ROLL_TOP_MIDI  = 72;
+  const ROLL_BASE_MIDI = 48; // C3
+  const ROLL_TOP_MIDI  = 72; // C5
   const ROLL_PITCHES   = (ROLL_TOP_MIDI - ROLL_BASE_MIDI) + 1;
 
   const drumNames = ["Kick", "Clap", "Hat", "Snare"];
   const drumKeys  = ["kick", "clap", "hat", "snare"];
 
-  // GitHub Pages-safe relative paths (NO leading slash)
   const MIDI_PATHS = {
     bass:  "MIDI/NW_EID_115_synth_pluck_nightlife_Abmaj.mid",
     piano: "MIDI/NW_EID_115_synth_chords_nightlife_Abmaj.mid",
     synth: "MIDI/NW_EID_115_synth_arp_nightlife_Abmaj.mid",
   };
 
-  // ✅ Transpose (sound only), semitones
   const transpose = { piano: 0, synth: 0, bass: 0 };
 
   function makeEmptyProject(){
@@ -513,18 +503,13 @@
 
   const project = makeEmptyProject();
 
-  // fallback internal demo (only used if MIDI fetch fails)
   const DEMO_PROJECT = (() => {
     const p = makeEmptyProject();
-    [0, 16, 32, 48].forEach(s => p.drums.kick[s] = true);
-    [8, 24, 40, 56].forEach(s => p.drums.snare[s] = true);
-    for (let s=0; s<64; s+=2) p.drums.hat[s] = true;
     return p;
   })();
 
   let LOOP_STEPS = 64;
 
-  // playback
   let ctx = null;
   let master = null, pianoBus = null, synthBus = null, bassBus = null, drumBus = null;
   const drumGains = { kick:null, clap:null, hat:null, snare:null };
@@ -539,7 +524,6 @@
   const lookAhead = 0.025;
   const scheduleAhead = 0.12;
 
-  // UI refs
   const playBtn = document.getElementById("playBtn");
   const pauseBtn = document.getElementById("pauseBtn");
   const stopBtn = document.getElementById("stopBtn");
@@ -557,7 +541,6 @@
   const bassVol = document.getElementById("bassVol");
   const drumVol = document.getElementById("drumVol");
 
-  // Transpose knobs
   const pianoTrKnob = document.getElementById("pianoTrKnob");
   const synthTrKnob = document.getElementById("synthTrKnob");
   const bassTrKnob  = document.getElementById("bassTrKnob");
@@ -591,7 +574,6 @@
     bpmLabel.textContent = String(bpm);
   });
 
-  // Spacebar
   function isTypingTarget(el){
     if (!el) return false;
     const tag = (el.tagName || "").toLowerCase();
@@ -604,7 +586,6 @@
     togglePlayPause();
   }, {passive:false});
 
-  // AUDIO
   const AudioContext = window.AudioContext || window.webkitAudioContext;
 
   function ensureAudio(){
@@ -696,7 +677,6 @@
     playVoice(hz, now, 0.12, pianoBus, "square", 0.18, 4200);
   }
 
-  // Drum synths
   let noiseBuf = null;
   function getNoiseBuffer(){
     if (noiseBuf) return noiseBuf;
@@ -721,7 +701,6 @@
     osc.connect(gain).connect(out);
     osc.start(time); osc.stop(time + 0.16);
   }
-
   function playSnare(time){
     const out = drumGains.snare;
     const src = ctx.createBufferSource();
@@ -737,7 +716,6 @@
     src.connect(bp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.12);
   }
-
   function playHat(time){
     const out = drumGains.hat;
     const src = ctx.createBufferSource();
@@ -752,7 +730,6 @@
     src.connect(hp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.06);
   }
-
   function playClap(time){
     const out = drumGains.clap;
     const t = time;
@@ -770,7 +747,6 @@
     src.start(t); src.stop(t + 0.09);
   }
 
-  // ---- Grid helpers ----
   function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
   function rangesOverlap(aStart, aLen, bStart, bLen){
     const aEnd = aStart + aLen;
@@ -792,17 +768,14 @@
     clearOverlaps(row, start, len);
     row[start] = len;
   }
-
   function clearInstrumentGrid(grid){
     for (let p=0; p<ROLL_PITCHES; p++) grid[p].fill(0);
   }
-
   function getActiveGrid(){
     if (activeRoll === "bass") return project.bass;
     if (activeRoll === "synth") return project.synth;
     return project.piano;
   }
-
   function noteColor(){
     const css = (v)=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
     if (activeRoll === "bass") return css("--bassNote");
@@ -810,7 +783,6 @@
     return css("--pianoNote");
   }
 
-  // ---- Project ops ----
   function applyProject(src){
     stopTransportOnly();
     drumKeys.forEach(k => project.drums[k] = src.drums[k].slice());
@@ -829,7 +801,28 @@
     applyProject(makeEmptyProject());
   }
 
-  // ---- GitHub Pages-safe fetch ----
+  // ✅ Simple demo drum groove (1/64 grid but meaningful on any loop)
+  function setDemoDrums(){
+    // clear drums first
+    drumKeys.forEach(k => project.drums[k].fill(false));
+
+    // For a 64-step loop representing 1 bar at 1/64 "feel":
+    // We'll treat beats at 0, 16, 32, 48 (quarter notes)
+    const beats = [0,16,32,48];
+
+    // Kick: 1 + "and" of 2 + 3 + "and" of 4 (a common dance-ish groove)
+    [0, 24, 32, 56].forEach(s => project.drums.kick[s] = true);
+
+    // Snare on 2 and 4
+    [16, 48].forEach(s => project.drums.snare[s] = true);
+
+    // Hat: 8th notes (every 8 steps)
+    for (let s=0; s<64; s+=8) project.drums.hat[s] = true;
+
+    // Clap layered lightly on snare (optional)
+    [16, 48].forEach(s => project.drums.clap[s] = true);
+  }
+
   async function fetchMidiArrayBuffer(relPath){
     const url = new URL(relPath, window.location.href).toString();
     const res = await fetch(url, { cache: "no-store" });
@@ -840,7 +833,6 @@
   async function importMidiIntoGrid(arrayBuffer, targetGrid){
     const midi = new Midi(arrayBuffer);
 
-    // Keep BPM absolute (don’t overwrite from MIDI)
     const quarter = 60 / bpm;
     const toStep = (t) => clamp(Math.round((t / quarter) * 4), 0, MASTER_STEPS-1);
     const toLen  = (d) => clamp(Math.max(1, Math.round((d / quarter) * 4)), 1, MASTER_STEPS);
@@ -858,11 +850,6 @@
   }
 
   async function loadDemoFromMidiFolder(){
-    const pluckURL  = new URL(MIDI_PATHS.bass,  window.location.href).toString();
-    const chordsURL = new URL(MIDI_PATHS.piano, window.location.href).toString();
-    const arpURL    = new URL(MIDI_PATHS.synth, window.location.href).toString();
-    console.log("Demo MIDI URLs:", { pluckURL, chordsURL, arpURL });
-
     const [pluckBuf, chordsBuf, arpBuf] = await Promise.all([
       fetchMidiArrayBuffer(MIDI_PATHS.bass),
       fetchMidiArrayBuffer(MIDI_PATHS.piano),
@@ -874,29 +861,20 @@
     await importMidiIntoGrid(chordsBuf, project.piano);
     await importMidiIntoGrid(arpBuf,    project.synth);
 
+    // ✅ inject a default drum groove
+    setDemoDrums();
+
     buildDrumGrid();
     drawRoll(-1);
   }
 
-  // ----------------------------
-  // KNOB math/helpers (shared)
-  // ----------------------------
+  // ---------- Knob helpers ----------
   function knobStyleForPercent(pct){
     const deg = pct * 270;
     const rot = (-135 + pct * 270);
     return { fillDeg: `${deg}deg`, rotDeg: `${rot}deg` };
   }
-
-  // ----------------------------
-  // Transpose knobs (sound only)
-  // Range: -24..+24 semitones
-  // Vertical drag: up = +, down = -
-  // Double tap/click: reset to 0
-  // ----------------------------
-  function semitoneToPct(v){
-    // map [-24..+24] -> [0..1]
-    return (clamp(v, -24, 24) + 24) / 48;
-  }
+  function semitoneToPct(v){ return (clamp(v, -24, 24) + 24) / 48; }
 
   function setTranspose(inst, val){
     const v = clamp(Math.round(Number(val)), -24, 24);
@@ -912,7 +890,7 @@
       const st = knobStyleForPercent(semitoneToPct(v));
       synthTrKnob.style.setProperty("--knobDeg", st.fillDeg);
       synthTrKnob.style.setProperty("--knobRot", st.rotDeg);
-    } else if (inst === "bass"){
+    } else {
       bassTrVal.textContent = String(v);
       const st = knobStyleForPercent(semitoneToPct(v));
       bassTrKnob.style.setProperty("--knobDeg", st.fillDeg);
@@ -925,34 +903,25 @@
 
     const onDown = async (e) => {
       e.preventDefault();
-      await ensureRunning(); // enables immediate preview after adjusting if you click keys
+      await ensureRunning();
       active = true;
       pid = e.pointerId;
       startY = e.clientY;
       startVal = transpose[inst] || 0;
       knobEl.setPointerCapture(pid);
     };
-
     const onMove = (e) => {
       if (!active || e.pointerId !== pid) return;
       e.preventDefault();
       const dy = startY - e.clientY;
-
-      // 12px drag ≈ 1 semitone (feels good on mobile too)
-      const delta = dy / 12;
+      const delta = dy / 12; // 12px ≈ 1 semitone
       setTranspose(inst, startVal + delta);
     };
-
     const onUp = (e) => {
       if (!active || e.pointerId !== pid) return;
       active = false; pid = null;
     };
-
-    // double-click / double-tap reset
-    knobEl.addEventListener("dblclick", (e) => {
-      e.preventDefault();
-      setTranspose(inst, 0);
-    });
+    knobEl.addEventListener("dblclick", (e) => { e.preventDefault(); setTranspose(inst, 0); });
 
     knobEl.addEventListener("pointerdown", onDown, {passive:false});
     knobEl.addEventListener("pointermove", onMove, {passive:false});
@@ -961,14 +930,11 @@
     knobEl.addEventListener("lostpointercapture", () => { active=false; pid=null; });
   }
 
-  // ----------------------------
-  // DRUM UI (knobs + drag paint)
-  // ----------------------------
+  // Drum knobs + grid build
   function knobStyleForValue(v){
     const pct = clamp(v, 0, 100) / 100;
     return knobStyleForPercent(pct);
   }
-
   function setKnobValue(knobEl, valEl, v, track){
     const vv = clamp(Math.round(v), 0, 100);
     valEl.textContent = String(vv);
@@ -982,7 +948,6 @@
       drumGains[track].gain.value = x * x;
     }
   }
-
   function attachKnob(knobEl, valEl, track){
     let active = false, pid = null, startVal = 100, startY = 0;
 
@@ -1104,7 +1069,6 @@
     });
   }
 
-  // row-locked drag paint
   let drumPaint = { active:false, pointerId:null, value:true, visited:new Set(), track:null };
 
   function cellFromPoint(clientX, clientY){
@@ -1180,9 +1144,7 @@
     });
   }
 
-  // ----------------------------
-  // PIANO ROLL (draw + edit + preview)
-  // ----------------------------
+  // Piano roll drawing + editing (unchanged from your current build)
   const KEY_PAD = 128;
 
   function isBlackKey(midi){
@@ -1216,7 +1178,7 @@
     for (let p=0; p<ROLL_PITCHES; p++){
       const midi = ROLL_BASE_MIDI + p;
       const y = H - (p+1)*cellH;
-      g.fillStyle = isBlackKey(midi) ? cssVar("--rowBlack") : ((p % 2 === 0) ? cssVar("--rowWhiteA") : cssVar("--rowWhiteB"));
+      g.fillStyle = isBlackKey(midi) ? cssVar("--rowBlack") : ((p % 2 === 0) ? "rgba(255,255,255,.03)" : "rgba(255,255,255,.015)");
       g.fillRect(leftPad, y, W-leftPad, cellH);
     }
 
@@ -1282,7 +1244,6 @@
 
         g.fillStyle = noteColor();
         g.fillRect(x,y,w,h);
-
         g.strokeStyle = "rgba(255,255,255,.18)";
         g.strokeRect(x+0.5,y+0.5,w-1,h-1);
       }
@@ -1392,12 +1353,10 @@
     noteDrag.pointerId = null;
   });
 
-  // ----------------------------
   // ABSOLUTE BPM playback
-  // ----------------------------
   function secondsPerStep(){
     const quarter = 60 / bpm;
-    return quarter / 4; // 1/16 step time
+    return quarter / 4;
   }
 
   function scheduleStep(step, time){
@@ -1501,7 +1460,6 @@
   pauseBtn.addEventListener("click", pause);
   stopBtn.addEventListener("click", stopTransportOnly);
 
-  // loop size changes
   resEl.addEventListener("input", () => {
     const opt = RES_OPTIONS[Number(resEl.value)];
     applyLoopSize(opt.steps, opt.label);
@@ -1517,14 +1475,18 @@
     drawRoll(-1);
   }
 
-  // buttons
   loadDemoBtn.addEventListener("click", async () => {
     try { await loadDemoFromMidiFolder(); }
-    catch { applyProject(DEMO_PROJECT); }
+    catch {
+      // fallback: still add demo drums so it feels like a song
+      setDemoDrums();
+      buildDrumGrid();
+      drawRoll(-1);
+    }
   });
+
   clearProjectBtn.addEventListener("click", clearProject);
 
-  // import MIDI into current instrument
   importMidiBtn.addEventListener("click", () => midiFileInput.click());
   midiFileInput.addEventListener("change", async () => {
     const file = midiFileInput.files && midiFileInput.files[0];
@@ -1540,14 +1502,11 @@
     midiFileInput.value = "";
   });
 
-  // ----------------------------
-  // INIT (Launch: 115 BPM + 1/64 + auto MIDI demo)
-  // ----------------------------
+  // INIT
   bpm = 115;
   bpmEl.value = "115";
   bpmLabel.textContent = "115";
 
-  // force 1/64 at launch
   resEl.value = "2";
   const initialOpt = RES_OPTIONS[Number(resEl.value)];
   LOOP_STEPS = initialOpt.steps;
@@ -1564,6 +1523,7 @@
   attachTransposeKnob(synthTrKnob, "synth");
   attachTransposeKnob(bassTrKnob, "bass");
 
+  // build UI
   buildDrumGrid();
   drawRoll(-1);
 
@@ -1571,8 +1531,10 @@
     try{
       await loadDemoFromMidiFolder();
     } catch (e){
-      console.warn("Auto demo MIDI load failed; falling back to internal demo.", e);
-      applyProject(DEMO_PROJECT);
+      console.warn("Auto demo MIDI load failed; fallback demo drums only.", e);
+      setDemoDrums();
+      buildDrumGrid();
+      drawRoll(-1);
     }
   })();
 
