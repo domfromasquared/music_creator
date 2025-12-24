@@ -17,8 +17,8 @@
       --radius: 14px;
 
       /* Drum 4-step grouping */
-      --groupA:#121a28;
-      --groupB:#211a2f;
+      --groupA:#121a28;  /* cool */
+      --groupB:#211a2f;  /* warm */
       --inactiveOverlay: rgba(0,0,0,0.38);
       --playheadOutline: rgba(255,255,255,0.30);
       --beatDivider: rgba(255,255,255,0.18);
@@ -31,21 +31,20 @@
       --snare: rgba(88,166,255,0.92);
       --clap: rgba(255,255,255,0.88);
 
-      /* Piano roll look */
+      /* Piano roll */
       --rollBg: rgba(0,0,0,.18);
       --rollStrip: rgba(0,0,0,.32);
       --gridLine: rgba(255,255,255,.06);
       --gridBeat: rgba(255,255,255,.14);
 
       /* Piano keys */
-      --whiteKey: rgba(255,255,255,0.90);
-      --whiteKey2: rgba(255,255,255,0.82);
-      --blackKey: rgba(10,12,18,0.95);
-      --blackKey2: rgba(18,20,28,0.95);
+      --whiteKeyA: rgba(255,255,255,0.92);
+      --whiteKeyB: rgba(255,255,255,0.82);
+      --blackKeyA: rgba(12,14,20,0.98);
+      --blackKeyB: rgba(22,24,32,0.98);
       --keyBorder: rgba(0,0,0,0.35);
-      --keyLabel: rgba(0,0,0,0.65);
 
-      /* Row shading in the roll (black keys darker rows) */
+      /* Row shading on grid (black keys darker) */
       --rowWhiteA: rgba(255,255,255,.03);
       --rowWhiteB: rgba(255,255,255,.015);
       --rowBlack: rgba(0,0,0,.22);
@@ -70,7 +69,7 @@
 
     .wrap{
       display:grid;
-      grid-template-columns: 380px 1fr;
+      grid-template-columns: 410px 1fr;
       gap: 14px;
       align-items:start;
     }
@@ -138,41 +137,71 @@
     /* Drum grid */
     .drumGrid{
       display:grid;
-      grid-template-columns: 84px 1fr;
+      grid-template-columns: 164px 1fr; /* widened for volume knobs */
       gap:10px;
       align-items:start;
       touch-action: none;
     }
     .trackNames{
       display:grid;
-      grid-template-rows: repeat(4, 34px);
       gap:8px;
     }
     .trackName{
-      height:34px;
-      border-radius: 10px;
+      height:40px;
+      border-radius: 12px;
       background: rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.08);
-      display:flex; align-items:center; justify-content:center;
-      font-size:12px; color: var(--muted);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 8px 10px;
       user-select:none;
+      gap:10px;
     }
+    .trackLabel{
+      font-size:12px;
+      color: var(--muted);
+      width:54px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .volWrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:1;
+      min-width:0;
+    }
+    .volWrap input[type="range"]{
+      width: 100%;
+      min-width: 70px;
+    }
+    .volVal{
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      color: var(--ink);
+      width: 40px;
+      text-align:center;
+    }
+
     .steps{
       display:grid;
-      grid-template-rows: repeat(4, 34px);
       gap:8px;
     }
     .rowSteps{
       display:grid;
-      grid-template-columns: repeat(16, 1fr);
       gap:6px;
-      height:34px;
+      height:40px;
       align-items:stretch;
       touch-action: none;
     }
 
     .cell{
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid rgba(255,255,255,.10);
       position:relative;
       overflow:hidden;
@@ -242,7 +271,7 @@
 </head>
 <body>
   <h1>RetroLoop Studio</h1>
-  <p class="sub">4/4 • 16-step drums • piano roll (C3–B4, piano keys + note preview) • PC + Mobile</p>
+  <p class="sub">4/4 • Drum sequencer + piano roll • Resolution: <span class="kbd" id="resText">1/16</span> • Keys: C3 → C5</p>
 
   <div class="wrap">
     <div class="card">
@@ -261,10 +290,12 @@
             <input id="bpm" type="range" min="70" max="180" value="120"/>
             <span id="bpmLabel" class="kbd">120</span>
           </div>
+
+          <!-- Repurposed "Swing" into RESOLUTION -->
           <div class="pill">
-            <span>Swing</span>
-            <input id="swing" type="range" min="0" max="0.6" step="0.01" value="0.12"/>
-            <span id="swingLabel" class="kbd">0.12</span>
+            <span>Resolution</span>
+            <input id="resolution" type="range" min="0" max="3" step="1" value="1"/>
+            <span id="resolutionLabel" class="kbd">1/16</span>
           </div>
         </div>
 
@@ -276,7 +307,7 @@
             <span>Bass</span><input id="bassVol" type="range" min="0" max="1" step="0.01" value="0.40"/>
           </div>
           <div class="pill">
-            <span>Drums</span><input id="drumVol" type="range" min="0" max="1" step="0.01" value="0.85"/>
+            <span>Drum Bus</span><input id="drumVol" type="range" min="0" max="1" step="0.01" value="0.85"/>
           </div>
         </div>
 
@@ -296,8 +327,11 @@
 
     <div class="card">
       <div class="hd">
-        <div class="title">Drum Sequencer (1/16)</div>
-        <div class="pill"><span>Groups</span><span class="kbd">1–4 / 5–8 / 9–12 / 13–16</span></div>
+        <div class="title">Drum Sequencer</div>
+        <div class="pill">
+          <span>Groups</span>
+          <span class="kbd" id="groupText">1–4 / 5–8 / 9–12 / 13–16</span>
+        </div>
       </div>
       <div class="bd">
         <div class="drumGrid" id="drumGrid"></div>
@@ -306,7 +340,7 @@
 
     <div class="card" style="grid-column: 1 / -1;">
       <div class="hd">
-        <div class="title">Piano Roll (1/16)</div>
+        <div class="title">Piano Roll</div>
         <div class="tabs">
           <div class="tab active" data-roll="melody">Melody</div>
           <div class="tab" data-roll="bass">Bass</div>
@@ -314,10 +348,10 @@
       </div>
       <div class="bd">
         <div class="rollWrap">
-          <canvas id="roll" width="1280" height="520"></canvas>
+          <canvas id="roll" width="1280" height="560"></canvas>
         </div>
         <p class="hint">
-          Range: <span class="kbd">C3 → B4</span> (2 octaves). Black keys use flat names and darker shades.
+          Range: <span class="kbd">C3 → C5</span>. Every note row is labeled. Black keys use flat names (Db, Eb, Gb, Ab, Bb).
         </p>
       </div>
     </div>
@@ -326,37 +360,41 @@
 <script>
 (() => {
   // ----------------------------
-  // CONFIG
+  // RESOLUTION MODEL
+  // 0 => 1/8  (8 steps per bar)
+  // 1 => 1/16 (16)
+  // 2 => 1/32 (32)
+  // 3 => 1/64 (64)
   // ----------------------------
-  const STEPS = 16;
-  const BARS = 1;
-  const TOTAL_STEPS = STEPS * BARS;
+  const RES_OPTIONS = [
+    { label: "1/8",  stepsPerBar: 8  },
+    { label: "1/16", stepsPerBar: 16 },
+    { label: "1/32", stepsPerBar: 32 },
+    { label: "1/64", stepsPerBar: 64 },
+  ];
 
-  // Piano roll is fixed: 2 octaves, C3–B4 (24 semitones)
-  const ROLL_PITCHES = 24;
+  // Piano roll range: C3 -> C5 inclusive
   const ROLL_BASE_MIDI = 48; // C3
-  const ROLL_TOP_MIDI = ROLL_BASE_MIDI + ROLL_PITCHES - 1; // B4
+  const ROLL_TOP_MIDI  = 72; // C5
+  const ROLL_PITCHES   = (ROLL_TOP_MIDI - ROLL_BASE_MIDI) + 1; // 25 semitones (includes both C's)
 
   // ----------------------------
-  // STATE
+  // STATE (rebuilt when resolution changes)
   // ----------------------------
   const drumNames = ["Kick", "Clap", "Hat", "Snare"];
   const drumKeys  = ["kick", "clap", "hat", "snare"];
-  const drums = {
-    kick:  new Array(TOTAL_STEPS).fill(false),
-    clap:  new Array(TOTAL_STEPS).fill(false),
-    hat:   new Array(TOTAL_STEPS).fill(false),
-    snare: new Array(TOTAL_STEPS).fill(false),
-  };
 
-  // Both Melody & Bass now share the same pitch range (C3–B4)
-  // Notes are stored as note-start lengths: grid[pitchIndex][step] = lenInSteps (0 = none)
-  const melody = Array.from({length: ROLL_PITCHES}, () => new Array(TOTAL_STEPS).fill(0));
-  const bass   = Array.from({length: ROLL_PITCHES}, () => new Array(TOTAL_STEPS).fill(0));
+  let stepsPerBar = 16;
+  let TOTAL_STEPS = stepsPerBar; // 1 bar loop in this build
+
+  let drums = null;   // {kick:bool[],...}
+  let melody = null;  // [pitch][step] => len
+  let bass = null;
 
   // Playback
   let ctx = null;
   let master = null, melBus = null, bassBus = null, drumBus = null;
+  let drumGains = { kick:null, clap:null, hat:null, snare:null };
 
   let isPlaying = false;
   let isPaused = false;
@@ -365,7 +403,7 @@
   let timerId = null;
 
   let bpm = 120;
-  let swing = 0.12;
+
   const lookAhead = 0.025;
   const scheduleAhead = 0.12;
 
@@ -378,8 +416,11 @@
 
   const bpmEl = document.getElementById("bpm");
   const bpmLabel = document.getElementById("bpmLabel");
-  const swingEl = document.getElementById("swing");
-  const swingLabel = document.getElementById("swingLabel");
+
+  const resEl = document.getElementById("resolution");
+  const resLabel = document.getElementById("resolutionLabel");
+  const resText = document.getElementById("resText");
+  const groupText = document.getElementById("groupText");
 
   const melVol = document.getElementById("melVol");
   const bassVol = document.getElementById("bassVol");
@@ -404,8 +445,10 @@
     });
   });
 
-  bpmEl.addEventListener("input", () => { bpm = Number(bpmEl.value); bpmLabel.textContent = String(bpm); });
-  swingEl.addEventListener("input", () => { swing = Number(swingEl.value); swingLabel.textContent = swing.toFixed(2); });
+  bpmEl.addEventListener("input", () => {
+    bpm = Number(bpmEl.value);
+    bpmLabel.textContent = String(bpm);
+  });
 
   // ----------------------------
   // Spacebar Play/Pause (desktop)
@@ -423,6 +466,232 @@
   }, {passive:false});
 
   // ----------------------------
+  // AUDIO
+  // ----------------------------
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+  function ensureAudio(){
+    if (ctx) return;
+
+    ctx = new AudioContext();
+
+    master = ctx.createGain();
+    master.gain.value = 0.9;
+    master.connect(ctx.destination);
+
+    melBus = ctx.createGain();
+    bassBus = ctx.createGain();
+    drumBus = ctx.createGain();
+
+    melBus.gain.value = Number(melVol.value);
+    bassBus.gain.value = Number(bassVol.value);
+    drumBus.gain.value = Number(drumVol.value);
+
+    // Per-drum gains (0..1)
+    drumGains.kick = ctx.createGain(); drumGains.kick.gain.value = 1;
+    drumGains.clap = ctx.createGain(); drumGains.clap.gain.value = 1;
+    drumGains.hat  = ctx.createGain(); drumGains.hat.gain.value  = 1;
+    drumGains.snare= ctx.createGain(); drumGains.snare.gain.value= 1;
+
+    // Route: drum synth -> per drum gain -> drumBus -> master
+    drumGains.kick.connect(drumBus);
+    drumGains.clap.connect(drumBus);
+    drumGains.hat.connect(drumBus);
+    drumGains.snare.connect(drumBus);
+
+    melBus.connect(master);
+    bassBus.connect(master);
+    drumBus.connect(master);
+
+    melVol.addEventListener("input", () => melBus.gain.value = Number(melVol.value));
+    bassVol.addEventListener("input", () => bassBus.gain.value = Number(bassVol.value));
+    drumVol.addEventListener("input", () => drumBus.gain.value = Number(drumVol.value));
+  }
+
+  async function ensureRunning(){
+    ensureAudio();
+    if (ctx.state !== "running") await ctx.resume();
+  }
+
+  function midiToHz(midi){
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  function playNote(freq, time, dur, bus, type, peak){
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const lp = ctx.createBiquadFilter();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, time);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(peak, time + 0.01);
+
+    const rel = Math.max(0.02, Math.min(0.14, dur * 0.25));
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + dur + rel);
+
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(type === "square" ? 4200 : 2400, time);
+
+    osc.connect(lp).connect(gain).connect(bus);
+    osc.start(time);
+    osc.stop(time + dur + rel + 0.03);
+  }
+
+  async function previewMidi(midi){
+    await ensureRunning();
+    const hz = midiToHz(midi);
+    const now = ctx.currentTime + 0.001;
+    const bus = (activeRoll === "melody") ? melBus : bassBus;
+    const type = (activeRoll === "melody") ? "square" : "triangle";
+    playNote(hz, now, 0.12, bus, type, (activeRoll === "melody") ? 0.18 : 0.22);
+  }
+
+  // Drum synths (routed to per-drum gains)
+  let noiseBuf = null;
+  function getNoiseBuffer(){
+    if (noiseBuf) return noiseBuf;
+    const len = ctx.sampleRate * 0.3;
+    const b = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i=0;i<len;i++) d[i] = Math.random()*2 - 1;
+    noiseBuf = b;
+    return b;
+  }
+
+  function playKick(time){
+    const out = drumGains.kick;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(160, time);
+    osc.frequency.exponentialRampToValueAtTime(50, time + 0.09);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(1.0, time + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.14);
+
+    const click = ctx.createOscillator();
+    const cg = ctx.createGain();
+    click.type = "square";
+    click.frequency.setValueAtTime(900, time);
+    cg.gain.setValueAtTime(0.18, time);
+    cg.gain.exponentialRampToValueAtTime(0.0001, time + 0.01);
+
+    osc.connect(gain).connect(out);
+    click.connect(cg).connect(out);
+
+    osc.start(time); osc.stop(time + 0.16);
+    click.start(time); click.stop(time + 0.02);
+  }
+
+  function playSnare(time){
+    const out = drumGains.snare;
+
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(1800, time);
+    bp.Q.setValueAtTime(0.8, time);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(0.9, time + 0.003);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.10);
+
+    const osc = ctx.createOscillator();
+    const og = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(220, time);
+    og.gain.setValueAtTime(0.0001, time);
+    og.gain.exponentialRampToValueAtTime(0.24, time + 0.004);
+    og.gain.exponentialRampToValueAtTime(0.0001, time + 0.08);
+
+    src.connect(bp).connect(gain).connect(out);
+    osc.connect(og).connect(out);
+
+    src.start(time); src.stop(time + 0.12);
+    osc.start(time); osc.stop(time + 0.10);
+  }
+
+  function playHat(time){
+    const out = drumGains.hat;
+
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(7000, time);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(0.35, time + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+
+    src.connect(hp).connect(gain).connect(out);
+    src.start(time); src.stop(time + 0.06);
+  }
+
+  function playClap(time){
+    const out = drumGains.clap;
+
+    const burstTimes = [0, 0.012, 0.024];
+    burstTimes.forEach(dt => {
+      const t = time + dt;
+      const src = ctx.createBufferSource();
+      src.buffer = getNoiseBuffer();
+
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.setValueAtTime(2200, t);
+      bp.Q.setValueAtTime(0.7, t);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.55, t + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+
+      src.connect(bp).connect(gain).connect(out);
+      src.start(t); src.stop(t + 0.09);
+    });
+  }
+
+  // ----------------------------
+  // DATA INIT / RESET
+  // ----------------------------
+  function initDataForSteps(nSteps){
+    TOTAL_STEPS = nSteps;
+
+    drums = {
+      kick:  new Array(TOTAL_STEPS).fill(false),
+      clap:  new Array(TOTAL_STEPS).fill(false),
+      hat:   new Array(TOTAL_STEPS).fill(false),
+      snare: new Array(TOTAL_STEPS).fill(false),
+    };
+
+    melody = Array.from({length: ROLL_PITCHES}, () => new Array(TOTAL_STEPS).fill(0));
+    bass   = Array.from({length: ROLL_PITCHES}, () => new Array(TOTAL_STEPS).fill(0));
+  }
+
+  // ----------------------------
+  // GROUP LABEL for UI
+  // ----------------------------
+  function groupLabelForSteps(nSteps){
+    const groups = [];
+    for (let s = 1; s <= nSteps; s += 4){
+      const a = s;
+      const b = Math.min(nSteps, s + 3);
+      groups.push(`${a}–${b}`);
+    }
+    return groups.join(" / ");
+  }
+
+  // ----------------------------
   // DRUM GRID UI + PAINTING
   // ----------------------------
   function buildDrumGrid(){
@@ -430,32 +699,67 @@
 
     const namesCol = document.createElement("div");
     namesCol.className = "trackNames";
-    drumNames.forEach(n => {
-      const d = document.createElement("div");
-      d.className = "trackName";
-      d.textContent = n;
-      namesCol.appendChild(d);
-    });
 
     const stepsCol = document.createElement("div");
     stepsCol.className = "steps";
 
-    drumKeys.forEach((key) => {
+    drumKeys.forEach((key, idx) => {
+      // LEFT: Track name + volume knob
+      const nameRow = document.createElement("div");
+      nameRow.className = "trackName";
+
+      const label = document.createElement("div");
+      label.className = "trackLabel";
+      label.textContent = drumNames[idx];
+
+      const volWrap = document.createElement("div");
+      volWrap.className = "volWrap";
+
+      const vol = document.createElement("input");
+      vol.type = "range";
+      vol.min = "0";
+      vol.max = "100";
+      vol.step = "1";
+      vol.value = "100";
+
+      const val = document.createElement("div");
+      val.className = "volVal";
+      val.textContent = "100";
+
+      vol.addEventListener("input", () => {
+        val.textContent = String(vol.value);
+        // Convert 0..100 to a musically nicer curve
+        // Use squared curve for more fine control near low volumes.
+        const x = Number(vol.value) / 100;
+        const gain = x * x;
+        ensureAudio();
+        drumGains[key].gain.value = gain;
+      });
+
+      volWrap.appendChild(vol);
+      volWrap.appendChild(val);
+
+      nameRow.appendChild(label);
+      nameRow.appendChild(volWrap);
+      namesCol.appendChild(nameRow);
+
+      // RIGHT: Steps row
       const row = document.createElement("div");
       row.className = "rowSteps";
+      row.style.gridTemplateColumns = `repeat(${TOTAL_STEPS}, 1fr)`;
 
       for (let s = 0; s < TOTAL_STEPS; s++){
         const cell = document.createElement("div");
         cell.className = "cell";
 
-        // 4-step grouping
+        // 4-step background grouping
         const group = Math.floor(s / 4) % 2;
         cell.classList.add(group === 0 ? "groupA" : "groupB");
 
         // instrument class
         cell.classList.add(key);
 
-        // beat divider each 4
+        // Divider every 4
         if ((s+1) % 4 === 0 && s !== TOTAL_STEPS-1) cell.classList.add("beatDivider");
 
         cell.dataset.track = key;
@@ -464,6 +768,7 @@
 
         row.appendChild(cell);
       }
+
       stepsCol.appendChild(row);
     });
 
@@ -486,15 +791,12 @@
   }
 
   function updatePlayheadUI(step){
-    const allCells = drumGridEl.querySelectorAll(".cell");
-    allCells.forEach(c => c.classList.remove("playhead"));
+    drumGridEl.querySelectorAll(".cell").forEach(c => c.classList.remove("playhead"));
     if (step < 0) return;
-
     const rows = drumGridEl.querySelectorAll(".rowSteps");
     drumKeys.forEach((_, rIdx) => {
       const row = rows[rIdx];
-      if (!row) return;
-      const cell = row.children[step];
+      const cell = row && row.children[step];
       if (cell) cell.classList.add("playhead");
     });
   }
@@ -570,263 +872,15 @@
   }
 
   // ----------------------------
-  // AUDIO + NOTE PREVIEW
+  // PIANO ROLL: labels for ALL notes
   // ----------------------------
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const KEY_PAD = 128;
 
-  function ensureAudio(){
-    if (ctx) return;
-
-    ctx = new AudioContext();
-    master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
-
-    melBus = ctx.createGain();
-    bassBus = ctx.createGain();
-    drumBus = ctx.createGain();
-
-    melBus.gain.value = Number(melVol.value);
-    bassBus.gain.value = Number(bassVol.value);
-    drumBus.gain.value = Number(drumVol.value);
-
-    melBus.connect(master);
-    bassBus.connect(master);
-    drumBus.connect(master);
-
-    melVol.addEventListener("input", () => melBus.gain.value = Number(melVol.value));
-    bassVol.addEventListener("input", () => bassBus.gain.value = Number(bassVol.value));
-    drumVol.addEventListener("input", () => drumBus.gain.value = Number(drumVol.value));
-  }
-
-  async function ensureRunning(){
-    ensureAudio();
-    if (ctx.state !== "running") await ctx.resume();
-  }
-
-  function midiToHz(midi){ return 440 * Math.pow(2, (midi - 69) / 12); }
-
-  function playNote(freq, time, dur, bus, type, peak){
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const lp = ctx.createBiquadFilter();
-
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, time);
-
-    gain.gain.setValueAtTime(0.0001, time);
-    gain.gain.exponentialRampToValueAtTime(peak, time + 0.01);
-
-    const rel = Math.max(0.02, Math.min(0.14, dur * 0.25));
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + dur + rel);
-
-    lp.type = "lowpass";
-    lp.frequency.setValueAtTime(type === "square" ? 4200 : 2400, time);
-
-    osc.connect(lp).connect(gain).connect(bus);
-    osc.start(time);
-    osc.stop(time + dur + rel + 0.03);
-  }
-
-  // Quick preview: short note, does NOT place anything
-  async function previewMidi(midi){
-    await ensureRunning();
-    const hz = midiToHz(midi);
-    const now = ctx.currentTime + 0.001;
-    const isMel = activeRoll === "melody";
-    const bus = isMel ? melBus : bassBus;
-    const type = isMel ? "square" : "triangle";
-    playNote(hz, now, 0.12, bus, type, isMel ? 0.18 : 0.22);
-  }
-
-  // Drum synths (unchanged)
-  let noiseBuf = null;
-  function getNoiseBuffer(){
-    if (noiseBuf) return noiseBuf;
-    const len = ctx.sampleRate * 0.3;
-    const b = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = b.getChannelData(0);
-    for (let i=0;i<len;i++) d[i] = Math.random()*2 - 1;
-    noiseBuf = b;
-    return b;
-  }
-  function playKick(time){
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(160, time);
-    osc.frequency.exponentialRampToValueAtTime(50, time + 0.09);
-    gain.gain.setValueAtTime(0.0001, time);
-    gain.gain.exponentialRampToValueAtTime(1.0, time + 0.004);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.14);
-
-    const click = ctx.createOscillator();
-    const cg = ctx.createGain();
-    click.type = "square";
-    click.frequency.setValueAtTime(900, time);
-    cg.gain.setValueAtTime(0.18, time);
-    cg.gain.exponentialRampToValueAtTime(0.0001, time + 0.01);
-
-    osc.connect(gain).connect(drumBus);
-    click.connect(cg).connect(drumBus);
-    osc.start(time); osc.stop(time + 0.16);
-    click.start(time); click.stop(time + 0.02);
-  }
-  function playSnare(time){
-    const src = ctx.createBufferSource();
-    src.buffer = getNoiseBuffer();
-    const bp = ctx.createBiquadFilter();
-    bp.type = "bandpass"; bp.frequency.setValueAtTime(1800, time); bp.Q.setValueAtTime(0.8, time);
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, time);
-    gain.gain.exponentialRampToValueAtTime(0.9, time + 0.003);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.10);
-
-    const osc = ctx.createOscillator();
-    const og = ctx.createGain();
-    osc.type = "triangle"; osc.frequency.setValueAtTime(220, time);
-    og.gain.setValueAtTime(0.0001, time);
-    og.gain.exponentialRampToValueAtTime(0.24, time + 0.004);
-    og.gain.exponentialRampToValueAtTime(0.0001, time + 0.08);
-
-    src.connect(bp).connect(gain).connect(drumBus);
-    osc.connect(og).connect(drumBus);
-    src.start(time); src.stop(time + 0.12);
-    osc.start(time); osc.stop(time + 0.10);
-  }
-  function playHat(time){
-    const src = ctx.createBufferSource();
-    src.buffer = getNoiseBuffer();
-    const hp = ctx.createBiquadFilter();
-    hp.type = "highpass"; hp.frequency.setValueAtTime(7000, time);
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, time);
-    gain.gain.exponentialRampToValueAtTime(0.35, time + 0.002);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
-    src.connect(hp).connect(gain).connect(drumBus);
-    src.start(time); src.stop(time + 0.06);
-  }
-  function playClap(time){
-    const burstTimes = [0, 0.012, 0.024];
-    burstTimes.forEach(dt => {
-      const t = time + dt;
-      const src = ctx.createBufferSource();
-      src.buffer = getNoiseBuffer();
-      const bp = ctx.createBiquadFilter();
-      bp.type = "bandpass"; bp.frequency.setValueAtTime(2200, t); bp.Q.setValueAtTime(0.7, t);
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.55, t + 0.002);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
-      src.connect(bp).connect(gain).connect(drumBus);
-      src.start(t); src.stop(t + 0.09);
-    });
-  }
-
-  // ----------------------------
-  // SEQUENCER
-  // ----------------------------
-  function secondsPerStep(){ return (60 / bpm) / 4; }
-  function stepTimeWithSwing(baseTime, stepIdx){
-    if (stepIdx % 2 === 1) return baseTime + secondsPerStep() * swing;
-    return baseTime;
-  }
-
-  function scheduleStep(step, time){
-    if (drums.kick[step])  playKick(time);
-    if (drums.snare[step]) playSnare(time);
-    if (drums.hat[step])   playHat(time);
-    if (drums.clap[step])  playClap(time);
-
-    // Melody
-    for (let p=0; p<ROLL_PITCHES; p++){
-      const len = melody[p][step];
-      if (len > 0){
-        const hz = midiToHz(ROLL_BASE_MIDI + p);
-        const dur = secondsPerStep() * len * 0.98;
-        playNote(hz, time, dur, melBus, "square", 0.20);
-      }
-    }
-    // Bass
-    for (let p=0; p<ROLL_PITCHES; p++){
-      const len = bass[p][step];
-      if (len > 0){
-        const hz = midiToHz(ROLL_BASE_MIDI + p);
-        const dur = secondsPerStep() * len * 0.98;
-        playNote(hz, time, dur, bassBus, "triangle", 0.26);
-      }
-    }
-
-    updatePlayheadUI(step);
-    drawRoll(step);
-  }
-
-  function nextStep(){
-    currentStep = (currentStep + 1) % TOTAL_STEPS;
-    nextNoteTime += secondsPerStep();
-  }
-
-  function tick(){
-    while (nextNoteTime < ctx.currentTime + scheduleAhead){
-      const swungTime = stepTimeWithSwing(nextNoteTime, currentStep);
-      scheduleStep(currentStep, swungTime);
-      nextStep();
-    }
-    timerId = window.setTimeout(tick, lookAhead * 1000);
-  }
-
-  async function startFromCurrentStep(){
-    await ensureRunning();
-
-    isPlaying = true;
-    isPaused = false;
-    playBtn.disabled = true;
-    pauseBtn.disabled = false;
-    stopBtn.disabled = false;
-
-    nextNoteTime = ctx.currentTime + 0.06;
-    tick();
-  }
-
-  function pause(){
-    isPaused = true;
-    isPlaying = false;
-    playBtn.disabled = false;
-    pauseBtn.disabled = true;
-    stopBtn.disabled = false;
-    if (timerId) { clearTimeout(timerId); timerId = null; }
-  }
-
-  function stop(){
-    isPlaying = false;
-    isPaused = false;
-    playBtn.disabled = false;
-    pauseBtn.disabled = true;
-    stopBtn.disabled = true;
-    if (timerId) { clearTimeout(timerId); timerId = null; }
-    currentStep = 0;
-    updatePlayheadUI(-1);
-    drawRoll(-1);
-  }
-
-  function togglePlayPause(){
-    if (!ctx && !isPlaying && !isPaused){ startFromCurrentStep(); return; }
-    if (isPlaying) pause();
-    else startFromCurrentStep();
-  }
-
-  playBtn.addEventListener("click", () => { currentStep = 0; startFromCurrentStep(); });
-  pauseBtn.addEventListener("click", pause);
-  stopBtn.addEventListener("click", stop);
-
-  // ----------------------------
-  // PIANO ROLL: KEYS + FLATS + PREVIEW + NOTE LENGTH
-  // ----------------------------
-  // Black-key semitones in an octave: C#, D#, F#, G#, A#
   function isBlackKey(midi){
     const pc = midi % 12;
     return pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10;
   }
 
-  // Use FLAT names for black keys (as requested)
   function midiNameFlat(m){
     const pc = m % 12;
     const oct = Math.floor(m/12) - 1;
@@ -838,8 +892,9 @@
     return `${names[pc]}${oct}`;
   }
 
-  // Drawing layout
-  const KEY_PAD = 112; // wider so the piano keys read clearly
+  function css(varName){
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  }
 
   function drawRoll(playheadStep = -1){
     const W = rollCanvas.width;
@@ -853,100 +908,77 @@
 
     // background
     g.clearRect(0,0,W,H);
-    g.fillStyle = getCss("--rollBg");
+    g.fillStyle = css("--rollBg");
     g.fillRect(0,0,W,H);
 
-    // roll grid strip area
-    g.fillStyle = "rgba(0,0,0,.00)";
-    g.fillRect(leftPad,0,W-leftPad,H);
-
-    // ---------- ROW SHADING (black keys darker) ----------
+    // row shading
     for (let p=0; p<ROLL_PITCHES; p++){
       const midi = ROLL_BASE_MIDI + p;
       const y = H - (p+1)*cellH;
 
-      if (isBlackKey(midi)){
-        g.fillStyle = getCss("--rowBlack");
-      } else {
-        g.fillStyle = (p % 2 === 0) ? getCss("--rowWhiteA") : getCss("--rowWhiteB");
-      }
+      if (isBlackKey(midi)) g.fillStyle = css("--rowBlack");
+      else g.fillStyle = (p % 2 === 0) ? css("--rowWhiteA") : css("--rowWhiteB");
+
       g.fillRect(leftPad, y, W-leftPad, cellH);
     }
 
-    // ---------- GRID LINES ----------
+    // grid lines
     for (let s=0; s<=TOTAL_STEPS; s++){
       const x = leftPad + s*cellW;
       const isBeat = (s % 4 === 0);
-      g.strokeStyle = isBeat ? getCss("--gridBeat") : getCss("--gridLine");
-      g.beginPath();
-      g.moveTo(x,0); g.lineTo(x,H);
-      g.stroke();
+      g.strokeStyle = isBeat ? css("--gridBeat") : css("--gridLine");
+      g.beginPath(); g.moveTo(x,0); g.lineTo(x,H); g.stroke();
     }
     for (let p=0; p<=ROLL_PITCHES; p++){
       const y = p*cellH;
-      g.strokeStyle = getCss("--gridLine");
-      g.beginPath();
-      g.moveTo(leftPad,y); g.lineTo(W,y);
-      g.stroke();
+      g.strokeStyle = css("--gridLine");
+      g.beginPath(); g.moveTo(leftPad,y); g.lineTo(W,y); g.stroke();
     }
 
-    // ---------- PIANO KEYS UI (leftPad) ----------
-    // Key background strip
-    g.fillStyle = getCss("--rollStrip");
+    // keys strip background
+    g.fillStyle = css("--rollStrip");
     g.fillRect(0,0,leftPad,H);
 
-    // Draw white key rows first
+    // draw keys per row w/ correct text color
     for (let p=0; p<ROLL_PITCHES; p++){
       const midi = ROLL_BASE_MIDI + p;
-      if (isBlackKey(midi)) continue;
-
       const y = H - (p+1)*cellH;
 
-      const grad = g.createLinearGradient(0,y,0,y+cellH);
-      grad.addColorStop(0, getCss("--whiteKey"));
-      grad.addColorStop(1, getCss("--whiteKey2"));
+      const black = isBlackKey(midi);
 
-      g.fillStyle = grad;
-      g.fillRect(6, y+1, leftPad-12, cellH-2);
+      if (!black){
+        const grad = g.createLinearGradient(0,y,0,y+cellH);
+        grad.addColorStop(0, css("--whiteKeyA"));
+        grad.addColorStop(1, css("--whiteKeyB"));
+        g.fillStyle = grad;
+        g.fillRect(6, y+1, leftPad-12, cellH-2);
+        g.strokeStyle = css("--keyBorder");
+        g.strokeRect(6.5, y+1.5, leftPad-13, cellH-3);
 
-      g.strokeStyle = getCss("--keyBorder");
-      g.strokeRect(6.5, y+1.5, leftPad-13, cellH-3);
-
-      // label for C notes (and optionally all whites)
-      const pc = midi % 12;
-      if (pc === 0){ // C
-        g.fillStyle = getCss("--keyLabel");
+        // label: black text on white
+        g.fillStyle = "rgba(0,0,0,0.75)";
         g.font = "12px ui-monospace, SFMono-Regular, Menlo, monospace";
         g.fillText(midiNameFlat(midi), 12, y + cellH*0.68);
+      } else {
+        const grad = g.createLinearGradient(0,y,0,y+cellH);
+        grad.addColorStop(0, css("--blackKeyB"));
+        grad.addColorStop(1, css("--blackKeyA"));
+
+        const insetLeft = 22;
+        const insetRight = 20;
+        g.fillStyle = grad;
+        g.fillRect(insetLeft, y+2, leftPad - insetLeft - insetRight, cellH-4);
+        g.strokeStyle = "rgba(255,255,255,.10)";
+        g.strokeRect(insetLeft+0.5, y+2.5, leftPad - insetLeft - insetRight - 1, cellH-5);
+
+        // label: white text on black
+        g.fillStyle = "rgba(255,255,255,0.75)";
+        g.font = "12px ui-monospace, SFMono-Regular, Menlo, monospace";
+        g.fillText(midiNameFlat(midi), insetLeft+6, y + cellH*0.68);
       }
     }
 
-    // Draw black key rows (narrower, inset)
-    for (let p=0; p<ROLL_PITCHES; p++){
-      const midi = ROLL_BASE_MIDI + p;
-      if (!isBlackKey(midi)) continue;
-
-      const y = H - (p+1)*cellH;
-
-      const grad = g.createLinearGradient(0,y,0,y+cellH);
-      grad.addColorStop(0, getCss("--blackKey2"));
-      grad.addColorStop(1, getCss("--blackKey"));
-
-      const insetLeft = 22;
-      const insetRight = 20;
-      g.fillStyle = grad;
-      g.fillRect(insetLeft, y+2, leftPad - insetLeft - insetRight, cellH-4);
-
-      g.strokeStyle = "rgba(255,255,255,.08)";
-      g.strokeRect(insetLeft+0.5, y+2.5, leftPad - insetLeft - insetRight - 1, cellH-5);
-
-      // label black keys lightly
-      g.fillStyle = "rgba(255,255,255,.55)";
-      g.font = "11px ui-monospace, SFMono-Regular, Menlo, monospace";
-      g.fillText(midiNameFlat(midi), insetLeft+6, y + cellH*0.68);
-    }
-
-    // ---------- NOTES (start + length) ----------
+    // notes
     for (let p=0; p<ROLL_PITCHES; p++){
       for (let s=0; s<TOTAL_STEPS; s++){
         const len = grid[p][s];
@@ -957,7 +989,7 @@
         const w = (cellW * len) - 2;
         const h = cellH - 2;
 
-        g.fillStyle = (activeRoll === "melody") ? getCss("--melNote") : getCss("--bassNote");
+        g.fillStyle = (activeRoll === "melody") ? css("--melNote") : css("--bassNote");
         g.fillRect(x,y,w,h);
 
         g.strokeStyle = "rgba(255,255,255,.18)";
@@ -965,16 +997,12 @@
       }
     }
 
-    // ---------- PLAYHEAD ----------
+    // playhead
     if (playheadStep >= 0){
       const x = leftPad + playheadStep*cellW;
       g.fillStyle = "rgba(255,255,255,.12)";
       g.fillRect(x,0,cellW,H);
     }
-  }
-
-  function getCss(varName){
-    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
   }
 
   function rollHitTest(clientX, clientY){
@@ -989,15 +1017,14 @@
     const cellW = (W - leftPad) / TOTAL_STEPS;
     const cellH = H / ROLL_PITCHES;
 
-    const pitch = Math.floor((H - py) / cellH); // bottom=0
+    const pitch = Math.floor((H - py) / cellH);
     if (pitch < 0 || pitch >= ROLL_PITCHES) return null;
 
-    if (px < leftPad){
-      return { area:"keys", pitch };
-    }
+    if (px < leftPad) return { area:"keys", pitch };
 
     const step = Math.floor((px - leftPad) / cellW);
     if (step < 0 || step >= TOTAL_STEPS) return null;
+
     return { area:"grid", pitch, step };
   }
 
@@ -1031,28 +1058,25 @@
     row[start] = len;
   }
 
-  // Pointer note drawing + key preview
   let noteDrag = {active:false, pointerId:null, grid:null, pitch:0, start:0};
 
   rollCanvas.addEventListener("pointerdown", async (e) => {
     e.preventDefault();
-
     const hit = rollHitTest(e.clientX, e.clientY);
     if (!hit) return;
 
     const midi = ROLL_BASE_MIDI + hit.pitch;
     const grid = (activeRoll === "melody") ? melody : bass;
 
-    // Tap keys area => PREVIEW ONLY
+    // keys => preview only
     if (hit.area === "keys"){
       await previewMidi(midi);
       return;
     }
 
-    // Grid area:
     const row = grid[hit.pitch];
 
-    // If tapping existing note body => delete (no preview)
+    // click existing note => delete
     const existing = findCoveringNote(row, hit.step);
     if (existing){
       row[existing.start] = 0;
@@ -1060,7 +1084,7 @@
       return;
     }
 
-    // Start placing a note => preview + drag length
+    // place note => preview + drag length
     await previewMidi(midi);
 
     setNoteLength(grid, hit.pitch, hit.step, 1);
@@ -1073,8 +1097,8 @@
   rollCanvas.addEventListener("pointermove", (e) => {
     if (!noteDrag.active) return;
     if (noteDrag.pointerId !== e.pointerId) return;
-
     e.preventDefault();
+
     const hit = rollHitTest(e.clientX, e.clientY);
     if (!hit || hit.area !== "grid") return;
 
@@ -1097,7 +1121,113 @@
   });
 
   // ----------------------------
-  // Clear / Demo
+  // SEQUENCER TIMING
+  // For 4/4: bar has 4 quarter notes.
+  // stepsPerBar = 8 => step = eighth note => secondsPerStep = (60/bpm)/2
+  // stepsPerBar = 16 => step = sixteenth => (60/bpm)/4
+  // stepsPerBar = 32 => (60/bpm)/8
+  // stepsPerBar = 64 => (60/bpm)/16
+  // ----------------------------
+  function secondsPerStep(){
+    const quarter = 60 / bpm;
+    const stepsPerQuarter = stepsPerBar / 4;
+    return quarter / stepsPerQuarter;
+  }
+
+  function scheduleStep(step, time){
+    // drums
+    if (drums.kick[step])  playKick(time);
+    if (drums.snare[step]) playSnare(time);
+    if (drums.hat[step])   playHat(time);
+    if (drums.clap[step])  playClap(time);
+
+    // melody
+    for (let p=0; p<ROLL_PITCHES; p++){
+      const len = melody[p][step];
+      if (len > 0){
+        const hz = midiToHz(ROLL_BASE_MIDI + p);
+        const dur = secondsPerStep() * len * 0.98;
+        playNote(hz, time, dur, melBus, "square", 0.20);
+      }
+    }
+    // bass
+    for (let p=0; p<ROLL_PITCHES; p++){
+      const len = bass[p][step];
+      if (len > 0){
+        const hz = midiToHz(ROLL_BASE_MIDI + p);
+        const dur = secondsPerStep() * len * 0.98;
+        playNote(hz, time, dur, bassBus, "triangle", 0.26);
+      }
+    }
+
+    updatePlayheadUI(step);
+    drawRoll(step);
+  }
+
+  function nextStep(){
+    currentStep = (currentStep + 1) % TOTAL_STEPS;
+    nextNoteTime += secondsPerStep();
+  }
+
+  function tick(){
+    while (nextNoteTime < ctx.currentTime + scheduleAhead){
+      scheduleStep(currentStep, nextNoteTime);
+      nextStep();
+    }
+    timerId = window.setTimeout(tick, lookAhead * 1000);
+  }
+
+  async function startFromCurrentStep(){
+    await ensureRunning();
+    isPlaying = true;
+    isPaused = false;
+
+    playBtn.disabled = true;
+    pauseBtn.disabled = false;
+    stopBtn.disabled = false;
+
+    nextNoteTime = ctx.currentTime + 0.06;
+    tick();
+  }
+
+  function pause(){
+    isPaused = true;
+    isPlaying = false;
+
+    playBtn.disabled = false;
+    pauseBtn.disabled = true;
+    stopBtn.disabled = false;
+
+    if (timerId) { clearTimeout(timerId); timerId = null; }
+  }
+
+  function stop(){
+    isPlaying = false;
+    isPaused = false;
+
+    playBtn.disabled = false;
+    pauseBtn.disabled = true;
+    stopBtn.disabled = true;
+
+    if (timerId) { clearTimeout(timerId); timerId = null; }
+
+    currentStep = 0;
+    updatePlayheadUI(-1);
+    drawRoll(-1);
+  }
+
+  function togglePlayPause(){
+    if (!ctx && !isPlaying && !isPaused){ startFromCurrentStep(); return; }
+    if (isPlaying) pause();
+    else startFromCurrentStep();
+  }
+
+  playBtn.addEventListener("click", () => { currentStep = 0; startFromCurrentStep(); });
+  pauseBtn.addEventListener("click", pause);
+  stopBtn.addEventListener("click", stop);
+
+  // ----------------------------
+  // CLEAR / DEMO
   // ----------------------------
   clearDrumsBtn.addEventListener("click", () => {
     drumKeys.forEach(k => drums[k].fill(false));
@@ -1111,45 +1241,87 @@
   });
 
   demoFillBtn.addEventListener("click", () => {
-    // Drums
+    // clear
     drumKeys.forEach(k => drums[k].fill(false));
+    melody.forEach(r => r.fill(0));
+    bass.forEach(r => r.fill(0));
+
+    // simple beat dependent on stepsPerBar
+    // Kick on quarter notes: step indices 0, 1*stepsPerBar/4, 2*..., 3*...
+    const q = Math.max(1, Math.floor(stepsPerBar/4));
+    drums.kick[0] = true;
+    drums.kick[1*q] = true;
+    drums.kick[2*q] = true;
+    drums.kick[3*q] = true;
+
+    // Snare on beats 2 and 4
+    if (1*q < TOTAL_STEPS) drums.snare[1*q] = true;
+    if (3*q < TOTAL_STEPS) drums.snare[3*q] = true;
+
+    // Hats on every other step (works at all resolutions)
     for (let s=0; s<TOTAL_STEPS; s++){
-      if (s % 4 === 0) drums.kick[s] = true;
-      if (s === 4 || s === 12) drums.snare[s] = true;
       if (s % 2 === 0) drums.hat[s] = true;
-      if (s === 11) drums.clap[s] = true;
     }
+
     refreshDrumUI();
 
-    // Notes (within C3–B4)
-    melody.forEach(row => row.fill(0));
-    bass.forEach(row => row.fill(0));
-
-    // Melody: C4-ish phrase (C4 is midi 60 => pitchIndex 12)
+    // Notes: C4-ish phrase, bass C3 sustain
     const putMel = (step, midi, len=1) => {
       const p = midi - ROLL_BASE_MIDI;
-      if (p>=0 && p<ROLL_PITCHES) setNoteLength(melody, p, step, len);
+      if (p>=0 && p<ROLL_PITCHES && step < TOTAL_STEPS) setNoteLength(melody, p, step, len);
     };
-    putMel(0, 60, 2);  // C4
-    putMel(2, 62, 2);  // D4
-    putMel(4, 64, 1);  // E4
-    putMel(6, 67, 2);  // G4
-    putMel(8, 69, 2);  // A4
-    putMel(12, 67, 3); // G4
-
-    // Bass: C3 sustained
-    const putBass = (step, midi, len=8) => {
+    const putBass = (step, midi, len=4) => {
       const p = midi - ROLL_BASE_MIDI;
-      if (p>=0 && p<ROLL_PITCHES) setNoteLength(bass, p, step, len);
+      if (p>=0 && p<ROLL_PITCHES && step < TOTAL_STEPS) setNoteLength(bass, p, step, len);
     };
-    putBass(0, 48, 8); // C3
+
+    putMel(0, 60, Math.min(2, TOTAL_STEPS)); // C4
+    putMel(Math.min(2, TOTAL_STEPS-1), 62, 2); // D4
+    putMel(Math.min(4, TOTAL_STEPS-1), 64, 1); // E4
+    putMel(Math.min(6, TOTAL_STEPS-1), 67, 2); // G4
+    putMel(Math.min(8, TOTAL_STEPS-1), 69, 2); // A4
+    putMel(Math.min(12, TOTAL_STEPS-1), 67, Math.min(3, TOTAL_STEPS-12)); // G4
+
+    putBass(0, 48, Math.min(Math.floor(TOTAL_STEPS/2), TOTAL_STEPS)); // C3
 
     drawRoll(isPlaying ? currentStep : -1);
   });
 
   // ----------------------------
+  // RESOLUTION CHANGE HANDLER
+  // ----------------------------
+  resEl.addEventListener("input", () => {
+    const opt = RES_OPTIONS[Number(resEl.value)];
+    applyResolution(opt.stepsPerBar, opt.label);
+  });
+
+  function applyResolution(newStepsPerBar, label){
+    stepsPerBar = newStepsPerBar;
+
+    // Update UI labels
+    resLabel.textContent = label;
+    resText.textContent = label;
+
+    groupText.textContent = groupLabelForSteps(stepsPerBar);
+
+    // Stop playback and rebuild patterns/UI
+    stop();
+    initDataForSteps(stepsPerBar);
+    buildDrumGrid();
+    drawRoll(-1);
+  }
+
+  // ----------------------------
   // INIT
   // ----------------------------
+  // default resolution slider value = 1 (1/16)
+  const initialOpt = RES_OPTIONS[Number(resEl.value)];
+  resLabel.textContent = initialOpt.label;
+  resText.textContent = initialOpt.label;
+
+  initDataForSteps(initialOpt.stepsPerBar);
+  groupText.textContent = groupLabelForSteps(initialOpt.stepsPerBar);
+
   buildDrumGrid();
   drawRoll(-1);
 
