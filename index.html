@@ -478,6 +478,7 @@
     canvas{display:block; width:100%; height:auto; touch-action:none}
 
     #midiFile{display:none}
+    #projectFile{display:none}
   </style>
 </head>
 
@@ -724,9 +725,15 @@
           </div>
         </div>
 
+        <!-- Actions -->
         <div class="btnRow" style="margin-top:10px;">
           <button id="loadDemo">Reload Demo</button>
           <button id="clearProject">Clear Project</button>
+
+          <button id="saveProjectBtn">Save Project</button>
+          <button id="loadProjectBtn">Load Project</button>
+          <input id="projectFile" type="file" accept=".json,application/json"/>
+
           <button id="importMidiBtn">Import MIDI</button>
           <input id="midiFile" type="file" accept=".mid,.midi" />
         </div>
@@ -945,6 +952,11 @@
   const importMidiBtn = document.getElementById("importMidiBtn");
   const midiFileInput = document.getElementById("midiFile");
 
+  // ✅ Save / Load Project
+  const saveProjectBtn = document.getElementById("saveProjectBtn");
+  const loadProjectBtn = document.getElementById("loadProjectBtn");
+  const projectFileInput = document.getElementById("projectFile");
+
   const drumGridEl = document.getElementById("drumGrid");
   const rollCanvas = document.getElementById("roll");
   const g = rollCanvas.getContext("2d");
@@ -991,7 +1003,7 @@
   function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
   function cssVar(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
-  // Knob math
+  // Knob visuals
   function knobStyleForPercent(pct){
     const deg = pct * 270;
     const rot = (-135 + pct * 270);
@@ -1008,7 +1020,6 @@
   function bindKnob({knobEl, valEl, min, max, step, initial, onChange, format, dblClickReset}){
     let value = initial;
     const valueToPct = (v) => (v - min) / (max - min);
-    const pctToValue = (p) => min + p * (max - min);
 
     function setValue(v){
       v = clamp(v, min, max);
@@ -1053,7 +1064,7 @@
     return { get:()=>value, set:setValue, toPct:valueToPct };
   }
 
-  // Transpose knobs (existing behavior)
+  // Transpose knobs
   function semitoneToPct(v){ return (clamp(v, -24, 24) + 24) / 48; }
   function setTranspose(inst, val){
     const v = clamp(Math.round(Number(val)), -24, 24);
@@ -1095,8 +1106,7 @@
     knobEl.addEventListener("dblclick", (e)=>{e.preventDefault(); setTranspose(inst,0);});
   }
 
-  // Audio graph: busGain -> LPF -> Pan -> master
-  // and busGain -> sendGain -> rvInput -> convolver -> returnGain -> master
+  // Routing + mute/solo
   function applyBusRouting(){
     if (!pianoBus) return;
     const anySolo = Object.values(busState).some(b => b.solo);
@@ -1131,7 +1141,7 @@
     });
   }
 
-  // LPF mapping: 0..100 => 200..18000 (exp curve)
+  // LPF mapping: 0..100 => 200..18000
   function lpfCutoffFromPct(pct01){
     const min = 200;
     const max = 18000;
@@ -1140,7 +1150,6 @@
   }
 
   function makeImpulseResponse(decaySeconds){
-    // Stereo noise burst with exponential decay
     const sr = ctx.sampleRate;
     const len = Math.max(1, Math.floor(sr * decaySeconds));
     const buffer = ctx.createBuffer(2, len, sr);
@@ -1149,7 +1158,7 @@
       const data = buffer.getChannelData(ch);
       for (let i=0; i<len; i++){
         const t = i / len;
-        const env = Math.pow(1 - t, 2.8);      // nice tail
+        const env = Math.pow(1 - t, 2.8);
         data[i] = (Math.random()*2 - 1) * env;
       }
     }
@@ -1159,8 +1168,6 @@
   function setReverbSize(size0to100){
     rvSize = clamp(Math.round(size0to100), 0, 100);
     if (!ctx || !rvConvolver) return;
-
-    // map 0..100 => 0.6..6.0 seconds
     const decay = 0.6 + (rvSize/100) * 5.4;
     rvConvolver.buffer = makeImpulseResponse(decay);
   }
@@ -1168,7 +1175,6 @@
   function setReverbReturn(v0to100){
     rvReturn = clamp(Math.round(v0to100), 0, 100);
     if (!rvReturnGain) return;
-    // 0..100 => 0..0.55 (safe)
     rvReturnGain.gain.value = (rvReturn/100) * 0.55;
   }
 
@@ -1177,15 +1183,12 @@
     const m = mix[inst];
     if (!m || !m.pan || !m.lpf || !m.send) return;
 
-    // Pan: -100..100 => -1..1
     m.pan.pan.value = clamp(m.panVal/100, -1, 1);
 
-    // LPF: 0..100 -> cutoff
     const pct = clamp(m.lpfVal/100, 0, 1);
     m.lpf.frequency.setValueAtTime(lpfCutoffFromPct(pct), ctx.currentTime);
     m.lpf.Q.value = 0.7;
 
-    // Send: 0..100 => 0..1 with curve
     const s = clamp(m.sendVal/100, 0, 1);
     m.send.gain.value = s*s;
   }
@@ -1199,14 +1202,12 @@
     master.gain.value = 0.9;
     master.connect(ctx.destination);
 
-    // Main bus gains (mute/solo writes here)
     pianoBus = ctx.createGain();
     synthBus = ctx.createGain();
     bassBus  = ctx.createGain();
     drumBus  = ctx.createGain();
 
-    // Reverb bus
-    rvInput = ctx.createGain();      // sum of sends
+    rvInput = ctx.createGain();
     rvConvolver = ctx.createConvolver();
     rvReturnGain = ctx.createGain();
 
@@ -1214,11 +1215,9 @@
     rvConvolver.connect(rvReturnGain);
     rvReturnGain.connect(master);
 
-    // initial IR + return level
     rvConvolver.buffer = makeImpulseResponse(0.6 + (rvSize/100)*5.4);
     setReverbReturn(rvReturn);
 
-    // Per-track inserts and sends
     function wireBus(inst, busGain){
       const lpf = ctx.createBiquadFilter();
       lpf.type = "lowpass";
@@ -1226,12 +1225,10 @@
       const pan = ctx.createStereoPanner();
       const send = ctx.createGain();
 
-      // dry path
       busGain.connect(lpf);
       lpf.connect(pan);
       pan.connect(master);
 
-      // send path (post-mute/solo since it taps busGain output)
       busGain.connect(send);
       send.connect(rvInput);
 
@@ -1247,14 +1244,12 @@
     wireBus("bass",  bassBus);
     wireBus("drum",  drumBus);
 
-    // Drum row gains connect into drumBus
     for (const k of drumKeys){
       drumGains[k] = ctx.createGain();
       drumGains[k].gain.value = 1;
       drumGains[k].connect(drumBus);
     }
 
-    // Volume sliders update routing (respects mute/solo)
     pianoVol.addEventListener("input", applyBusRouting);
     synthVol.addEventListener("input", applyBusRouting);
     bassVol.addEventListener("input", applyBusRouting);
@@ -1273,12 +1268,11 @@
     if (ctx.state !== "running") await ctx.resume();
   }
 
-  // --- Mixer Knobs binders ---
+  // --- Mixer knobs ---
   function bindTrackMixer(inst){
     const els = knobEls[inst];
     const m = mix[inst];
 
-    // Pan (-100..100)
     bindKnob({
       knobEl: els.panK,
       valEl: els.panV,
@@ -1289,7 +1283,6 @@
       onChange: (v)=>{ m.panVal = v; applyMixerNodes(inst); }
     });
 
-    // LPF (0..100) where 100 = bright/open
     bindKnob({
       knobEl: els.lpfK,
       valEl: els.lpfV,
@@ -1300,7 +1293,6 @@
       onChange: (v)=>{ m.lpfVal = v; applyMixerNodes(inst); }
     });
 
-    // Send (0..100)
     bindKnob({
       knobEl: els.sndK,
       valEl: els.sndV,
@@ -1466,9 +1458,6 @@
     gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
     src.connect(hp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.06);
-
-    // "choke" OH a tiny bit (simple DAW-ish behavior)
-    // (optional, but it helps)
   }
 
   function playOH(time){
@@ -1499,14 +1488,7 @@
       if (rangesOverlap(s, l, start, len)) row[s] = 0;
     }
   }
-  function setNoteLength(grid, midi, start, len){
-    const p = midi - ROLL_BASE_MIDI;
-    if (p < 0 || p >= ROLL_PITCHES) return;
-    len = Math.max(1, Math.min(len, MASTER_STEPS - start));
-    const row = grid[p];
-    clearOverlaps(row, start, len);
-    row[start] = len;
-  }
+
   function clearInstrumentGrid(grid){
     for (let p=0; p<ROLL_PITCHES; p++) grid[p].fill(0);
   }
@@ -1521,7 +1503,7 @@
     return cssVar("--pianoNote");
   }
 
-  // Demo drums (same “nice spot” version)
+  // Demo drums
   function setDemoDrumsFromAudioAnalysis(){
     for (const k of drumKeys) project.drums[k].fill(false);
 
@@ -1568,7 +1550,17 @@
       tr.notes.forEach(n => {
         const s = toStep(n.time);
         const len = Math.min(toLen(n.duration), MASTER_STEPS - s);
-        setNoteLength(targetGrid, n.midi, s, len);
+        const p = n.midi - ROLL_BASE_MIDI;
+        if (p < 0 || p >= ROLL_PITCHES) return;
+
+        // clear overlaps + place note
+        const row = targetGrid[p];
+        for (let i=0; i<MASTER_STEPS; i++){
+          const l = row[i];
+          if (l <= 0) continue;
+          if (rangesOverlap(i, l, s, len)) row[i] = 0;
+        }
+        row[s] = len;
       });
     });
   }
@@ -1604,7 +1596,7 @@
     drawRoll(-1);
   }
 
-  // --- Drum UI ---
+  // --- Drums UI ---
   function knobStyleForValue(v){
     const pct = clamp(v, 0, 100) / 100;
     return knobStyleForPercent(pct);
@@ -1819,7 +1811,7 @@
     });
   }
 
-  // --- Piano roll drawing/editing (unchanged core) ---
+  // --- Piano roll drawing/editing ---
   const KEY_PAD = 128;
   function isBlackKey(midi){
     const pc = midi % 12;
@@ -1963,7 +1955,12 @@
   function setNoteLenOnGrid(grid, pitch, start, len){
     const row = grid[pitch];
     len = Math.max(1, Math.min(len, MASTER_STEPS - start));
-    clearOverlaps(row, start, len);
+    // clear overlaps
+    for (let i=0; i<MASTER_STEPS; i++){
+      const l = row[i];
+      if (l <= 0) continue;
+      if (rangesOverlap(i, l, start, len)) row[i] = 0;
+    }
     row[start] = len;
   }
 
@@ -2025,7 +2022,7 @@
     noteDrag.pointerId = null;
   });
 
-  // ABSOLUTE BPM playback (unchanged)
+  // ABSOLUTE BPM playback
   function secondsPerStep(){
     const quarter = 60 / bpm;
     return quarter / 4;
@@ -2081,14 +2078,12 @@
   async function startFromCurrentStep(){
     await ensureRunning();
 
-    // per-drum row gains from knobs
     for (const k of drumKeys){
       const vv = project.drumVols[k] ?? 100;
       const x = vv / 100;
       drumGains[k].gain.value = x * x;
     }
 
-    // make sure mixer values are applied
     applyMixerNodes("piano");
     applyMixerNodes("synth");
     applyMixerNodes("bass");
@@ -2185,6 +2180,224 @@
     midiFileInput.value = "";
   });
 
+  // ---------------------------
+  // ✅ Project Save / Load
+  // ---------------------------
+  function clampInt(v, min, max){
+    v = Number(v);
+    if (!Number.isFinite(v)) return min;
+    v = Math.round(v);
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function buildSavePayload(){
+    return {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      bpm,
+      resolutionLabel: RES_OPTIONS[Number(resEl.value)]?.label ?? "1/64",
+      resolutionIndex: Number(resEl.value),
+      loopSteps: LOOP_STEPS,
+
+      project: {
+        drums: project.drums,
+        piano: project.piano,
+        synth: project.synth,
+        bass:  project.bass,
+        drumVols: project.drumVols
+      },
+
+      mix: {
+        piano: { panVal: mix.piano.panVal, lpfVal: mix.piano.lpfVal, sendVal: mix.piano.sendVal },
+        synth: { panVal: mix.synth.panVal, lpfVal: mix.synth.lpfVal, sendVal: mix.synth.sendVal },
+        bass:  { panVal: mix.bass.panVal,  lpfVal: mix.bass.lpfVal,  sendVal: mix.bass.sendVal  },
+        drum:  { panVal: mix.drum.panVal,  lpfVal: mix.drum.lpfVal,  sendVal: mix.drum.sendVal  },
+        reverb: { return: rvReturn, size: rvSize }
+      },
+
+      transpose: { ...transpose },
+      busState: JSON.parse(JSON.stringify(busState)),
+    };
+  }
+
+  function downloadJson(filename, obj){
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function applyLoadedProject(data){
+    stopTransportOnly();
+
+    // BPM
+    if (Number.isFinite(Number(data.bpm))){
+      bpm = Number(data.bpm);
+      bpmEl.value = String(clampInt(bpm, 70, 180));
+      bpm = Number(bpmEl.value);
+      bpmLabel.textContent = String(bpm);
+    }
+
+    // Resolution/loop steps
+    let idx = Number.isFinite(Number(data.resolutionIndex))
+      ? clampInt(data.resolutionIndex, 0, RES_OPTIONS.length - 1)
+      : null;
+
+    if (idx === null && typeof data.resolutionLabel === "string"){
+      const found = RES_OPTIONS.findIndex(x => x.label === data.resolutionLabel);
+      if (found >= 0) idx = found;
+    }
+    if (idx === null) idx = 2; // default 1/64
+
+    resEl.value = String(idx);
+    const opt = RES_OPTIONS[idx];
+    LOOP_STEPS = opt.steps;
+    resLabel.textContent = opt.label;
+    resText.textContent = opt.label;
+    groupText.textContent = opt.label;
+
+    // Drums
+    if (data.project?.drums){
+      for (const k of drumKeys){
+        const src = data.project.drums[k];
+        if (Array.isArray(src)){
+          for (let i=0; i<MASTER_STEPS; i++){
+            project.drums[k][i] = !!src[i];
+          }
+        }
+      }
+    }
+
+    // Piano roll grids
+    function loadGrid(dst, src){
+      if (!Array.isArray(src)) return;
+      for (let p=0; p<ROLL_PITCHES; p++){
+        const row = src[p];
+        if (!Array.isArray(row)) continue;
+        for (let s=0; s<MASTER_STEPS; s++){
+          const v = row[s];
+          dst[p][s] = clampInt(v ?? 0, 0, MASTER_STEPS);
+        }
+      }
+    }
+    loadGrid(project.piano, data.project?.piano);
+    loadGrid(project.synth, data.project?.synth);
+    loadGrid(project.bass,  data.project?.bass);
+
+    // Drum row volumes
+    if (data.project?.drumVols){
+      for (const k of drumKeys){
+        project.drumVols[k] = clampInt(data.project.drumVols[k] ?? project.drumVols[k] ?? 100, 0, 100);
+      }
+    }
+
+    // Transpose
+    if (data.transpose){
+      setTranspose("piano", clampInt(data.transpose.piano ?? 0, -24, 24));
+      setTranspose("synth", clampInt(data.transpose.synth ?? 0, -24, 24));
+      setTranspose("bass",  clampInt(data.transpose.bass  ?? 0, -24, 24));
+    }
+
+    // Mixer (pan/lpf/send + reverb)
+    function loadMix(inst){
+      const m = data.mix?.[inst];
+      if (!m) return;
+      mix[inst].panVal  = clampInt(m.panVal  ?? mix[inst].panVal,  -100, 100);
+      mix[inst].lpfVal  = clampInt(m.lpfVal  ?? mix[inst].lpfVal,     0, 100);
+      mix[inst].sendVal = clampInt(m.sendVal ?? mix[inst].sendVal,    0, 100);
+    }
+    loadMix("piano"); loadMix("synth"); loadMix("bass"); loadMix("drum");
+
+    if (data.mix?.reverb){
+      rvReturn = clampInt(data.mix.reverb.return ?? rvReturn, 0, 100);
+      rvSize   = clampInt(data.mix.reverb.size   ?? rvSize,   0, 100);
+    }
+
+    // Bus state
+    if (data.busState){
+      for (const name of ["piano","synth","bass","drum"]){
+        if (!data.busState[name]) continue;
+        busState[name].mute = !!data.busState[name].mute;
+        busState[name].solo = !!data.busState[name].solo;
+        busBtns[name].mute.classList.toggle("active", busState[name].mute);
+        busBtns[name].solo.classList.toggle("active", busState[name].solo);
+      }
+    }
+
+    // Rebuild UI for LOOP_STEPS
+    buildDrumGrid();
+    refreshDrumUI();
+    drawRoll(-1);
+
+    // Apply audio routing if audio is already created
+    if (ctx){
+      applyBusRouting();
+      applyMixerNodes("piano");
+      applyMixerNodes("synth");
+      applyMixerNodes("bass");
+      applyMixerNodes("drum");
+      setReverbReturn(rvReturn);
+      setReverbSize(rvSize);
+    }
+
+    // Update knob text + visuals (bindings remain active)
+    knobEls.piano.panV.textContent = String(mix.piano.panVal); setKnobVisual(knobEls.piano.panK, (mix.piano.panVal + 100)/200);
+    knobEls.piano.lpfV.textContent = String(mix.piano.lpfVal); setKnobVisual(knobEls.piano.lpfK, mix.piano.lpfVal/100);
+    knobEls.piano.sndV.textContent = String(mix.piano.sendVal); setKnobVisual(knobEls.piano.sndK, mix.piano.sendVal/100);
+
+    knobEls.synth.panV.textContent = String(mix.synth.panVal); setKnobVisual(knobEls.synth.panK, (mix.synth.panVal + 100)/200);
+    knobEls.synth.lpfV.textContent = String(mix.synth.lpfVal); setKnobVisual(knobEls.synth.lpfK, mix.synth.lpfVal/100);
+    knobEls.synth.sndV.textContent = String(mix.synth.sendVal); setKnobVisual(knobEls.synth.sndK, mix.synth.sendVal/100);
+
+    knobEls.bass.panV.textContent = String(mix.bass.panVal); setKnobVisual(knobEls.bass.panK, (mix.bass.panVal + 100)/200);
+    knobEls.bass.lpfV.textContent = String(mix.bass.lpfVal); setKnobVisual(knobEls.bass.lpfK, mix.bass.lpfVal/100);
+    knobEls.bass.sndV.textContent = String(mix.bass.sendVal); setKnobVisual(knobEls.bass.sndK, mix.bass.sendVal/100);
+
+    knobEls.drum.panV.textContent = String(mix.drum.panVal); setKnobVisual(knobEls.drum.panK, (mix.drum.panVal + 100)/200);
+    knobEls.drum.lpfV.textContent = String(mix.drum.lpfVal); setKnobVisual(knobEls.drum.lpfK, mix.drum.lpfVal/100);
+    knobEls.drum.sndV.textContent = String(mix.drum.sendVal); setKnobVisual(knobEls.drum.sndK, mix.drum.sendVal/100);
+
+    knobEls.rv.retV.textContent = String(rvReturn); setKnobVisual(knobEls.rv.retK, rvReturn/100);
+    knobEls.rv.sizV.textContent = String(rvSize);   setKnobVisual(knobEls.rv.sizK, rvSize/100);
+  }
+
+  function saveProject(){
+    const payload = buildSavePayload();
+    const name = `RetroLoop_Project_${(new Date()).toISOString().replace(/[:.]/g,"-")}.json`;
+    downloadJson(name, payload);
+  }
+
+  async function loadProjectFromFile(file){
+    const text = await file.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch {
+      alert("That file doesn’t look like valid project JSON.");
+      return;
+    }
+    applyLoadedProject(data);
+  }
+
+  saveProjectBtn.addEventListener("click", async () => {
+    // optional: resume audio so state is fully live
+    await ensureRunning().catch(()=>{});
+    saveProject();
+  });
+
+  loadProjectBtn.addEventListener("click", () => projectFileInput.click());
+
+  projectFileInput.addEventListener("change", async () => {
+    const file = projectFileInput.files && projectFileInput.files[0];
+    if (!file) return;
+    await loadProjectFromFile(file);
+    projectFileInput.value = "";
+  });
+
   // Init values + visuals
   bpm = 115;
   bpmEl.value = "115";
@@ -2197,7 +2410,7 @@
   resText.textContent = initialOpt.label;
   groupText.textContent = initialOpt.label;
 
-  // init transpose knob visuals
+  // init transpose knobs
   setTranspose("piano", 0);
   setTranspose("synth", 0);
   setTranspose("bass", 0);
@@ -2205,7 +2418,7 @@
   attachTransposeKnob(synthTrKnob, "synth");
   attachTransposeKnob(bassTrKnob, "bass");
 
-  // init mixer knob visuals (no audio needed)
+  // init mixer knobs
   bindTrackMixer("piano");
   bindTrackMixer("synth");
   bindTrackMixer("bass");
