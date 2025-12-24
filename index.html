@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Retro Loop Sequencer (Drums + Piano Roll)</title>
+  <style>
+    :root{
+      --bg:#0f1115;
+      --ink:#e9eef5;
+      --muted:#97a3b6;
+      --btn:#22283a;
+      --btn2:#2a3150;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 20% -10%, #1b2040 0%, transparent 60%),
+                  radial-gradient(900px 500px at 90% 0%, #223022 0%, transparent 55%),
+                  var(--bg);
+      color:var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      padding: 18px;
+    }
+    h1{margin:0 0 6px 0; font-size:18px; letter-spacing:.2px}
+    .sub{color:var(--muted); margin:0 0 16px 0; font-size:13px}
+    .wrap{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .wrap{grid-template-columns:1fr}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.07);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 12px 12px 10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .title{font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.12em}
+    .bd{padding: 12px}
+    button{
+      background: linear-gradient(180deg, var(--btn2), var(--btn));
+      color:var(--ink);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-weight: 600;
+      cursor:pointer;
+      user-select:none;
+    }
+    button:disabled{opacity:.5; cursor:not-allowed}
+    .btnRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .pill{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      color: var(--muted);
+      display:flex; gap:8px; align-items:center;
+    }
+    input[type="range"]{width: 140px}
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding:1px 6px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:8px;
+      background: rgba(0,0,0,.25);
+      color: var(--ink);
+    }
+
+    /* Drum grid */
+    .drumGrid{
+      display:grid;
+      grid-template-columns: 84px 1fr;
+      gap:10px;
+      align-items:start;
+    }
+    .trackNames{
+      display:grid;
+      grid-template-rows: repeat(4, 34px);
+      gap:8px;
+    }
+    .trackName{
+      height:34px;
+      border-radius: 10px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; color: var(--muted);
+    }
+    .steps{
+      display:grid;
+      grid-template-rows: repeat(4, 34px);
+      gap:8px;
+    }
+    .rowSteps{
+      display:grid;
+      grid-template-columns: repeat(16, 1fr);
+      gap:6px;
+      height:34px;
+      align-items:stretch;
+    }
+    .cell{
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.10);
+      position:relative;
+      cursor:pointer;
+      overflow:hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      user-select:none;
+    }
+
+    /* Subtle measure/beat-group shading: alternate every 4 steps */
+    .cell.groupA::before,
+    .cell.groupB::before{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+    }
+    .cell.groupA::before{ background: rgba(0,0,0,.18); }
+    .cell.groupB::before{ background: rgba(0,0,0,.30); } /* slightly darker */
+
+    /* "cap" overlay to keep off cells subdued */
+    .cell::after{
+      content:"";
+      position:absolute; inset:0;
+      background: rgba(0,0,0,.35);
+      opacity:.55;
+      pointer-events:none;
+    }
+    .cell.on::after{opacity:.05}
+
+    .cell.on{ background: linear-gradient(180deg, rgba(255,139,90,.9), rgba(255,139,90,.35)); border-color: rgba(255,139,90,.65); }
+    .cell.on.hat{ background: linear-gradient(180deg, rgba(124,255,178,.9), rgba(124,255,178,.25)); border-color: rgba(124,255,178,.55); }
+    .cell.on.snare{ background: linear-gradient(180deg, rgba(88,166,255,.9), rgba(88,166,255,.25)); border-color: rgba(88,166,255,.55); }
+    .cell.on.clap{ background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.20)); border-color: rgba(255,255,255,.45); }
+
+    .cell.playhead{
+      outline: 2px solid rgba(255,255,255,.25);
+      outline-offset: 1px;
+    }
+    .beatDivider{
+      box-shadow: inset -2px 0 0 rgba(255,255,255,.10);
+    }
+
+    /* Piano roll */
+    .tabs{display:flex; gap:8px}
+    .tab{
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: var(--muted);
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.active{
+      background: rgba(124,255,178,.14);
+      border-color: rgba(124,255,178,.35);
+      color: var(--ink);
+    }
+    .rollWrap{
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      overflow:hidden;
+    }
+    canvas{display:block; width:100%; height:auto}
+
+    .hint{color:var(--muted); font-size:12px; margin-top:10px; line-height:1.35}
+  </style>
+</head>
+<body>
+  <h1>Retro Loop Sequencer</h1>
+  <p class="sub">4/4 • 16-step drum grid • piano-roll for melody + bass • Spacebar = Play/Pause</p>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="hd">
+        <div class="title">Transport</div>
+        <div class="btnRow">
+          <button id="playBtn">Play</button>
+          <button id="pauseBtn" disabled>Pause</button>
+          <button id="stopBtn" disabled>Stop</button>
+        </div>
+      </div>
+      <div class="bd">
+        <div class="btnRow" style="margin-bottom:10px;">
+          <div class="pill">
+            <span style="min-width:38px;">BPM</span>
+            <input id="bpm" type="range" min="70" max="180" value="120"/>
+            <span id="bpmLabel" class="kbd">120</span>
+          </div>
+          <div class="pill">
+            <span>Swing</span>
+            <input id="swing" type="range" min="0" max="0.6" step="0.01" value="0.12"/>
+            <span id="swingLabel" class="kbd">0.12</span>
+          </div>
+        </div>
+
+        <div class="btnRow" style="margin-bottom:10px;">
+          <div class="pill">
+            <span>Mel</span><input id="melVol" type="range" min="0" max="1" step="0.01" value="0.35"/>
+          </div>
+          <div class="pill">
+            <span>Bass</span><input id="bassVol" type="range" min="0" max="1" step="0.01" value="0.40"/>
+          </div>
+          <div class="pill">
+            <span>Drums</span><input id="drumVol" type="range" min="0" max="1" step="0.01" value="0.85"/>
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button id="clearDrums">Clear Drums</button>
+          <button id="clearNotes">Clear Notes</button>
+          <button id="demoFill">Demo Fill</button>
+        </div>
+
+        <p class="hint">
+          <span class="kbd">Space</span> toggles Play/Pause.<br/>
+          Drums: click cells. Piano roll: click+drag right to set note length. Click an existing note to delete.
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="hd">
+        <div class="title">Drum Sequencer (1/16)</div>
+        <div class="pill"><span>Loop</span><span class="kbd">16 steps</span></div>
+      </div>
+      <div class="bd">
+        <div class="drumGrid" id="drumGrid"></div>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="hd">
+        <div class="title">Piano Roll (1/16)</div>
+        <div class="tabs">
+          <div class="tab active" data-roll="melody">Melody</div>
+          <div class="tab" data-roll="bass">Bass</div>
+        </div>
+      </div>
+      <div class="bd">
+        <div class="rollWrap">
+          <canvas id="roll" width="1280" height="420"></canvas>
+        </div>
+        <p class="hint">
+          Note length = drag to the right. Length is in 16th-note steps. Sustains play as a longer envelope.
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ----------------------------
+  // CONFIG
+  // ----------------------------
+  const STEPS = 16;        // 1 bar of 16th notes
+  const BARS = 1;          // easy to expand to 4 later (64 steps)
+  const TOTAL_STEPS = STEPS * BARS;
+
+  const MELODY_PITCHES = 24; // 2 octaves
+  const BASS_PITCHES = 12;   // 1 octave
+
+  const MELODY_BASE_MIDI = 60; // C4
+  const BASS_BASE_MIDI   = 36; // C2
+
+  // ----------------------------
+  // STATE
+  // ----------------------------
+  const drumNames = ["Kick", "Clap", "Hat", "Snare"];
+  const drumKeys  = ["kick", "clap", "hat", "snare"];
+  const drums = {
+    kick:  new Array(TOTAL_STEPS).fill(false),
+    clap:  new Array(TOTAL_STEPS).fill(false),
+    hat:   new Array(TOTAL_STEPS).fill(false),
+    snare: new Array(TOTAL_STEPS).fill(false),
+  };
+
+  // Piano rolls store NOTE STARTS with LENGTHS:
+  // grid[pitch][step] = lengthInSteps (0 means no note start here)
+  const melody = Array.from({length: MELODY_PITCHES}, () => new Array(TOTAL_STEPS).fill(0));
+  const bass   = Array.from({length: BASS_PITCHES},   () => new Array(TOTAL_STEPS).fill(0));
+
+  // Playback
+  let ctx = null;
+  let master = null, melBus = null, bassBus = null, drumBus = null;
+
+  let isPlaying = false;
+  let isPaused = false;
+  let currentStep = 0;
+  let nextNoteTime = 0;
+  let timerId = null;
+
+  let bpm = 120;
+  let swing = 0.12;
+
+  const lookAhead = 0.025;
+  const scheduleAhead = 0.12;
+
+  // ----------------------------
+  // UI refs
+  // ----------------------------
+  const playBtn = document.getElementById("playBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const stopBtn = document.getElementById("stopBtn");
+
+  const bpmEl = document.getElementById("bpm");
+  const bpmLabel = document.getElementById("bpmLabel");
+  const swingEl = document.getElementById("swing");
+  const swingLabel = document.getElementById("swingLabel");
+  const melVol = document.getElementById("melVol");
+  const bassVol = document.getElementById("bassVol");
+  const drumVol = document.getElementById("drumVol");
+
+  const clearDrumsBtn = document.getElementById("clearDrums");
+  const clearNotesBtn = document.getElementById("clearNotes");
+  const demoFillBtn = document.getElementById("demoFill");
+
+  const drumGridEl = document.getElementById("drumGrid");
+  const rollCanvas = document.getElementById("roll");
+  const g = rollCanvas.getContext("2d");
+
+  // Tabs
+  let activeRoll = "melody";
+  document.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+      t.classList.add("active");
+      activeRoll = t.dataset.roll;
+      drawRoll(isPlaying ? currentStep : -1);
+    });
+  });
+
+  // Sliders
+  bpmEl.addEventListener("input", () => {
+    bpm = Number(bpmEl.value);
+    bpmLabel.textContent = String(bpm);
+  });
+  swingEl.addEventListener("input", () => {
+    swing = Number(swingEl.value);
+    swingLabel.textContent = swing.toFixed(2);
+  });
+
+  // ----------------------------
+  // Spacebar Play/Pause shortcut
+  // ----------------------------
+  function isTypingTarget(el){
+    if (!el) return false;
+    const tag = (el.tagName || "").toLowerCase();
+    return tag === "input" || tag === "textarea" || el.isContentEditable;
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.code !== "Space") return;
+    if (isTypingTarget(document.activeElement)) return;
+    e.preventDefault(); // stop page scroll
+    togglePlayPause();
+  }, {passive:false});
+
+  // ----------------------------
+  // Build Drum Grid UI
+  // ----------------------------
+  function buildDrumGrid(){
+    drumGridEl.innerHTML = "";
+
+    const namesCol = document.createElement("div");
+    namesCol.className = "trackNames";
+    drumNames.forEach(n => {
+      const d = document.createElement("div");
+      d.className = "trackName";
+      d.textContent = n;
+      namesCol.appendChild(d);
+    });
+
+    const stepsCol = document.createElement("div");
+    stepsCol.className = "steps";
+
+    drumKeys.forEach((key) => {
+      const row = document.createElement("div");
+      row.className = "rowSteps";
+
+      for (let s = 0; s < TOTAL_STEPS; s++){
+        const cell = document.createElement("div");
+        cell.className = "cell";
+
+        // alternate subtle shading every 4 steps
+        const group = Math.floor(s / 4) % 2;
+        cell.classList.add(group === 0 ? "groupA" : "groupB");
+
+        if (key === "hat") cell.classList.add("hat");
+        if (key === "snare") cell.classList.add("snare");
+        if (key === "clap") cell.classList.add("clap");
+
+        if ((s+1) % 4 === 0 && s !== TOTAL_STEPS-1) cell.classList.add("beatDivider");
+
+        cell.dataset.track = key;
+        cell.dataset.step = String(s);
+
+        cell.addEventListener("click", () => {
+          const step = Number(cell.dataset.step);
+          drums[key][step] = !drums[key][step];
+          cell.classList.toggle("on", drums[key][step]);
+        });
+
+        row.appendChild(cell);
+      }
+      stepsCol.appendChild(row);
+    });
+
+    drumGridEl.appendChild(namesCol);
+    drumGridEl.appendChild(stepsCol);
+  }
+
+  function updatePlayheadUI(step){
+    const allCells = drumGridEl.querySelectorAll(".cell");
+    allCells.forEach(c => c.classList.remove("playhead"));
+    if (step < 0) return;
+
+    const rows = drumGridEl.querySelectorAll(".rowSteps");
+    drumKeys.forEach((_, rIdx) => {
+      const row = rows[rIdx];
+      if (!row) return;
+      const cell = row.children[step];
+      if (cell) cell.classList.add("playhead");
+    });
+  }
+
+  // ----------------------------
+  // Audio
+  // ----------------------------
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+  function ensureAudio(){
+    if (ctx) return;
+
+    ctx = new AudioContext();
+
+    master = ctx.createGain();
+    master.gain.value = 0.9;
+    master.connect(ctx.destination);
+
+    melBus = ctx.createGain();
+    bassBus = ctx.createGain();
+    drumBus = ctx.createGain();
+
+    melBus.gain.value = Number(melVol.value);
+    bassBus.gain.value = Number(bassVol.value);
+    drumBus.gain.value = Number(drumVol.value);
+
+    melBus.connect(master);
+    bassBus.connect(master);
+    drumBus.connect(master);
+
+    melVol.addEventListener("input", () => melBus.gain.value = Number(melVol.value));
+    bassVol.addEventListener("input", () => bassBus.gain.value = Number(bassVol.value));
+    drumVol.addEventListener("input", () => drumBus.gain.value = Number(drumVol.value));
+  }
+
+  function midiToHz(midi){
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  function playNote(freq, time, dur, bus, type, peak){
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const lp = ctx.createBiquadFilter();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, time);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(peak, time + 0.01);
+    // keep sustain for most of dur, then drop
+    const rel = Math.max(0.02, Math.min(0.12, dur * 0.18));
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + dur + rel);
+
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(type === "square" ? 4200 : 2200, time);
+
+    osc.connect(lp).connect(gain).connect(bus);
+    osc.start(time);
+    osc.stop(time + dur + rel + 0.03);
+  }
+
+  // Drums (no files)
+  let noiseBuf = null;
+  function getNoiseBuffer(){
+    if (noiseBuf) return noiseBuf;
+    const len = ctx.sampleRate * 0.3;
+    const b = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i=0;i<len;i++) d[i] = Math.random()*2 - 1;
+    noiseBuf = b;
+    return b;
+  }
+
+  function playKick(time){
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(160, time);
+    osc.frequency.exponentialRampToValueAtTime(50, time + 0.09);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(1.0, time + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.14);
+
+    const click = ctx.createOscillator();
+    const cg = ctx.createGain();
+    click.type = "square";
+    click.frequency.setValueAtTime(900, time);
+    cg.gain.setValueAtTime(0.2, time);
+    cg.gain.exponentialRampToValueAtTime(0.0001, time + 0.01);
+
+    osc.connect(gain).connect(drumBus);
+    click.connect(cg).connect(drumBus);
+
+    osc.start(time); osc.stop(time + 0.16);
+    click.start(time); click.stop(time + 0.02);
+  }
+
+  function playSnare(time){
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(1800, time);
+    bp.Q.setValueAtTime(0.8, time);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(0.9, time + 0.003);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.10);
+
+    const osc = ctx.createOscillator();
+    const og = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(220, time);
+    og.gain.setValueAtTime(0.0001, time);
+    og.gain.exponentialRampToValueAtTime(0.25, time + 0.004);
+    og.gain.exponentialRampToValueAtTime(0.0001, time + 0.08);
+
+    src.connect(bp).connect(gain).connect(drumBus);
+    osc.connect(og).connect(drumBus);
+
+    src.start(time); src.stop(time + 0.12);
+    osc.start(time); osc.stop(time + 0.10);
+  }
+
+  function playHat(time){
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(7000, time);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(0.35, time + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+
+    src.connect(hp).connect(gain).connect(drumBus);
+    src.start(time); src.stop(time + 0.06);
+  }
+
+  function playClap(time){
+    const burstTimes = [0, 0.012, 0.024];
+    burstTimes.forEach(dt => {
+      const t = time + dt;
+      const src = ctx.createBufferSource();
+      src.buffer = getNoiseBuffer();
+
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.setValueAtTime(2200, t);
+      bp.Q.setValueAtTime(0.7, t);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.55, t + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+
+      src.connect(bp).connect(gain).connect(drumBus);
+      src.start(t); src.stop(t + 0.09);
+    });
+  }
+
+  // ----------------------------
+  // Sequencing
+  // ----------------------------
+  function secondsPerStep(){
+    return (60 / bpm) / 4;
+  }
+
+  function stepTimeWithSwing(baseTime, stepIdx){
+    if (stepIdx % 2 === 1) return baseTime + secondsPerStep() * swing;
+    return baseTime;
+  }
+
+  function scheduleStep(step, time){
+    // Drums
+    if (drums.kick[step])  playKick(time);
+    if (drums.snare[step]) playSnare(time);
+    if (drums.hat[step])   playHat(time);
+    if (drums.clap[step])  playClap(time);
+
+    // Piano rolls: only trigger NOTE STARTS at this step (with their length)
+    for (let p=0; p<MELODY_PITCHES; p++){
+      const len = melody[p][step];
+      if (len > 0){
+        const midi = MELODY_BASE_MIDI + p;
+        const hz = midiToHz(midi);
+        const dur = secondsPerStep() * len * 0.98;
+        playNote(hz, time, dur, melBus, "square", 0.20);
+      }
+    }
+
+    for (let p=0; p<BASS_PITCHES; p++){
+      const len = bass[p][step];
+      if (len > 0){
+        const midi = BASS_BASE_MIDI + p;
+        const hz = midiToHz(midi);
+        const dur = secondsPerStep() * len * 0.98;
+        playNote(hz, time, dur, bassBus, "triangle", 0.26);
+      }
+    }
+
+    updatePlayheadUI(step);
+    drawRoll(step);
+  }
+
+  function nextStep(){
+    currentStep = (currentStep + 1) % TOTAL_STEPS;
+    nextNoteTime += secondsPerStep();
+  }
+
+  function tick(){
+    while (nextNoteTime < ctx.currentTime + scheduleAhead){
+      const swungTime = stepTimeWithSwing(nextNoteTime, currentStep);
+      scheduleStep(currentStep, swungTime);
+      nextStep();
+    }
+    timerId = window.setTimeout(tick, lookAhead * 1000);
+  }
+
+  async function startFromCurrentStep(){
+    ensureAudio();
+    if (ctx.state !== "running") await ctx.resume();
+
+    isPlaying = true;
+    isPaused = false;
+
+    playBtn.disabled = true;
+    pauseBtn.disabled = false;
+    stopBtn.disabled = false;
+
+    // Resume scheduling from currentStep
+    nextNoteTime = ctx.currentTime + 0.06;
+    tick();
+  }
+
+  function pause(){
+    isPaused = true;
+    isPlaying = false;
+
+    playBtn.disabled = false;
+    pauseBtn.disabled = true;
+    stopBtn.disabled = false;
+
+    if (timerId) { clearTimeout(timerId); timerId = null; }
+  }
+
+  function stop(){
+    isPlaying = false;
+    isPaused = false;
+
+    playBtn.disabled = false;
+    pauseBtn.disabled = true;
+    stopBtn.disabled = true;
+
+    if (timerId) { clearTimeout(timerId); timerId = null; }
+
+    currentStep = 0;
+    updatePlayheadUI(-1);
+    drawRoll(-1);
+  }
+
+  function togglePlayPause(){
+    if (!ctx && !isPlaying && !isPaused){
+      // first run
+      startFromCurrentStep();
+      return;
+    }
+    if (isPlaying){
+      pause();
+    } else {
+      startFromCurrentStep();
+    }
+  }
+
+  playBtn.addEventListener("click", () => {
+    currentStep = 0;
+    startFromCurrentStep();
+  });
+  pauseBtn.addEventListener("click", pause);
+  stopBtn.addEventListener("click", stop);
+
+  // ----------------------------
+  // Piano Roll Drawing + Interaction (custom note lengths)
+  // ----------------------------
+  function midiName(m){
+    const names = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const n = names[m % 12];
+    const oct = Math.floor(m/12)-1;
+    return `${n}${oct}`;
+  }
+
+  function drawRoll(playheadStep = -1){
+    const W = rollCanvas.width;
+    const H = rollCanvas.height;
+
+    const isMel = activeRoll === "melody";
+    const pitchCount = isMel ? MELODY_PITCHES : BASS_PITCHES;
+    const grid = isMel ? melody : bass;
+
+    const leftPad = 64;
+    const cellW = (W - leftPad) / TOTAL_STEPS;
+    const cellH = H / pitchCount;
+
+    g.clearRect(0,0,W,H);
+    g.fillStyle = "rgba(0,0,0,.18)";
+    g.fillRect(0,0,W,H);
+
+    // left strip
+    g.fillStyle = "rgba(0,0,0,.32)";
+    g.fillRect(0,0,leftPad,H);
+
+    // stripes
+    for (let p=0; p<pitchCount; p++){
+      const y = H - (p+1)*cellH;
+      g.fillStyle = (p % 2 === 0) ? "rgba(255,255,255,.03)" : "rgba(255,255,255,.01)";
+      g.fillRect(leftPad, y, W-leftPad, cellH);
+    }
+
+    // vertical lines + beat emphasis
+    for (let s=0; s<=TOTAL_STEPS; s++){
+      const x = leftPad + s*cellW;
+      const isBeat = (s % 4 === 0);
+      g.strokeStyle = isBeat ? "rgba(255,255,255,.14)" : "rgba(255,255,255,.06)";
+      g.beginPath();
+      g.moveTo(x,0); g.lineTo(x,H);
+      g.stroke();
+    }
+    for (let p=0; p<=pitchCount; p++){
+      const y = p*cellH;
+      g.strokeStyle = "rgba(255,255,255,.06)";
+      g.beginPath();
+      g.moveTo(leftPad,y); g.lineTo(W,y);
+      g.stroke();
+    }
+
+    // labels
+    g.fillStyle = "rgba(255,255,255,.55)";
+    g.font = "12px ui-monospace, SFMono-Regular, Menlo, monospace";
+    for (let p=0; p<pitchCount; p+=2){
+      const midi = (isMel ? MELODY_BASE_MIDI : BASS_BASE_MIDI) + p;
+      const name = midiName(midi);
+      const y = H - (p+0.5)*cellH + 4;
+      g.fillText(name, 10, y);
+    }
+
+    // notes (start+length)
+    for (let p=0; p<pitchCount; p++){
+      for (let s=0; s<TOTAL_STEPS; s++){
+        const len = grid[p][s];
+        if (len <= 0) continue;
+        const x = leftPad + s*cellW + 1;
+        const y = H - (p+1)*cellH + 1;
+        const w = (cellW * len) - 2;
+        const h = cellH - 2;
+
+        g.fillStyle = isMel ? "rgba(124,255,178,.85)" : "rgba(88,166,255,.80)";
+        g.fillRect(x,y,w,h);
+
+        // subtle edge
+        g.strokeStyle = "rgba(255,255,255,.18)";
+        g.strokeRect(x+0.5,y+0.5,w-1,h-1);
+      }
+    }
+
+    // playhead
+    if (playheadStep >= 0){
+      const x = leftPad + playheadStep*cellW;
+      g.fillStyle = "rgba(255,255,255,.12)";
+      g.fillRect(x,0,cellW,H);
+    }
+  }
+
+  function rollHitTest(evt){
+    const rect = rollCanvas.getBoundingClientRect();
+    const px = (evt.clientX - rect.left) * (rollCanvas.width / rect.width);
+    const py = (evt.clientY - rect.top)  * (rollCanvas.height / rect.height);
+
+    const W = rollCanvas.width;
+    const H = rollCanvas.height;
+
+    const isMel = activeRoll === "melody";
+    const pitchCount = isMel ? MELODY_PITCHES : BASS_PITCHES;
+
+    const leftPad = 64;
+    if (px < leftPad) return null;
+
+    const cellW = (W - leftPad) / TOTAL_STEPS;
+    const cellH = H / pitchCount;
+
+    const step = Math.floor((px - leftPad) / cellW);
+    const pitch = Math.floor((H - py) / cellH);
+
+    if (step < 0 || step >= TOTAL_STEPS) return null;
+    if (pitch < 0 || pitch >= pitchCount) return null;
+
+    return {step, pitch};
+  }
+
+  function findNoteStartAtOrBefore(row, step){
+    // Find a note that covers 'step' by scanning note starts in this pitch row.
+    for (let s=0; s<TOTAL_STEPS; s++){
+      const len = row[s];
+      if (len <= 0) continue;
+      if (step >= s && step < s + len) return {start:s, len};
+    }
+    return null;
+  }
+
+  function rangesOverlap(aStart, aLen, bStart, bLen){
+    const aEnd = aStart + aLen;
+    const bEnd = bStart + bLen;
+    return aStart < bEnd && bStart < aEnd;
+  }
+
+  function clearOverlaps(row, start, len){
+    // Remove any note start whose range overlaps the new note range.
+    for (let s=0; s<TOTAL_STEPS; s++){
+      const l = row[s];
+      if (l <= 0) continue;
+      if (rangesOverlap(s, l, start, len)) row[s] = 0;
+    }
+  }
+
+  // Drag-to-create note
+  let dragNote = null; // {grid,row,pitch,start}
+  function setNoteLength(grid, pitch, start, len){
+    const row = grid[pitch];
+    len = Math.max(1, Math.min(len, TOTAL_STEPS - start));
+    clearOverlaps(row, start, len);
+    row[start] = len;
+  }
+
+  rollCanvas.addEventListener("mousedown", (e) => {
+    const hit = rollHitTest(e);
+    if (!hit) return;
+
+    const grid = (activeRoll === "melody") ? melody : bass;
+    const row = grid[hit.pitch];
+
+    // If clicking on an existing note (anywhere in its body), delete it.
+    const existing = findNoteStartAtOrBefore(row, hit.step);
+    if (existing){
+      row[existing.start] = 0;
+      drawRoll(isPlaying ? currentStep : -1);
+      return;
+    }
+
+    // Otherwise create a new note start and begin drag to set length
+    setNoteLength(grid, hit.pitch, hit.step, 1);
+    dragNote = { grid, pitch: hit.pitch, start: hit.step };
+    drawRoll(isPlaying ? currentStep : -1);
+  });
+
+  window.addEventListener("mouseup", () => { dragNote = null; });
+
+  rollCanvas.addEventListener("mousemove", (e) => {
+    if (!dragNote) return;
+    const hit = rollHitTest(e);
+    if (!hit) return;
+
+    // Only extend to the right from the start
+    const len = Math.max(1, (hit.step - dragNote.start) + 1);
+    setNoteLength(dragNote.grid, dragNote.pitch, dragNote.start, len);
+    drawRoll(isPlaying ? currentStep : -1);
+  });
+
+  // ----------------------------
+  // Clear / Demo
+  // ----------------------------
+  clearDrumsBtn.addEventListener("click", () => {
+    drumKeys.forEach(k => drums[k].fill(false));
+    drumGridEl.querySelectorAll(".cell").forEach(c => c.classList.remove("on"));
+  });
+
+  clearNotesBtn.addEventListener("click", () => {
+    melody.forEach(row => row.fill(0));
+    bass.forEach(row => row.fill(0));
+    drawRoll(isPlaying ? currentStep : -1);
+  });
+
+  demoFillBtn.addEventListener("click", () => {
+    // Drums
+    drumKeys.forEach(k => drums[k].fill(false));
+    for (let s=0; s<TOTAL_STEPS; s++){
+      if (s % 4 === 0) drums.kick[s] = true;
+      if (s === 4 || s === 12) drums.snare[s] = true;
+      if (s % 2 === 0) drums.hat[s] = true;
+      if (s === 11) drums.clap[s] = true;
+    }
+    // Update UI
+    const rows = drumGridEl.querySelectorAll(".rowSteps");
+    drumKeys.forEach((k, r) => {
+      for (let s=0; s<TOTAL_STEPS; s++){
+        rows[r].children[s].classList.toggle("on", drums[k][s]);
+      }
+    });
+
+    // Notes (with lengths)
+    melody.forEach(row => row.fill(0));
+    bass.forEach(row => row.fill(0));
+
+    const putMel = (step, midi, len=1) => {
+      const p = midi - MELODY_BASE_MIDI;
+      if (p>=0 && p<MELODY_PITCHES) setNoteLength(melody, p, step, len);
+    };
+    // a few sustained notes to prove length works
+    putMel(0, 69, 2);
+    putMel(2, 72, 2);
+    putMel(4, 76, 1);
+    putMel(6, 74, 2);
+    putMel(8, 72, 2);
+    putMel(10, 71, 1);
+    putMel(12, 69, 3);
+
+    const putBass = (step, midi, len=4) => {
+      const p = midi - BASS_BASE_MIDI;
+      if (p>=0 && p<BASS_PITCHES) setNoteLength(bass, p, step, len);
+    };
+    putBass(0, 45, 8); // A2 sustained half bar
+
+    drawRoll(isPlaying ? currentStep : -1);
+  });
+
+  // ----------------------------
+  // Init
+  // ----------------------------
+  buildDrumGrid();
+  drawRoll(-1);
+
+})();
+</script>
+</body>
+</html>
