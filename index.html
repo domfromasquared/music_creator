@@ -837,4 +837,740 @@
     ].forEach(s => project.drums.kick[clamp(s,0,63)] = true);
 
     // Hats: 1/16 base (every 4 steps)
-    for (let s=0; s<64; s+=4) proje
+    for (let s=0; s<64; s+=4) project.drums.hat[s] = true;
+
+    // Hat rolls/bursts
+    [28,29,30,31].forEach(s => project.drums.hat[s] = true); // lead-in
+    [52,53,54,55].forEach(s => project.drums.hat[s] = true); // burst
+    [60,61,62,63].forEach(s => project.drums.hat[s] = true); // stutter
+
+    // Extra clap accent late bar
+    project.drums.clap[b4+8] = true;
+
+    // tasteful trap volumes
+    project.drumVols.kick = 100;
+    project.drumVols.snare = 92;
+    project.drumVols.clap = 80;
+    project.drumVols.hat = 62;
+  }
+
+  async function fetchMidiArrayBuffer(relPath){
+    const url = new URL(relPath, window.location.href).toString();
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to fetch MIDI ${url} (${res.status})`);
+    return await res.arrayBuffer();
+  }
+
+  async function importMidiIntoGrid(arrayBuffer, targetGrid){
+    const midi = new Midi(arrayBuffer);
+
+    const quarter = 60 / bpm;
+    const toStep = (t) => clamp(Math.round((t / quarter) * 4), 0, MASTER_STEPS-1);
+    const toLen  = (d) => clamp(Math.max(1, Math.round((d / quarter) * 4)), 1, MASTER_STEPS);
+
+    clearInstrumentGrid(targetGrid);
+
+    midi.tracks.forEach(tr => {
+      if (!tr.notes) return;
+      tr.notes.forEach(n => {
+        const s = toStep(n.time);
+        const len = Math.min(toLen(n.duration), MASTER_STEPS - s);
+        setNoteLength(targetGrid, n.midi, s, len);
+      });
+    });
+  }
+
+  async function loadDemoFromMidiFolder(){
+    const [pluckBuf, chordsBuf, arpBuf] = await Promise.all([
+      fetchMidiArrayBuffer(MIDI_PATHS.bass),
+      fetchMidiArrayBuffer(MIDI_PATHS.piano),
+      fetchMidiArrayBuffer(MIDI_PATHS.synth),
+    ]);
+
+    stopTransportOnly();
+    await importMidiIntoGrid(pluckBuf,  project.bass);
+    await importMidiIntoGrid(chordsBuf, project.piano);
+    await importMidiIntoGrid(arpBuf,    project.synth);
+
+    // ✅ only change: trap demo drums
+    setDemoDrumsTrap();
+
+    buildDrumGrid();
+    drawRoll(-1);
+  }
+
+  // ---------- Knob helpers ----------
+  function knobStyleForPercent(pct){
+    const deg = pct * 270;
+    const rot = (-135 + pct * 270);
+    return { fillDeg: `${deg}deg`, rotDeg: `${rot}deg` };
+  }
+  function semitoneToPct(v){ return (clamp(v, -24, 24) + 24) / 48; }
+
+  function setTranspose(inst, val){
+    const v = clamp(Math.round(Number(val)), -24, 24);
+    transpose[inst] = v;
+
+    if (inst === "piano"){
+      pianoTrVal.textContent = String(v);
+      const st = knobStyleForPercent(semitoneToPct(v));
+      pianoTrKnob.style.setProperty("--knobDeg", st.fillDeg);
+      pianoTrKnob.style.setProperty("--knobRot", st.rotDeg);
+    } else if (inst === "synth"){
+      synthTrVal.textContent = String(v);
+      const st = knobStyleForPercent(semitoneToPct(v));
+      synthTrKnob.style.setProperty("--knobDeg", st.fillDeg);
+      synthTrKnob.style.setProperty("--knobRot", st.rotDeg);
+    } else {
+      bassTrVal.textContent = String(v);
+      const st = knobStyleForPercent(semitoneToPct(v));
+      bassTrKnob.style.setProperty("--knobDeg", st.fillDeg);
+      bassTrKnob.style.setProperty("--knobRot", st.rotDeg);
+    }
+  }
+
+  function attachTransposeKnob(knobEl, inst){
+    let active = false, pid = null, startVal = 0, startY = 0;
+
+    const onDown = async (e) => {
+      e.preventDefault();
+      await ensureRunning();
+      active = true;
+      pid = e.pointerId;
+      startY = e.clientY;
+      startVal = transpose[inst] || 0;
+      knobEl.setPointerCapture(pid);
+    };
+    const onMove = (e) => {
+      if (!active || e.pointerId !== pid) return;
+      e.preventDefault();
+      const dy = startY - e.clientY;
+      const delta = dy / 12;
+      setTranspose(inst, startVal + delta);
+    };
+    const onUp = (e) => {
+      if (!active || e.pointerId !== pid) return;
+      active = false; pid = null;
+    };
+    knobEl.addEventListener("dblclick", (e) => { e.preventDefault(); setTranspose(inst, 0); });
+
+    knobEl.addEventListener("pointerdown", onDown, {passive:false});
+    knobEl.addEventListener("pointermove", onMove, {passive:false});
+    knobEl.addEventListener("pointerup", onUp);
+    knobEl.addEventListener("pointercancel", onUp);
+    knobEl.addEventListener("lostpointercapture", () => { active=false; pid=null; });
+  }
+
+  // Drum knobs + grid build
+  function knobStyleForValue(v){
+    const pct = clamp(v, 0, 100) / 100;
+    return knobStyleForPercent(pct);
+  }
+  function setKnobValue(knobEl, valEl, v, track){
+    const vv = clamp(Math.round(v), 0, 100);
+    valEl.textContent = String(vv);
+    const st = knobStyleForValue(vv);
+    knobEl.style.setProperty("--knobDeg", st.fillDeg);
+    knobEl.style.setProperty("--knobRot", st.rotDeg);
+    project.drumVols[track] = vv;
+
+    if (track && drumGains[track]){
+      const x = vv / 100;
+      drumGains[track].gain.value = x * x;
+    }
+  }
+  function attachKnob(knobEl, valEl, track){
+    let active = false, pid = null, startVal = 100, startY = 0;
+
+    const onDown = async (e) => {
+      e.preventDefault();
+      await ensureRunning();
+      active = true;
+      pid = e.pointerId;
+      startY = e.clientY;
+      startVal = Number(valEl.textContent) || 100;
+      knobEl.setPointerCapture(pid);
+    };
+    const onMove = (e) => {
+      if (!active || e.pointerId !== pid) return;
+      e.preventDefault();
+      const dy = startY - e.clientY;
+      setKnobValue(knobEl, valEl, startVal + dy * 0.35, track);
+    };
+    const onUp = (e) => {
+      if (!active || e.pointerId !== pid) return;
+      active = false; pid = null;
+    };
+
+    knobEl.addEventListener("pointerdown", onDown, {passive:false});
+    knobEl.addEventListener("pointermove", onMove, {passive:false});
+    knobEl.addEventListener("pointerup", onUp);
+    knobEl.addEventListener("pointercancel", onUp);
+    knobEl.addEventListener("lostpointercapture", () => { active=false; pid=null; });
+  }
+
+  function buildDrumGrid(){
+    drumGridEl.innerHTML = "";
+
+    const namesCol = document.createElement("div");
+    namesCol.className = "trackNames";
+
+    const stepsCol = document.createElement("div");
+    stepsCol.className = "steps";
+
+    drumKeys.forEach((key, idx) => {
+      const nameRow = document.createElement("div");
+      nameRow.className = "trackName";
+
+      const label = document.createElement("div");
+      label.className = "trackLabel";
+      label.textContent = drumNames[idx];
+
+      const knobWrap = document.createElement("div");
+      knobWrap.className = "knobWrap";
+
+      const knob = document.createElement("div");
+      knob.className = "knob";
+      const dot = document.createElement("div");
+      dot.className = "knobDot";
+      knob.appendChild(dot);
+
+      const val = document.createElement("div");
+      val.className = "knobVal";
+      val.textContent = String(project.drumVols[key] ?? 100);
+
+      const init = knobStyleForValue(Number(val.textContent));
+      knob.style.setProperty("--knobDeg", init.fillDeg);
+      knob.style.setProperty("--knobRot", init.rotDeg);
+
+      knobWrap.appendChild(knob);
+      knobWrap.appendChild(val);
+
+      nameRow.appendChild(label);
+      nameRow.appendChild(knobWrap);
+      namesCol.appendChild(nameRow);
+
+      attachKnob(knob, val, key);
+
+      const row = document.createElement("div");
+      row.className = "rowSteps";
+      row.style.gridTemplateColumns = `repeat(${LOOP_STEPS}, minmax(0, 1fr))`;
+
+      for (let s=0; s<LOOP_STEPS; s++){
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        const group = Math.floor(s / 4) % 2;
+        cell.classList.add(group === 0 ? "groupA" : "groupB");
+        cell.classList.add(key);
+        if ((s+1) % 4 === 0 && s !== LOOP_STEPS-1) cell.classList.add("beatDivider");
+        cell.dataset.track = key;
+        cell.dataset.step = String(s);
+        cell.ondragstart = () => false;
+        row.appendChild(cell);
+      }
+      stepsCol.appendChild(row);
+    });
+
+    drumGridEl.appendChild(namesCol);
+    drumGridEl.appendChild(stepsCol);
+
+    enableDrumPainting(stepsCol);
+    refreshDrumUI();
+  }
+
+  function refreshDrumUI(){
+    const rows = drumGridEl.querySelectorAll(".rowSteps");
+    drumKeys.forEach((k, r) => {
+      const row = rows[r];
+      if (!row) return;
+      for (let s=0; s<LOOP_STEPS; s++){
+        row.children[s].classList.toggle("on", project.drums[k][s]);
+      }
+    });
+  }
+
+  function updatePlayheadUI(step){
+    drumGridEl.querySelectorAll(".cell").forEach(c => c.classList.remove("playhead"));
+    if (step < 0) return;
+    const rows = drumGridEl.querySelectorAll(".rowSteps");
+    drumKeys.forEach((_, rIdx) => {
+      const row = rows[rIdx];
+      const cell = row && row.children[step];
+      if (cell) cell.classList.add("playhead");
+    });
+  }
+
+  let drumPaint = { active:false, pointerId:null, value:true, visited:new Set(), track:null };
+
+  function cellFromPoint(clientX, clientY){
+    const el = document.elementFromPoint(clientX, clientY);
+    if (!el) return null;
+    return el.classList && el.classList.contains("cell") ? el : null;
+  }
+  function clearDragHover(){
+    drumGridEl.querySelectorAll(".cell.drag-hover").forEach(c => c.classList.remove("drag-hover"));
+  }
+  function applyDrumCell(cell, value){
+    const key = cell.dataset.track;
+    if (drumPaint.track && key !== drumPaint.track) return;
+
+    const step = Number(cell.dataset.step);
+    const id = `${key}:${step}`;
+    if (drumPaint.visited.has(id)) return;
+    drumPaint.visited.add(id);
+
+    project.drums[key][step] = value;
+    cell.classList.toggle("on", value);
+    cell.classList.add("drag-hover");
+  }
+
+  function enableDrumPainting(container){
+    container.addEventListener("pointerdown", (e) => {
+      const cell = e.target.closest(".cell");
+      if (!cell) return;
+      e.preventDefault();
+
+      drumPaint.active = true;
+      drumPaint.pointerId = e.pointerId;
+      drumPaint.visited.clear();
+      clearDragHover();
+
+      const key = cell.dataset.track;
+      const step = Number(cell.dataset.step);
+
+      drumPaint.track = key;
+      drumPaint.value = !project.drums[key][step];
+
+      container.setPointerCapture(e.pointerId);
+      applyDrumCell(cell, drumPaint.value);
+    }, {passive:false});
+
+    container.addEventListener("pointermove", (e) => {
+      if (!drumPaint.active) return;
+      if (drumPaint.pointerId !== e.pointerId) return;
+      e.preventDefault();
+      const cell = cellFromPoint(e.clientX, e.clientY);
+      if (!cell) return;
+      applyDrumCell(cell, drumPaint.value);
+    }, {passive:false});
+
+    const end = (e) => {
+      if (!drumPaint.active) return;
+      if (drumPaint.pointerId !== e.pointerId) return;
+      drumPaint.active = false;
+      drumPaint.pointerId = null;
+      drumPaint.track = null;
+      drumPaint.visited.clear();
+      setTimeout(clearDragHover, 40);
+    };
+
+    container.addEventListener("pointerup", end);
+    container.addEventListener("pointercancel", end);
+    container.addEventListener("lostpointercapture", () => {
+      drumPaint.active = false;
+      drumPaint.pointerId = null;
+      drumPaint.track = null;
+      drumPaint.visited.clear();
+      setTimeout(clearDragHover, 40);
+    });
+  }
+
+  // Piano roll drawing + editing
+  const KEY_PAD = 128;
+
+  function isBlackKey(midi){
+    const pc = midi % 12;
+    return pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10;
+  }
+  function midiNameFlat(m){
+    const pc = m % 12;
+    const oct = Math.floor(m/12) - 1;
+    const names = { 0:"C", 1:"Db", 2:"D", 3:"Eb", 4:"E", 5:"F", 6:"Gb", 7:"G", 8:"Ab", 9:"A", 10:"Bb", 11:"B" };
+    return `${names[pc]}${oct}`;
+  }
+  function cssVar(v){
+    return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  }
+
+  function drawRoll(playheadStep = -1){
+    const W = rollCanvas.width;
+    const H = rollCanvas.height;
+
+    const grid = getActiveGrid();
+
+    const leftPad = KEY_PAD;
+    const cellW = (W - leftPad) / LOOP_STEPS;
+    const cellH = H / ROLL_PITCHES;
+
+    g.clearRect(0,0,W,H);
+    g.fillStyle = cssVar("--rollBg");
+    g.fillRect(0,0,W,H);
+
+    for (let p=0; p<ROLL_PITCHES; p++){
+      const midi = ROLL_BASE_MIDI + p;
+      const y = H - (p+1)*cellH;
+      g.fillStyle = isBlackKey(midi) ? cssVar("--rowBlack") : ((p % 2 === 0) ? "rgba(255,255,255,.03)" : "rgba(255,255,255,.015)");
+      g.fillRect(leftPad, y, W-leftPad, cellH);
+    }
+
+    for (let s=0; s<=LOOP_STEPS; s++){
+      const x = leftPad + s*cellW;
+      g.strokeStyle = (s % 4 === 0) ? cssVar("--gridBeat") : cssVar("--gridLine");
+      g.beginPath(); g.moveTo(x,0); g.lineTo(x,H); g.stroke();
+    }
+    for (let p=0; p<=ROLL_PITCHES; p++){
+      const y = p*cellH;
+      g.strokeStyle = cssVar("--gridLine");
+      g.beginPath(); g.moveTo(leftPad,y); g.lineTo(W,y); g.stroke();
+    }
+
+    g.fillStyle = cssVar("--rollStrip");
+    g.fillRect(0,0,leftPad,H);
+
+    for (let p=0; p<ROLL_PITCHES; p++){
+      const midi = ROLL_BASE_MIDI + p;
+      const y = H - (p+1)*cellH;
+      const black = isBlackKey(midi);
+
+      if (!black){
+        const grad = g.createLinearGradient(0,y,0,y+cellH);
+        grad.addColorStop(0, cssVar("--whiteKeyA"));
+        grad.addColorStop(1, cssVar("--whiteKeyB"));
+        g.fillStyle = grad;
+        g.fillRect(6, y+1, leftPad-12, cellH-2);
+        g.strokeStyle = cssVar("--keyBorder");
+        g.strokeRect(6.5, y+1.5, leftPad-13, cellH-3);
+
+        g.fillStyle = "rgba(0,0,0,0.80)";
+        g.font = "12px ui-monospace, SFMono-Regular, Menlo, monospace";
+        g.fillText(midiNameFlat(midi), 12, y + cellH*0.68);
+      } else {
+        const grad = g.createLinearGradient(0,y,0,y+cellH);
+        grad.addColorStop(0, cssVar("--blackKeyB"));
+        grad.addColorStop(1, cssVar("--blackKeyA"));
+
+        const insetLeft = 22;
+        const insetRight = 20;
+        g.fillStyle = grad;
+        g.fillRect(insetLeft, y+2, leftPad - insetLeft - insetRight, cellH-4);
+        g.strokeStyle = "rgba(255,255,255,.10)";
+        g.strokeRect(insetLeft+0.5, y+2.5, leftPad - insetLeft - insetRight - 1, cellH-5);
+
+        g.fillStyle = "rgba(255,255,255,0.80)";
+        g.font = "12px ui-monospace, SFMono-Regular, Menlo, monospace";
+        g.fillText(midiNameFlat(midi), insetLeft+6, y + cellH*0.68);
+      }
+    }
+
+    for (let p=0; p<ROLL_PITCHES; p++){
+      for (let s=0; s<LOOP_STEPS; s++){
+        const len = grid[p][s];
+        if (len <= 0) continue;
+
+        const x = leftPad + s*cellW + 1;
+        const y = H - (p+1)*cellH + 1;
+        const clampedLen = Math.min(len, LOOP_STEPS - s);
+        const w = (cellW * clampedLen) - 2;
+        const h = cellH - 2;
+
+        g.fillStyle = noteColor();
+        g.fillRect(x,y,w,h);
+        g.strokeStyle = "rgba(255,255,255,.18)";
+        g.strokeRect(x+0.5,y+0.5,w-1,h-1);
+      }
+    }
+
+    if (playheadStep >= 0){
+      const x = leftPad + playheadStep*cellW;
+      g.fillStyle = "rgba(255,255,255,.12)";
+      g.fillRect(x,0,cellW,H);
+    }
+  }
+
+  function rollHitTest(clientX, clientY){
+    const rect = rollCanvas.getBoundingClientRect();
+    const px = (clientX - rect.left) * (rollCanvas.width / rect.width);
+    const py = (clientY - rect.top)  * (rollCanvas.height / rect.height);
+
+    const W = rollCanvas.width;
+    const H = rollCanvas.height;
+
+    const leftPad = KEY_PAD;
+    const cellW = (W - leftPad) / LOOP_STEPS;
+    const cellH = H / ROLL_PITCHES;
+
+    const pitch = Math.floor((H - py) / cellH);
+    if (pitch < 0 || pitch >= ROLL_PITCHES) return null;
+
+    if (px < leftPad) return { area:"keys", pitch };
+
+    const step = Math.floor((px - leftPad) / cellW);
+    if (step < 0 || step >= LOOP_STEPS) return null;
+
+    return { area:"grid", pitch, step };
+  }
+
+  function findCoveringNote(row, step){
+    for (let s=0; s<MASTER_STEPS; s++){
+      const len = row[s];
+      if (len <= 0) continue;
+      if (step >= s && step < s + len) return {start:s, len};
+    }
+    return null;
+  }
+
+  function setNoteLenOnGrid(grid, pitch, start, len){
+    const row = grid[pitch];
+    len = Math.max(1, Math.min(len, MASTER_STEPS - start));
+    clearOverlaps(row, start, len);
+    row[start] = len;
+  }
+
+  let noteDrag = {active:false, pointerId:null, grid:null, pitch:0, start:0};
+
+  rollCanvas.addEventListener("pointerdown", async (e) => {
+    e.preventDefault();
+    const hit = rollHitTest(e.clientX, e.clientY);
+    if (!hit) return;
+
+    const midi = ROLL_BASE_MIDI + hit.pitch;
+    const grid = getActiveGrid();
+
+    if (hit.area === "keys"){
+      await previewMidi(midi);
+      return;
+    }
+
+    const row = grid[hit.pitch];
+    const existing = findCoveringNote(row, hit.step);
+    if (existing){
+      row[existing.start] = 0;
+      drawRoll(isPlaying ? currentStep : -1);
+      return;
+    }
+
+    await previewMidi(midi);
+
+    setNoteLenOnGrid(grid, hit.pitch, hit.step, 1);
+    noteDrag = {active:true, pointerId:e.pointerId, grid, pitch:hit.pitch, start:hit.step};
+    rollCanvas.setPointerCapture(e.pointerId);
+
+    drawRoll(isPlaying ? currentStep : -1);
+  }, {passive:false});
+
+  rollCanvas.addEventListener("pointermove", (e) => {
+    if (!noteDrag.active) return;
+    if (noteDrag.pointerId !== e.pointerId) return;
+    e.preventDefault();
+
+    const hit = rollHitTest(e.clientX, e.clientY);
+    if (!hit || hit.area !== "grid") return;
+
+    const len = Math.max(1, (hit.step - noteDrag.start) + 1);
+    setNoteLenOnGrid(noteDrag.grid, noteDrag.pitch, noteDrag.start, len);
+    drawRoll(isPlaying ? currentStep : -1);
+  }, {passive:false});
+
+  const endNoteDrag = (e) => {
+    if (!noteDrag.active) return;
+    if (noteDrag.pointerId !== e.pointerId) return;
+    noteDrag.active = false;
+    noteDrag.pointerId = null;
+  };
+  rollCanvas.addEventListener("pointerup", endNoteDrag);
+  rollCanvas.addEventListener("pointercancel", endNoteDrag);
+  rollCanvas.addEventListener("lostpointercapture", () => {
+    noteDrag.active = false;
+    noteDrag.pointerId = null;
+  });
+
+  // ABSOLUTE BPM playback (UNCHANGED)
+  function secondsPerStep(){
+    const quarter = 60 / bpm;
+    return quarter / 4;
+  }
+
+  function scheduleStep(step, time){
+    if (project.drums.kick[step])  playKick(time);
+    if (project.drums.snare[step]) playSnare(time);
+    if (project.drums.hat[step])   playHat(time);
+    if (project.drums.clap[step])  playClap(time);
+
+    for (let p=0; p<ROLL_PITCHES; p++){
+      const len = project.piano[p][step];
+      if (len > 0){
+        const hz = midiToHz((ROLL_BASE_MIDI + p) + transpose.piano);
+        playVoice(hz, time, secondsPerStep()*len*0.98, pianoBus, "square", 0.18, 4200);
+      }
+    }
+    for (let p=0; p<ROLL_PITCHES; p++){
+      const len = project.synth[p][step];
+      if (len > 0){
+        const hz = midiToHz((ROLL_BASE_MIDI + p) + transpose.synth);
+        playVoice(hz, time, secondsPerStep()*len*0.98, synthBus, "sawtooth", 0.15, 6000);
+      }
+    }
+    for (let p=0; p<ROLL_PITCHES; p++){
+      const len = project.bass[p][step];
+      if (len > 0){
+        const hz = midiToHz((ROLL_BASE_MIDI + p) + transpose.bass);
+        playVoice(hz, time, secondsPerStep()*len*0.98, bassBus, "triangle", 0.24, 1500);
+      }
+    }
+
+    updatePlayheadUI(step);
+    drawRoll(step);
+  }
+
+  function nextStep(){
+    currentStep = (currentStep + 1) % LOOP_STEPS;
+    nextNoteTime += secondsPerStep();
+  }
+
+  function tick(){
+    while (nextNoteTime < ctx.currentTime + scheduleAhead){
+      scheduleStep(currentStep, nextNoteTime);
+      nextStep();
+    }
+    timerId = window.setTimeout(tick, lookAhead * 1000);
+  }
+
+  async function startFromCurrentStep(){
+    await ensureRunning();
+
+    drumKeys.forEach(k => {
+      const vv = project.drumVols[k] ?? 100;
+      const x = vv / 100;
+      drumGains[k].gain.value = x * x;
+    });
+
+    isPlaying = true;
+    isPaused = false;
+
+    playBtn.disabled = true;
+    pauseBtn.disabled = false;
+    stopBtn.disabled = false;
+
+    nextNoteTime = ctx.currentTime + 0.06;
+    tick();
+  }
+
+  function pause(){
+    isPaused = true;
+    isPlaying = false;
+
+    playBtn.disabled = false;
+    pauseBtn.disabled = true;
+    stopBtn.disabled = false;
+
+    if (timerId) { clearTimeout(timerId); timerId = null; }
+  }
+
+  function stopTransportOnly(){
+    isPlaying = false;
+    isPaused = false;
+
+    if (timerId) { clearTimeout(timerId); timerId = null; }
+
+    currentStep = 0;
+    updatePlayheadUI(-1);
+    drawRoll(-1);
+
+    playBtn.disabled = false;
+    pauseBtn.disabled = true;
+    stopBtn.disabled = true;
+  }
+
+  function togglePlayPause(){
+    if (!ctx && !isPlaying && !isPaused){ startFromCurrentStep(); return; }
+    if (isPlaying) pause();
+    else startFromCurrentStep();
+  }
+
+  playBtn.addEventListener("click", () => { currentStep = 0; startFromCurrentStep(); });
+  pauseBtn.addEventListener("click", pause);
+  stopBtn.addEventListener("click", stopTransportOnly);
+
+  resEl.addEventListener("input", () => {
+    const opt = RES_OPTIONS[Number(resEl.value)];
+    applyLoopSize(opt.steps, opt.label);
+  });
+
+  function applyLoopSize(newLoopSteps, label){
+    stopTransportOnly();
+    LOOP_STEPS = newLoopSteps;
+    resLabel.textContent = label;
+    resText.textContent = label;
+    groupText.textContent = label;
+    buildDrumGrid();
+    drawRoll(-1);
+  }
+
+  loadDemoBtn.addEventListener("click", async () => {
+    try { await loadDemoFromMidiFolder(); }
+    catch {
+      // fallback: still provide trap drums
+      setDemoDrumsTrap();
+      buildDrumGrid();
+      drawRoll(-1);
+    }
+  });
+
+  clearProjectBtn.addEventListener("click", clearProject);
+
+  importMidiBtn.addEventListener("click", () => midiFileInput.click());
+  midiFileInput.addEventListener("change", async () => {
+    const file = midiFileInput.files && midiFileInput.files[0];
+    if (!file) return;
+    const arr = await file.arrayBuffer();
+    if (!window.Midi){
+      alert("MIDI parser failed to load.");
+      return;
+    }
+    const grid = getActiveGrid();
+    await importMidiIntoGrid(arr, grid);
+    drawRoll(isPlaying ? currentStep : -1);
+    midiFileInput.value = "";
+  });
+
+  // INIT
+  bpm = 115;
+  bpmEl.value = "115";
+  bpmLabel.textContent = "115";
+
+  // loop starts at 1/64 at launch
+  resEl.value = "2";
+  const initialOpt = RES_OPTIONS[Number(resEl.value)];
+  LOOP_STEPS = initialOpt.steps;
+  resLabel.textContent = initialOpt.label;
+  resText.textContent = initialOpt.label;
+  groupText.textContent = initialOpt.label;
+
+  // init transpose knobs
+  setTranspose("piano", 0);
+  setTranspose("synth", 0);
+  setTranspose("bass", 0);
+
+  attachTransposeKnob(pianoTrKnob, "piano");
+  attachTransposeKnob(synthTrKnob, "synth");
+  attachTransposeKnob(bassTrKnob, "bass");
+
+  // build UI
+  buildDrumGrid();
+  drawRoll(-1);
+
+  (async () => {
+    try{
+      await loadDemoFromMidiFolder();
+    } catch (e){
+      console.warn("Auto demo MIDI load failed; fallback to trap drums only.", e);
+      setDemoDrumsTrap();
+      buildDrumGrid();
+      drawRoll(-1);
+    }
+  })();
+
+})();
+</script>
+</body>
+</html>
