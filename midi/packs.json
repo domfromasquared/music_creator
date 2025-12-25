@@ -2,6 +2,7 @@
   "packs": [
     { "path": "nightlife", "name": "Nightlife" },
     { "path": "trap", "name": "Trap Essentials" },
-    { "path": "recent", "name": "Recent" }
+    { "path": "recent", "name": "Recent" },
+    { "path": "gfunk", "name": "G Funk" }
   ]
 }
