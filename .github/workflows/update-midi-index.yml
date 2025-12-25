@@ -1,0 +1,39 @@
+name: Update MIDI index
+
+on:
+  push:
+    paths:
+      - "midi/**"
+      - "scripts/generate-midi-index.js"
+      - ".github/workflows/update-midi-index.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate midi/index.json
+        run: node scripts/generate-midi-index.js
+
+      - name: Commit changes (if any)
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add midi/index.json
+          git commit -m "chore: auto-update midi index"
+          git push
