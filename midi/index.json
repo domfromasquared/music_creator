@@ -45,6 +45,16 @@
           "file": "LFF_100_keys_fresh_Dmaj.mid"
         }
       ]
+    },
+    {
+      "name": "G Funk",
+      "path": "gfunk",
+      "files": [
+        {
+          "name": "LFF 90 Keys Sundayvibe (Fmin)",
+          "file": "LFF_90_keys_sundayvibe_Fmin.mid"
+        }
+      ]
     }
   ]
 }
