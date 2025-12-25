@@ -184,6 +184,7 @@
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,.08);
       background: rgba(0,0,0,.18);
+      overflow-x: auto;
     }
     .mixerTop{
       display:flex;
@@ -200,12 +201,17 @@
     }
     .mixerGrid{
       display:grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(230px, 1fr));
       gap: 10px;
+      min-width: 980px; /* prevents tight wrap that caused overlap */
     }
     @media (max-width: 980px){
-      .mixerGrid{grid-template-columns: repeat(2, minmax(0, 1fr));}
+      .mixerGrid{
+        grid-template-columns: repeat(2, minmax(240px, 1fr));
+        min-width: unset;
+      }
     }
+
     .strip{
       border-radius: 16px;
       border:1px solid rgba(255,255,255,.08);
@@ -231,12 +237,13 @@
       text-overflow: ellipsis;
     }
 
+    /* ✅ FIX: lock the fader column to the left, knobs area to the right */
     .stripBody{
-      display:flex;
+      display:grid;
+      grid-template-columns: 56px 1fr;
       gap: 12px;
       align-items: stretch;
-      justify-content: space-between;
-      min-width:0;
+      min-width: 0;
     }
 
     /* --- Vertical fader block --- */
@@ -246,7 +253,7 @@
       border-radius: 14px;
       border:1px solid rgba(255,255,255,.08);
       background: rgba(0,0,0,.16);
-      padding: 10px 8px;
+      padding: 10px 7px;
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -274,7 +281,7 @@
     }
 
     .vFaderWrap{
-      height: 140px;
+      height: 138px;
       width: 34px;
       display:flex;
       align-items:center;
@@ -282,8 +289,8 @@
       touch-action:none;
     }
     .vFader{
-      width: 140px;
-      height: 34px;
+      width: 138px;
+      height: 32px;
       transform: rotate(-90deg);
       transform-origin: center;
       -webkit-appearance: none;
@@ -392,7 +399,8 @@
       flex-direction:column;
       align-items:center;
       gap:4px;
-      width: 54px;
+      width: 56px;
+      min-width: 56px;
     }
     .kLbl{
       font-size: 10px;
@@ -417,10 +425,11 @@
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      align-items:center;
+      align-items:flex-start;
       justify-content:flex-start;
       min-width:0;
       flex: 1 1 auto;
+      align-content:flex-start;
     }
 
     /* Drum */
@@ -731,7 +740,7 @@
               </div>
             </div>
 
-            <!-- Pad (NEW) -->
+            <!-- Pad -->
             <div class="strip">
               <div class="stripHd"><div class="stripName">Pad</div></div>
               <div class="stripBody">
@@ -810,7 +819,7 @@
                   </div>
                 </div>
                 <div class="hint" style="margin:0; max-width:560px;">
-                  Vol faders are vertical. Pan = -100..100 • LPF = brightness • Verb = send level • Size regenerates reverb IR (no assets).
+                  Vol faders stay <b>left</b>, FX stays <b>right</b>. Pan = -100..100 • LPF = brightness • Verb = send level • Size regenerates reverb IR (no assets).
                 </div>
               </div>
             </div>
@@ -831,8 +840,8 @@
 
         <p class="hint">
           <span class="kbd">Space</span> toggles Play/Pause (desktop).<br/>
-          Auto demo loads from <span class="kbd">MIDI/</span> on GitHub Pages (relative paths).<br/>
-          Mapping: <span class="kbd">pluck → Bass</span>, <span class="kbd">chords → Piano</span>, <span class="kbd">arp → Synth</span> (Pad starts empty).
+          Default demo loads from <span class="kbd">/demos/demo01.json</span> on GitHub Pages.<br/>
+          MIDI mapping fallback: <span class="kbd">pluck → Bass</span>, <span class="kbd">chords → Piano</span>, <span class="kbd">arp → Synth</span>.
         </p>
       </div>
     </div>
@@ -914,6 +923,8 @@
 
   const drumNames = ["Kick", "Clap", "Shaker", "Snare", "CH", "OH"];
   const drumKeys  = ["kick", "clap", "shaker", "snare", "ch", "oh"];
+
+  const DEMO_JSON_PATH = "demos/demo01.json"; // ✅ new default demo
 
   const MIDI_PATHS = {
     bass:  "MIDI/NW_EID_115_synth_pluck_nightlife_Abmaj.mid",
@@ -1413,7 +1424,6 @@
   // --- Instruments ---
   function midiToHz(midi){ return 440 * Math.pow(2, (midi - 69) / 12); }
 
-  // Added releaseOverride so bass (and pad) can truly hold + tail
   function playVoice(freq, time, dur, bus, wave, peak, cutoff, releaseOverride=null){
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -1436,7 +1446,6 @@
     osc.stop(time + dur + rel + 0.03);
   }
 
-  // Pad voice: slower attack + lush release + slight detune layer
   function playPad(freq, time, dur, bus, cutoff){
     const o1 = ctx.createOscillator();
     const o2 = ctx.createOscillator();
@@ -1448,7 +1457,7 @@
 
     o1.frequency.setValueAtTime(freq, time);
     o2.frequency.setValueAtTime(freq, time);
-    o2.detune.setValueAtTime(7, time); // gentle chorus
+    o2.detune.setValueAtTime(7, time);
 
     lp.type = "lowpass";
     lp.frequency.setValueAtTime(cutoff, time);
@@ -1616,31 +1625,6 @@
     return cssVar("--pianoNote");
   }
 
-  function setDemoDrumsFromAudioAnalysis(){
-    for (const k of drumKeys) project.drums[k].fill(false);
-
-    const KICK   = [11, 30, 32, 43, 56, 62];
-    const SNARE  = [ 8, 24, 40, 56];
-    const CLAP   = [ 8, 24, 40, 56];
-    const SHAKER = [6,7,8,22,24,26,27,28,38,39,40,54,56,58,59,60];
-    const CH     = [6,8,22,28,32,38,54,60];
-    const OH     = [3,11,17,20,24,26,35,43,52,56,58];
-
-    KICK.forEach(s => project.drums.kick[s] = true);
-    SNARE.forEach(s => project.drums.snare[s] = true);
-    CLAP.forEach(s => project.drums.clap[s] = true);
-    SHAKER.forEach(s => project.drums.shaker[s] = true);
-    CH.forEach(s => project.drums.ch[s] = true);
-    OH.forEach(s => project.drums.oh[s] = true);
-
-    project.drumVols.kick = 100;
-    project.drumVols.snare = 92;
-    project.drumVols.clap = 80;
-    project.drumVols.shaker = 58;
-    project.drumVols.ch = 62;
-    project.drumVols.oh = 70;
-  }
-
   async function fetchMidiArrayBuffer(relPath){
     const url = new URL(relPath, window.location.href).toString();
     const res = await fetch(url, { cache: "no-store" });
@@ -1688,10 +1672,7 @@
     await importMidiIntoGrid(chordsBuf, project.piano);
     await importMidiIntoGrid(arpBuf,    project.synth);
 
-    // Pad starts empty (by design)
     clearInstrumentGrid(project.pad);
-
-    setDemoDrumsFromAudioAnalysis();
     buildDrumGrid();
     drawRoll(-1);
   }
@@ -2147,7 +2128,6 @@
   }
 
   function scheduleStep(step, time){
-    // drums
     if (project.drums.kick[step])   playKick(time);
     if (project.drums.snare[step])  playSnare(time);
     if (project.drums.clap[step])   playClap(time);
@@ -2155,7 +2135,6 @@
     if (project.drums.ch[step])     playCH(time);
     if (project.drums.oh[step])     playOH(time);
 
-    // piano
     for (let p=0; p<ROLL_PITCHES; p++){
       const len = project.piano[p][step];
       if (len > 0){
@@ -2163,7 +2142,6 @@
         playVoice(hz, time, secondsPerStep()*len, pianoBus, "square", 0.18, 4200, 0.14);
       }
     }
-    // synth
     for (let p=0; p<ROLL_PITCHES; p++){
       const len = project.synth[p][step];
       if (len > 0){
@@ -2171,7 +2149,6 @@
         playVoice(hz, time, secondsPerStep()*len, synthBus, "sawtooth", 0.15, 6000, 0.18);
       }
     }
-    // bass (FIX: holds full painted length + longer release)
     for (let p=0; p<ROLL_PITCHES; p++){
       const len = project.bass[p][step];
       if (len > 0){
@@ -2179,7 +2156,6 @@
         playVoice(hz, time, secondsPerStep()*len, bassBus, "triangle", 0.24, 1500, 0.35);
       }
     }
-    // pad (NEW)
     for (let p=0; p<ROLL_PITCHES; p++){
       const len = project.pad[p][step];
       if (len > 0){
@@ -2279,18 +2255,6 @@
     buildDrumGrid();
     drawRoll(-1);
   }
-
-  // Demo / clear
-  loadDemoBtn.addEventListener("click", async () => {
-    try { await loadDemoFromMidiFolder(); }
-    catch (e){
-      console.warn("Demo MIDI load failed; using drum demo only.", e);
-      setDemoDrumsFromAudioAnalysis();
-      buildDrumGrid();
-      drawRoll(-1);
-    }
-  });
-  clearProjectBtn.addEventListener("click", clearProject);
 
   // MIDI import -> active roll only
   importMidiBtn.addEventListener("click", () => midiFileInput.click());
@@ -2467,28 +2431,16 @@
       setReverbSize(rvSize);
     }
 
-    // refresh knob UI text + visuals
-    function refreshKnobTriplet(inst, colorMode){
-      const els = knobEls[inst];
-      els.panV.textContent = String(mix[inst].panVal);
-      setKnobVisual(els.panK, (mix[inst].panVal + 100)/200);
-
-      els.lpfV.textContent = String(mix[inst].lpfVal);
-      setKnobVisual(els.lpfK, mix[inst].lpfVal/100);
-
-      els.sndV.textContent = String(mix[inst].sendVal);
-      setKnobVisual(els.sndK, mix[inst].sendVal/100);
-    }
-    ["piano","synth","bass","pad","drum"].forEach(refreshKnobTriplet);
-
-    knobEls.rv.retV.textContent = String(rvReturn);
-    setKnobVisual(knobEls.rv.retK, rvReturn/100);
-    knobEls.rv.sizV.textContent = String(rvSize);
-    setKnobVisual(knobEls.rv.sizK, rvSize/100);
-
-    // apply routing after restore
     syncVolReadouts();
     applyBusRouting();
+  }
+
+  async function loadDemoFromJson(){
+    const url = new URL(DEMO_JSON_PATH, window.location.href).toString();
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to fetch demo JSON ${url} (${res.status})`);
+    const data = await res.json();
+    applyLoadedProject(data);
   }
 
   async function loadProjectFromFile(file){
@@ -2516,6 +2468,18 @@
     projectFileInput.value = "";
   });
 
+  // Demo / clear
+  loadDemoBtn.addEventListener("click", async () => {
+    try {
+      await loadDemoFromJson();
+    } catch (e) {
+      console.warn("Demo JSON load failed; falling back to MIDI demo.", e);
+      try { await loadDemoFromMidiFolder(); }
+      catch (e2) { console.warn("Fallback MIDI demo failed.", e2); }
+    }
+  });
+  clearProjectBtn.addEventListener("click", clearProject);
+
   // --- Init bindings ---
   bpm = 115;
   bpmEl.value = "115";
@@ -2538,7 +2502,6 @@
   attachTransposeKnob(bassTrKnob,  "bass");
   attachTransposeKnob(padTrKnob,   "pad");
 
-  // mixer knobs
   ["piano","synth","bass","pad","drum"].forEach(bindTrackMixer);
   bindReverbKnobs();
 
@@ -2547,15 +2510,17 @@
   buildDrumGrid();
   drawRoll(-1);
 
-  // auto demo
+  // ✅ auto demo: JSON first
   (async () => {
     try{
-      await loadDemoFromMidiFolder();
+      await loadDemoFromJson();
     } catch (e){
-      console.warn("Auto demo MIDI load failed; fallback to drum demo only.", e);
-      setDemoDrumsFromAudioAnalysis();
-      buildDrumGrid();
-      drawRoll(-1);
+      console.warn("Auto demo JSON load failed; fallback to MIDI demo.", e);
+      try{
+        await loadDemoFromMidiFolder();
+      } catch (e2){
+        console.warn("Fallback MIDI demo failed; starting empty.", e2);
+      }
     }
   })();
 
