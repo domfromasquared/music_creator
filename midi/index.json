@@ -29,7 +29,12 @@
     {
       "name": "Trap Essentials",
       "path": "trap",
-      "files": []
+      "files": [
+        {
+          "name": "LFF 110 Synth Analoguefunk (Bmin)",
+          "file": "LFF_110_synth_analoguefunk_Bmin.mid"
+        }
+      ]
     },
     {
       "name": "Recent",
