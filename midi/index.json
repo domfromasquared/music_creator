@@ -30,6 +30,16 @@
       "name": "Trap Essentials",
       "path": "trap",
       "files": []
+    },
+    {
+      "name": "Recent",
+      "path": "recent",
+      "files": [
+        {
+          "name": "LFF 100 Keys Fresh (Dmaj)",
+          "file": "LFF_100_keys_fresh_Dmaj.mid"
+        }
+      ]
     }
   ]
 }
