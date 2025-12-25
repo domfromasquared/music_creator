@@ -5,6 +5,10 @@
       "path": "nightlife",
       "files": [
         {
+          "name": "LFF 100 Bass Gfunk (Bmaj)",
+          "file": "LFF_100_bass_gfunk_Bmaj.mid"
+        },
+        {
           "name": "EID 115 Synth Arp (Abmaj)",
           "file": "NW_EID_115_synth_arp_nightlife_Abmaj.mid"
         },
