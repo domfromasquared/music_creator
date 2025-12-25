@@ -1,0 +1,6 @@
+{
+  "packs": [
+    { "path": "nightlife", "name": "Nightlife" },
+    { "path": "trap", "name": "Trap Essentials" }
+  ]
+}
