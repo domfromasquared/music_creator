@@ -3,2646 +3,2439 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Mini DAW</title>
+  <title>Mini DAW — Drum Sequencer + Piano Roll</title>
+
   <style>
     :root{
       --bg0:#0b0f14;
-      --bg1:#0f1621;
-      --fg:#e6edf3;
-      --muted:#8aa0b8;
-      --line:rgba(255,255,255,.14);
-      --shadow: 0 10px 25px rgba(0,0,0,.25);
-      --radius:14px;
-      --radius2:18px;
-      --pad:14px;
-      --accent:#6ae4ff;
-      --good:#4ade80;
-      --warn:#fbbf24;
-      --bad:#fb7185;
+      --bg1:#0e1522;
+      --panel:#0f1621;
+      --panel2:#0c131d;
+      --line:#243244;
+      --text:#e6edf3;
+      --muted:#9fb3c8;
+      --good:#39d98a;
+      --warn:#f4d35e;
+      --bad:#ff5c5c;
+
+      --btn:#162133;
+      --btn2:#1a2a43;
+
+      --k-bg:#0b1018;
+      --k-ring:#2a3c57;
+      --k-fill:#e6edf3;
     }
 
-    *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
       margin:0;
-      color:var(--fg);
+      color:var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(1200px 700px at 20% 10%, rgba(90, 200, 255, 0.12), transparent 55%),
-                  radial-gradient(900px 650px at 80% 15%, rgba(255, 120, 200, 0.08), transparent 58%),
-                  radial-gradient(1200px 900px at 60% 90%, rgba(120, 255, 190, 0.07), transparent 60%),
-                  linear-gradient(180deg, var(--bg0), #070a0f 60%, #04060a);
-      overflow-x:hidden;
+      background: radial-gradient(1200px 800px at 40% 20%, #111f37 0%, var(--bg0) 45%, #05070a 100%);
     }
 
-    a{ color:inherit; }
-    button, input, select{ font:inherit; }
-    .app{ max-width:1280px; margin:0 auto; padding:14px 14px 22px; }
+    #wrap{
+      display:flex;
+      flex-wrap:wrap;
+      gap:16px;
+      padding:16px;
+      align-items:flex-start;
+      justify-content:center;
+    }
 
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:12px 12px;
+    .panel{
       border:1px solid var(--line);
-      background: rgba(15, 22, 33, 0.72);
-      backdrop-filter: blur(10px);
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow);
+      border-radius:14px;
+      background: rgba(15,22,33,0.9);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      overflow:hidden;
     }
 
-    .brand{
-      display:flex; align-items:center; gap:10px; min-width:0;
-    }
-    .logo{
-      width:34px; height:34px; border-radius:12px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.25), rgba(255,255,255,0) 60%),
-                  linear-gradient(135deg, rgba(106,228,255,.7), rgba(255,120,200,.35));
-      border:1px solid rgba(255,255,255,.18);
-      box-shadow: 0 8px 18px rgba(0,0,0,.22);
-      flex:0 0 auto;
-    }
-    .brand h1{
-      font-size:15px; margin:0; letter-spacing:.2px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .brand small{ display:block; color:var(--muted); font-weight:500; font-size:12px; margin-top:1px; }
-
-    .controls{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    .hdr{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0));
     }
 
-    .pill{
-      display:flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.12);
+    .hdr h2{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.2px;
+      color:var(--text);
+      font-weight:700;
     }
-    .pill label{ color:var(--muted); font-size:12px; }
-    .pill input[type="range"]{ width:120px; }
-    .pill input[type="number"]{
-      width:76px; padding:6px 8px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.25);
-      color:var(--fg);
+
+    .hdr .sub{
+      font-size:12px;
+      color:var(--muted);
     }
 
     .btn{
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      color:var(--fg);
-      padding:8px 10px;
-      border-radius: 12px;
+      appearance:none;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.05));
+      color:var(--text);
+      border-radius:10px;
+      padding:7px 10px;
+      font-size:12px;
       cursor:pointer;
-      transition: transform .06s ease, background .15s ease, border-color .15s ease;
       user-select:none;
-      display:inline-flex; align-items:center; gap:8px;
     }
-    .btn:hover{ background: rgba(255,255,255,.08); }
+    .btn:hover{ background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.02)); }
     .btn:active{ transform: translateY(1px); }
-    .btn.primary{
-      background: linear-gradient(135deg, rgba(106,228,255,.35), rgba(255,120,200,.18));
-      border-color: rgba(106,228,255,.35);
+
+    .btn.small{ padding:5px 8px; border-radius:9px; font-size:11px; }
+    .btn.primary{ border-color:#2b4d7a; background: linear-gradient(180deg, rgba(56,131,255,.25), rgba(56,131,255,.08)); }
+    .btn.danger{ border-color:#7a2b2b; background: linear-gradient(180deg, rgba(255,92,92,.22), rgba(255,92,92,.07)); }
+
+    .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .row.tight{ gap:8px; }
+    .spacer{ flex:1; }
+
+    .pill{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.15);
+      color:var(--muted);
+      white-space:nowrap;
     }
-    .btn.danger{ border-color: rgba(251,113,133,.35); }
-    .btn .kbd{
-      font-size:11px; color:var(--muted);
-      padding:2px 6px; border-radius:999px;
-      background: rgba(0,0,0,.25);
-      border:1px solid rgba(255,255,255,.08);
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:11px;
+      padding:3px 6px;
+      border-radius:7px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.15);
+      color:var(--text);
     }
 
     .grid{
       display:grid;
-      grid-template-columns: 1.25fr .9fr;
-      gap:14px;
-      margin-top:14px;
-      align-items:start;
+      gap:12px;
+      padding:12px;
     }
 
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 1fr; }
+    /* ===== TRANSPORT / TOP ===== */
+    #top{
+      width:min(1220px, calc(100vw - 32px));
     }
 
-    .card{
+    #transport{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding:12px;
+    }
+
+    .field{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
       border:1px solid var(--line);
-      background: rgba(15, 22, 33, 0.68);
-      backdrop-filter: blur(10px);
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-
-    .cardHeader{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:12px 14px;
-      border-bottom:1px solid rgba(255,255,255,.09);
+      border-radius:12px;
       background: rgba(0,0,0,.14);
     }
-
-    .cardHeader h2{
-      margin:0; font-size:14px; letter-spacing:.2px;
-      display:flex; align-items:center; gap:10px;
-    }
-    .cardHeader .sub{ color:var(--muted); font-weight:500; font-size:12px; }
-
-    /* ---------- Drum Sequencer ---------- */
-    .drumWrap{ padding: 12px 12px 14px; }
-
-    .seqTop{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      margin-bottom:10px;
-    }
-
-    .seqLeft, .seqRight{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    }
-
-    .seg{
-      display:inline-flex; gap:6px; align-items:center;
-      padding:7px 10px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.12);
-    }
-    .seg label{ color:var(--muted); font-size:12px; }
-    .seg .value{ font-size:12px; font-weight:700; }
-
-    .resBtns{
-      display:flex; gap:6px; align-items:center;
-    }
-
-    .resBtn{
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.15);
-      color:var(--fg);
-      padding:7px 10px;
-      border-radius:12px;
-      cursor:pointer;
+    .field label{ font-size:12px; color:var(--muted); }
+    .field input[type="number"]{
+      width:64px;
+      background: transparent;
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:10px;
+      padding:6px 8px;
       font-size:12px;
+      outline:none;
     }
-    .resBtn.active{
-      border-color: rgba(106,228,255,.35);
-      background: rgba(106,228,255,.14);
+
+    /* ===== DRUMS ===== */
+    #drums{
+      width:min(1220px, calc(100vw - 32px));
+    }
+
+    .drumHeader{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      padding:12px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .drumGridWrap{
+      padding:12px;
+      overflow:hidden;
     }
 
     .drumGrid{
       display:grid;
+      grid-template-columns: 140px 1fr;
+      gap:10px;
+      align-items:start;
+    }
+
+    .drumLabels{
+      display:flex;
+      flex-direction:column;
       gap:10px;
     }
 
-    .drumRow{
-      display:grid;
-      grid-template-columns: 170px 1fr;
-      gap:10px;
+    .drLabel{
+      height:34px;
+      display:flex;
       align-items:center;
-    }
-
-    @media (max-width: 720px){
-      .drumRow{ grid-template-columns: 1fr; }
-    }
-
-    .drumMeta{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
-      min-width:0;
-    }
-
-    .drumLabel{
-      display:flex; flex-direction:column; gap:4px;
-      min-width:0;
-    }
-    .drumLabel .name{
-      font-size:12px; font-weight:800; letter-spacing:.2px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      cursor:pointer;
-      user-select:none;
-    }
-    .drumLabel .hint{ font-size:11px; color:var(--muted); }
-
-    .drumKnobs{
-      display:flex; align-items:center; gap:10px; flex:0 0 auto;
-    }
-
-    .miniToggle{
-      width:26px; height:26px;
-      display:grid; place-items:center;
-      border-radius: 10px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
-      cursor:pointer;
-      user-select:none;
-      font-size:12px;
-      line-height:1;
-    }
-    .miniToggle.on{
-      border-color: rgba(106,228,255,.35);
-      background: rgba(106,228,255,.14);
-    }
-    .miniToggle.mute.on{
-      border-color: rgba(251,113,133,.35);
-      background: rgba(251,113,133,.16);
-    }
-
-    .knob{
-      width:34px; height:34px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.16);
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(0,0,0,.22));
-      display:grid; place-items:center;
-      position:relative;
-      cursor:pointer;
+      justify-content:space-between;
+      gap:8px;
+      padding:0 10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background: rgba(0,0,0,.14);
       user-select:none;
       touch-action:none;
-      box-shadow: 0 8px 18px rgba(0,0,0,.18);
-    }
-    .knob::after{
-      content:"";
-      position:absolute;
-      width:2px; height:11px;
-      top:6px; left:50%;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,.72);
-      border-radius:999px;
-    }
-    .knob span{
-      font-size:10px; color:rgba(255,255,255,.86);
-      font-weight:800;
-      text-shadow: 0 2px 8px rgba(0,0,0,.4);
     }
 
-    .stepsWrap{
+    .drLabel .name{
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+
+    .tag{
+      font-size:10px;
+      padding:2px 6px;
+      border-radius:999px;
       border:1px solid rgba(255,255,255,.12);
-      border-radius:14px;
+      background: rgba(0,0,0,.20);
+      color:rgba(255,255,255,.85);
+    }
+
+    .drSteps{
       overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:14px;
       background: rgba(0,0,0,.10);
     }
 
-    .steps{
+    .drStepsInner{
       display:grid;
-      grid-auto-flow:column;
+      grid-auto-flow: column;
       grid-auto-columns: 1fr;
-      min-width: 0;
+      gap:0;
+      width:100%;
+      min-width:0;
     }
 
     .step{
       height:34px;
       border-right:1px solid rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:center;
       cursor:pointer;
-      background: rgba(255,255,255,.03);
-      transition: background .12s ease, transform .06s ease, outline-color .12s ease;
-      position:relative;
       user-select:none;
       touch-action:none;
+      position:relative;
     }
+    .step:last-child{ border-right:none; }
 
-    .step.groupA{ background: rgba(255,255,255,.025); }
-    .step.groupB{ background: rgba(106,228,255,.055); }
-    .step.groupC{ background: rgba(255,120,200,.045); }
-    .step.groupD{ background: rgba(120,255,190,.04); }
-
-    .step.on{ background: rgba(255,255,255,.12); }
-    .step.on::after{
+    .step::after{
       content:"";
-      position:absolute; inset:6px 6px 6px 6px;
-      border-radius:9px;
-      background: rgba(255,255,255,.42);
-      opacity:.85;
+      width:13px; height:13px;
+      border-radius:4px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      transform: rotate(45deg);
+      opacity:.6;
+      transition: .08s ease;
     }
 
-    .step.playhead{
-      outline: 2px solid rgba(106,228,255,.55);
+    .step.on::after{
+      transform: rotate(0deg);
+      border-radius:4px;
+      opacity:1;
+      background: rgba(255,255,255,.9);
+    }
+
+    .step.playing{
+      outline:2px solid rgba(255,255,255,.25);
       outline-offset:-2px;
     }
 
     .step.dragHover{
-      outline: 2px solid rgba(255,255,255,.35);
-      outline-offset:-2px;
+      box-shadow: inset 0 0 0 999px rgba(255,255,255,.08);
     }
 
-    /* ---------- Piano Roll ---------- */
-    .rollWrap{ padding: 0; }
-    .rollTop{
-      padding: 12px 14px;
-      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-      border-bottom: 1px solid rgba(255,255,255,.09);
-      background: rgba(0,0,0,.12);
+    /* group shading (every N steps) */
+    .step.grpA{ background: rgba(255,255,255,.02); }
+    .step.grpB{ background: rgba(255,255,255,.06); }
+    .step.grpC{ background: rgba(255,255,255,.03); }
+    .step.grpD{ background: rgba(255,255,255,.07); }
+
+    /* ===== PIANO ROLL ===== */
+    #roll{
+      width:min(1220px, calc(100vw - 32px));
     }
 
-    .tabs{
-      display:flex; gap:8px; flex-wrap:wrap; align-items:center;
-    }
-    .tab{
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.15);
-      color:var(--fg);
-      padding:8px 10px;
-      border-radius: 12px;
-      cursor:pointer;
-      font-size:12px;
-      user-select:none;
-    }
-    .tab.active{
-      border-color: rgba(106,228,255,.35);
-      background: rgba(106,228,255,.14);
+    .rollHeader{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding:12px;
+      border-bottom:1px solid var(--line);
     }
 
-    .rollTools{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    .instBtns{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
     }
 
-    .toolChip{
-      display:flex; align-items:center; gap:8px;
+    .instBtn{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      border-radius:12px;
       padding:7px 10px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+      user-select:none;
+      touch-action:none;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .instBtn .dot{
+      width:10px; height:10px;
       border-radius:999px;
-      background: rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.35);
+      border:1px solid rgba(255,255,255,.18);
     }
-    .toolChip label{ font-size:12px; color:var(--muted); }
-    .toolChip input[type="range"]{ width:120px; }
-    .toolChip input[type="number"]{
-      width:76px; padding:6px 8px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.25);
-      color:var(--fg);
+    .instBtn.active{
+      border-color: rgba(255,255,255,.22);
+      background: rgba(255,255,255,.10);
     }
 
-    .rollMain{
+    .rollWrap{
+      padding:12px;
+      overflow:auto;
+    }
+
+    .rollGrid{
       display:grid;
-      grid-template-columns: 120px 1fr;
-      min-height: 430px;
-      max-height: 520px;
-      overflow:hidden;
-    }
-
-    @media (max-width: 720px){
-      .rollMain{ grid-template-columns: 92px 1fr; }
+      grid-template-columns: 92px 1fr;
+      gap:10px;
+      min-width: 920px;
     }
 
     .keys{
-      border-right: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.10);
-      overflow:auto;
-      padding-bottom:8px;
-      touch-action: pan-y;
+      display:flex;
+      flex-direction:column;
+      gap:0;
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(0,0,0,.12);
     }
 
     .key{
-      height: 26px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      display:flex; align-items:center; justify-content:flex-start;
-      padding:0 10px;
+      height:24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 8px;
+      border-bottom:1px solid rgba(255,255,255,.06);
       user-select:none;
+      touch-action:none;
       cursor:pointer;
-      position:relative;
-    }
-    .key.white{
-      background: rgba(255,255,255,.03);
-      color: #0b0f14;
-    }
-    .key.black{
-      background: rgba(0,0,0,.55);
-      color: rgba(255,255,255,.90);
-    }
-    .key .noteTxt{
-      font-weight:800;
       font-size:11px;
-      opacity:.92;
-      letter-spacing:.2px;
+      font-weight:800;
     }
-    .key:hover{ filter: brightness(1.08); }
+    .key:last-child{ border-bottom:none; }
 
-    .roll{
+    .key.white{ background: rgba(255,255,255,.06); color:#0b0f14; }
+    .key.black{ background: rgba(0,0,0,.45); color:#e6edf3; }
+
+    .rollSteps{
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(0,0,0,.10);
       position:relative;
-      overflow:auto;
-      background: rgba(0,0,0,.06);
-      touch-action: none;
     }
 
-    .rollCanvas{
-      display:block;
-    }
-
-    /* ---------- Mixer ---------- */
-    .mixerWrap{ padding: 12px 12px 14px; }
-
-    .mixerGrid{
+    .rollStepsInner{
       display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      grid-template-columns: repeat(var(--steps), 1fr);
+    }
+
+    .cell{
+      height:24px;
+      border-right:1px solid rgba(255,255,255,.06);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      cursor:pointer;
+      user-select:none;
+      touch-action:none;
+      position:relative;
+    }
+    .cell:nth-child(var(--steps)n){ border-right:none; }
+
+    .cell.grpA{ background: rgba(255,255,255,.01); }
+    .cell.grpB{ background: rgba(255,255,255,.05); }
+    .cell.grpC{ background: rgba(255,255,255,.02); }
+    .cell.grpD{ background: rgba(255,255,255,.06); }
+
+    .note{
+      position:absolute;
+      left:0;
+      top:2px;
+      bottom:2px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.22);
+      opacity:.95;
+      pointer-events:none;
+    }
+
+    /* ===== MIXER ===== */
+    #mixer{
+      width:min(1220px, calc(100vw - 32px));
+    }
+
+    .mixerWrap{
+      padding:12px;
+      overflow-x:auto;
+    }
+
+    .stripRow{
+      display:flex;
       gap:12px;
+      align-items:stretch;
+      min-width: 980px;
     }
 
     .strip{
-      border:1px solid rgba(255,255,255,.12);
+      width: 180px;
+      border:1px solid var(--line);
       border-radius:16px;
-      background: rgba(0,0,0,.16);
-      padding:10px 10px 12px;
-      display:flex; flex-direction:column; gap:10px;
+      background: rgba(0,0,0,.12);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .stripTop{
+      padding:10px 10px 8px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .stripTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      user-select:none;
+      touch-action:none;
+      cursor:default;
+    }
+    .stripTitle .left{
+      display:flex; align-items:center; gap:8px;
+      font-size:12px; font-weight:900;
       min-width:0;
     }
-
-    .stripHead{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    .stripTitle .sw{
+      width:10px; height:10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.35);
+      flex:0 0 auto;
     }
-    .stripName{
-      font-weight:900; font-size:12px;
-      letter-spacing:.2px;
+    .stripTitle .nm{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .stripBtns{
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+
+    .miniBtn{
+      width:34px;
+      height:28px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.88);
+      font-size:11px;
+      font-weight:900;
       cursor:pointer;
       user-select:none;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      touch-action:none;
+    }
+    .miniBtn.on{
+      background: rgba(255,255,255,.14);
+      border-color: rgba(255,255,255,.22);
     }
 
-    .stripToggles{ display:flex; gap:8px; align-items:center; }
-
     .stripBody{
-      display:flex;
+      display:grid;
+      grid-template-columns: 56px 1fr; /* fader column + knobs column */
       gap:10px;
-      align-items:flex-start;
+      padding:10px;
+      align-items:start;
     }
 
     .faderCol{
-      width:44px;
       display:flex;
       flex-direction:column;
       align-items:center;
-      gap:6px;
-      flex:0 0 auto;
-    }
-    .faderCol .faderLabel{
-      font-size:11px;
-      color:var(--muted);
-      font-weight:700;
-      letter-spacing:.2px;
-    }
-    .vFader{
-      writing-mode: bt-lr;
-      -webkit-appearance: slider-vertical;
-      width: 26px;
-      height: 150px;
-      transform: rotate(180deg);
-      touch-action:none;
+      gap:8px;
+      min-width:0;
     }
 
-    /* ✅ FIX: lock knob alignment (PAN / LPF / VERB) */
+    .fader{
+      -webkit-appearance:none;
+      appearance:none;
+      width: 120px;
+      height: 24px;
+      transform: rotate(-90deg);
+      border-radius:999px;
+      background: rgba(255,255,255,.12);
+      outline:none;
+      cursor:pointer;
+    }
+    .fader::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      appearance:none;
+      width:16px; height:16px;
+      border-radius:999px;
+      background: rgba(255,255,255,.9);
+      border:1px solid rgba(0,0,0,.2);
+    }
+    .fader::-moz-range-thumb{
+      width:16px; height:16px;
+      border-radius:999px;
+      background: rgba(255,255,255,.9);
+      border:1px solid rgba(0,0,0,.2);
+    }
+
+    .fval{
+      font-size:11px;
+      color:var(--muted);
+      text-align:center;
+      width:100%;
+    }
+
+    /* === FIX: Knob alignment (PAN, LPF, VERB stacked vertically) === */
     .stripKnobs{
+      /* Stack PAN / LPF / VERB vertically, in a consistent top-to-bottom order */
       display:grid;
-      grid-template-columns: repeat(3, 56px);
-      gap:10px;
-      align-items:start;
-      justify-content:start;
-      min-width:0;
-      flex: 1 1 auto;
+      grid-auto-flow: row;
+      grid-template-rows: repeat(3, auto);
+      gap: 10px;
+      align-items: start;
+      justify-items: center;
+      align-content: start;
+      min-width: 0;
     }
 
     .kCol{
-      width:56px;
       display:flex;
       flex-direction:column;
       align-items:center;
       gap:6px;
+      min-width:0;
     }
-    .kCol label{
-      font-size:11px;
+    .kLab{
+      font-size:10px;
       color:var(--muted);
-      font-weight:800;
-      letter-spacing:.2px;
+      letter-spacing:.4px;
+      font-weight:900;
+      text-transform:uppercase;
     }
 
-    .knobBig{
-      width:44px; height:44px;
+    .knob{
+      width:42px; height:42px;
+      border-radius:999px;
+      background: radial-gradient(20px 20px at 30% 30%, rgba(255,255,255,.10), rgba(0,0,0,.18));
+      border:1px solid rgba(255,255,255,.12);
+      position:relative;
+      cursor:pointer;
+      user-select:none;
+      touch-action:none;
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,.20);
     }
-    .knobBig::after{ height:14px; top:7px; }
+    .knob .ring{
+      position:absolute;
+      inset:7px;
+      border-radius:999px;
+      border:2px solid rgba(255,255,255,.10);
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,.18);
+    }
+    .knob .needle{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:2px;
+      height:16px;
+      background: rgba(255,255,255,.9);
+      transform-origin: 50% 100%;
+      transform: translate(-50%,-100%) rotate(0deg);
+      border-radius:2px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.25);
+    }
 
-    /* ---------- Modals ---------- */
-    .modalOverlay{
-      position:fixed; inset:0;
+    /* ===== MODALS ===== */
+    .modalBackdrop{
+      position:fixed;
+      inset:0;
       background: rgba(0,0,0,.55);
       display:none;
       align-items:center;
       justify-content:center;
-      padding:14px;
-      z-index: 50;
+      padding:16px;
+      z-index:50;
     }
-    .modal{
-      width:min(760px, 100%);
-      border-radius: 18px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(15,22,33,.92);
-      backdrop-filter: blur(14px);
-      box-shadow: 0 22px 55px rgba(0,0,0,.5);
-      overflow:hidden;
-    }
-    .modalHead{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:12px 14px;
-      border-bottom:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.16);
-    }
-    .modalHead h3{ margin:0; font-size:14px; }
-    .modalHead .right{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .modalBody{ padding:12px 14px 14px; }
+    .modalBackdrop.show{ display:flex; }
 
-    .searchBar{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-      margin-bottom:10px;
+    .modal{
+      width:min(900px, 100%);
+      max-height:min(90vh, 900px);
+      overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background: rgba(15,22,33,0.96);
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+      display:flex;
+      flex-direction:column;
     }
-    .searchBar input{
-      flex:1 1 260px;
-      padding:10px 12px;
-      border-radius: 12px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.25);
-      color:var(--fg);
-      outline:none;
+
+    .modalHdr{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .modalHdr h3{
+      margin:0;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .modalBody{
+      padding:12px 14px;
+      overflow:auto;
+      display:grid;
+      gap:12px;
     }
 
     .list{
-      display:flex;
-      flex-direction:column;
+      display:grid;
       gap:8px;
-      max-height: 420px;
-      overflow:auto;
-      padding-right:4px;
     }
 
-    .fileRow{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding:10px 12px;
+    .listItem{
       border:1px solid rgba(255,255,255,.10);
       border-radius:14px;
       background: rgba(0,0,0,.14);
+      padding:10px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
     }
-    .fileName{
-      font-weight:800; font-size:12px; letter-spacing:.2px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      max-width: 480px;
+    .listItem .meta{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
     }
-    .fileBtns{
-      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
-      flex:0 0 auto;
-    }
-    .miniBtn{
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.16);
-      color:var(--fg);
-      padding:7px 10px;
-      border-radius:12px;
-      cursor:pointer;
+    .listItem .meta .t{
       font-size:12px;
-      user-select:none;
+      font-weight:900;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
     }
-    .miniBtn.primary{
-      border-color: rgba(106,228,255,.35);
-      background: rgba(106,228,255,.14);
+    .listItem .meta .s{
+      font-size:11px;
+      color:var(--muted);
     }
 
-    /* Color Picker Popover */
-    .pop{
+    .colorPop{
       position:fixed;
-      z-index: 80;
+      inset:auto auto auto auto;
+      z-index:60;
       display:none;
+      background: rgba(15,22,33,0.96);
+      border:1px solid var(--line);
+      border-radius:14px;
       padding:10px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(15,22,33,.95);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 18px 45px rgba(0,0,0,.42);
+      box-shadow: 0 18px 50px rgba(0,0,0,.6);
     }
-    .pop .row{ display:flex; align-items:center; gap:10px; }
-    .pop input[type="color"]{
-      width:46px; height:46px; padding:0; border:0;
-      background:transparent;
-    }
-    .pop button{
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
-      color:var(--fg);
-      padding:8px 10px;
-      border-radius:12px;
+    .colorPop.show{ display:block; }
+    .colorPop input[type="color"]{
+      width: 180px;
+      height: 46px;
+      border:none;
+      background: transparent;
+      padding:0;
       cursor:pointer;
+    }
+
+    @media (max-width: 760px){
+      .drumGrid{ grid-template-columns: 1fr; }
+      .drumLabels{ flex-direction:row; flex-wrap:wrap; }
+      .drLabel{ width:calc(50% - 5px); }
+      .rollGrid{ grid-template-columns: 84px 1fr; min-width: 780px; }
+      .strip{ width: 172px; }
     }
   </style>
 </head>
+
 <body>
-  <div class="app">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo"></div>
-        <div style="min-width:0">
-          <h1>Nightlife Mini-DAW</h1>
-          <small>Sequencer + Piano Roll + Mixer</small>
+  <div id="wrap">
+
+    <!-- TOP / TRANSPORT -->
+    <section id="top" class="panel">
+      <div class="hdr">
+        <div>
+          <h2>Mini DAW</h2>
+          <div class="sub">Space = play/pause • Tap/drag to paint • MIDI demo + project save/load</div>
+        </div>
+        <div class="row tight">
+          <span class="pill" id="statusPill">Stopped</span>
+          <span class="kbd">Space</span>
         </div>
       </div>
 
-      <div class="controls">
-        <button class="btn primary" id="playBtn">Play <span class="kbd">Space</span></button>
-        <div class="pill">
-          <label>BPM</label>
-          <input id="bpm" type="number" min="60" max="220" step="1" value="115" />
+      <div id="transport">
+        <button class="btn primary" id="playBtn">Play</button>
+        <button class="btn" id="stopBtn">Stop</button>
+
+        <div class="field">
+          <label for="bpm">BPM</label>
+          <input id="bpm" type="number" min="40" max="240" step="1" value="115" />
         </div>
 
-        <button class="btn" id="saveBtn">Save</button>
+        <div class="field">
+          <label>Resolution</label>
+          <select id="resSel" class="btn" style="padding:6px 10px">
+            <option value="16">1/16</option>
+            <option value="32">1/32</option>
+            <option value="64" selected>1/64</option>
+          </select>
+        </div>
+
+        <span class="pill" id="resPill">1/64</span>
+
+        <div class="spacer"></div>
+
         <button class="btn" id="loadBtn">Load</button>
-        <button class="btn" id="importBtn">Import</button>
+        <button class="btn" id="saveBtn">Save</button>
+        <button class="btn" id="importBtn">Import MIDI</button>
         <button class="btn" id="midiLibBtn">MIDI Library</button>
         <button class="btn" id="bgBtn">Background</button>
         <button class="btn danger" id="clearBtn">Clear</button>
       </div>
-    </div>
+    </section>
 
-    <div class="grid">
-      <div class="card">
-        <div class="cardHeader">
-          <h2>Drum Sequencer <span class="sub">1/16 → 1/32 → 1/64 (loop extends)</span></h2>
-          <div class="sub" id="drumResLabel">Resolution: 1/64</div>
-        </div>
-
-        <div class="drumWrap">
-          <div class="seqTop">
-            <div class="seqLeft">
-              <div class="seg">
-                <label>Resolution</label>
-                <div class="resBtns">
-                  <button class="resBtn" data-res="16">1/16</button>
-                  <button class="resBtn" data-res="32">1/32</button>
-                  <button class="resBtn active" data-res="64">1/64</button>
-                </div>
-              </div>
-              <div class="seg">
-                <label>Groups</label>
-                <div class="value" id="groupLabel">1/64</div>
-              </div>
-            </div>
-            <div class="seqRight">
-              <div class="seg">
-                <label>Drum Bus</label>
-                <div class="value" id="drumBusStatus">Active</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="drumGrid" id="drumGrid"></div>
-        </div>
+    <!-- DRUMS -->
+    <section id="drums" class="panel">
+      <div class="hdr">
+        <h2>Drum Sequencer</h2>
+        <div class="sub">Paint steps (drag works) • Groups reflect current resolution</div>
       </div>
 
-      <div class="card">
-        <div class="cardHeader">
-          <h2>Mixer <span class="sub">PAN / LPF / VERB per track</span></h2>
-          <div class="sub">Compact strips</div>
-        </div>
-        <div class="mixerWrap">
-          <div class="mixerGrid" id="mixerGrid"></div>
-        </div>
+      <div class="drumHeader">
+        <span class="pill" id="drInfo">Steps: 64</span>
+        <span class="pill" id="drGroupInfo">Resolution: 1/64</span>
       </div>
 
-      <div class="card" style="grid-column: 1 / -1;">
-        <div class="cardHeader">
-          <h2>Piano Roll <span class="sub">C3 → C5 (3 octaves)</span></h2>
-          <div class="sub">Paint & sustain notes</div>
-        </div>
+      <div class="drumGridWrap">
+        <div class="drumGrid" id="drumGrid"></div>
+      </div>
+    </section>
 
-        <div class="rollWrap">
-          <div class="rollTop">
-            <div class="tabs" id="tabs"></div>
+    <!-- PIANO ROLL -->
+    <section id="roll" class="panel">
+      <div class="hdr">
+        <h2>Piano Roll</h2>
+        <div class="sub">2+ octaves (C3–C5) • Sustain notes by dragging length • Tap keys to preview</div>
+      </div>
 
-            <div class="rollTools">
-              <div class="toolChip">
-                <label>Steps</label>
-                <select id="rollSteps">
-                  <option value="64" selected>64</option>
-                  <option value="128">128</option>
-                  <option value="256">256</option>
-                </select>
-              </div>
+      <div class="rollHeader">
+        <div class="instBtns" id="instBtns"></div>
 
-              <div class="toolChip">
-                <label>Quant</label>
-                <select id="rollQuant">
-                  <option value="1">1</option>
-                  <option value="2">1/2</option>
-                  <option value="4">1/4</option>
-                  <option value="8">1/8</option>
-                  <option value="16">1/16</option>
-                  <option value="32">1/32</option>
-                  <option value="64" selected>1/64</option>
-                </select>
-              </div>
+        <div class="spacer"></div>
 
-              <div class="toolChip">
-                <label>Velocity</label>
-                <input id="rollVel" type="range" min="10" max="127" value="98" />
-              </div>
+        <!-- transpose knobs in header -->
+        <span class="pill" id="transposePill">Transpose</span>
+        <div id="transposeKnobs" class="row tight"></div>
+      </div>
 
-              <div class="toolChip">
-                <label>Snap</label>
-                <select id="rollSnap">
-                  <option value="1" selected>On</option>
-                  <option value="0">Off</option>
-                </select>
-              </div>
-
-              <div class="toolChip">
-                <label>Note Len</label>
-                <select id="rollNoteLen">
-                  <option value="1">1/64</option>
-                  <option value="2">1/32</option>
-                  <option value="4">1/16</option>
-                  <option value="8">1/8</option>
-                  <option value="16" selected>1/4</option>
-                </select>
-              </div>
-
-              <div class="toolChip">
-                <label>Trans</label>
-                <div id="transposeKnobs" style="display:flex; gap:10px; align-items:center;"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="rollMain">
-            <div class="keys" id="keys"></div>
-            <div class="roll" id="roll">
-              <canvas class="rollCanvas" id="rollCanvas" width="1400" height="520"></canvas>
-            </div>
+      <div class="rollWrap">
+        <div class="rollGrid">
+          <div class="keys" id="keys"></div>
+          <div class="rollSteps" id="rollSteps">
+            <div class="rollStepsInner" id="rollStepsInner"></div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- MIXER -->
+    <section id="mixer" class="panel">
+      <div class="hdr">
+        <h2>Mixer</h2>
+        <div class="sub">Vertical faders • Solo/Mute • PAN / LPF / VERB per channel</div>
+      </div>
+
+      <div class="mixerWrap">
+        <div class="stripRow" id="stripRow"></div>
+      </div>
+    </section>
+
   </div>
 
-  <!-- MIDI Library Modal -->
-  <div class="modalOverlay" id="midiOverlay">
+  <!-- MIDI LIBRARY MODAL -->
+  <div class="modalBackdrop" id="midiModalBack">
     <div class="modal">
-      <div class="modalHead">
+      <div class="modalHdr">
         <h3>MIDI Library</h3>
-        <div class="right">
-          <span class="kbd" id="targetLaneBadge">Target: Piano</span>
-          <span class="kbd" id="suggestLaneBadge" style="opacity:.85">Suggested: —</span>
-          <button class="miniBtn" id="midiCloseBtn">Close</button>
+        <div class="row tight">
+          <span class="pill" id="targetLaneBadge">Target: Piano</span>
+          <button class="btn small" id="midiModalClose">Close</button>
         </div>
       </div>
 
       <div class="modalBody">
-        <div class="searchBar">
-          <input id="midiSearch" placeholder="Search packs or files..." />
-          <button class="miniBtn" id="midiRefreshBtn">Refresh</button>
+        <div class="row">
+          <span class="pill" id="midiPackInfo">Loading…</span>
+          <span class="pill" id="midiFileStatus">Pick a MIDI to preview/import.</span>
         </div>
-
         <div class="list" id="midiList"></div>
       </div>
     </div>
   </div>
 
-  <!-- Color Popover -->
-  <div class="pop" id="colorPop">
-    <div class="row">
-      <input type="color" id="colorPicker" />
-      <button id="colorApplyBtn">Apply</button>
-      <button id="colorCancelBtn">Cancel</button>
+  <!-- color picker pop -->
+  <div class="colorPop" id="colorPop">
+    <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+      <span class="pill" id="colorPopTitle">Color</span>
+      <button class="btn small" id="colorPopClose">Close</button>
     </div>
+    <input type="color" id="colorPicker" value="#ffffff" />
   </div>
 
+  <input id="fileInput" type="file" accept=".mid,.midi,application/json" style="display:none" />
+
+  <!-- MIDI parser -->
+  <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.min.js"></script>
+
   <script>
-    /***********************
-     * Utilities
-     ***********************/
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const lerp = (a,b,t) => a + (b-a)*t;
+  // ============================================================
+  // State / Constants
+  // ============================================================
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  const actx = new AudioContextClass();
 
-    function hexToRgb(hex){
-      const h = hex.replace("#","").trim();
-      const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-      const n = parseInt(full, 16);
-      return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
-    }
-    function hexToRgba(hex, alpha){
-      const {r,g,b} = hexToRgb(hex);
-      return `rgba(${r},${g},${b},${alpha})`;
-    }
-    function luminance(hex){
-      const {r,g,b} = hexToRgb(hex);
-      const sr=[r,g,b].map(v=>{
-        v/=255;
-        return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
-      });
-      return 0.2126*sr[0]+0.7152*sr[1]+0.0722*sr[2];
-    }
-    function contrastText(bgHex){
-      return luminance(bgHex) > 0.48 ? "#0b0f14" : "#e6edf3";
-    }
-    function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-    /***********************
-     * Theme + Lanes
-     ***********************/
-    const theme = {
-      lanes: {
-        piano: "#6ae4ff",
-        bass: "#7cff9b",
-        synth: "#ff79c6",
-        pad: "#a78bfa",
-        ep: "#fbbf24",
-        bell: "#60a5fa",
-        poly: "#fb7185",
-        drums: "#9ca3af",
-        kick: "#6ae4ff",
-        snare: "#ff79c6",
-        shaker: "#7cff9b",
-        ch: "#fbbf24",
-        oh: "#60a5fa",
-        tom: "#a78bfa",
-        ride: "#fb7185",
-        crash: "#9ca3af",
-      },
-      labelText: { lanes:{} }
-    };
-    // compute text colors
-    Object.keys(theme.lanes).forEach(k => theme.labelText.lanes[k] = contrastText(theme.lanes[k]));
+  const statusPill = document.getElementById("statusPill");
+  const playBtn = document.getElementById("playBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const bpmEl = document.getElementById("bpm");
+  const resSel = document.getElementById("resSel");
+  const resPill = document.getElementById("resPill");
 
-    const LANES = [
-      { key:"piano", label:"Piano" },
-      { key:"bass", label:"Bass" },
-      { key:"synth", label:"Synth" },
-      { key:"pad", label:"Pad" },
-      { key:"ep", label:"EP" },
-      { key:"bell", label:"Bell" },
-      { key:"poly", label:"Poly" },
-    ];
+  const loadBtn = document.getElementById("loadBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const importBtn = document.getElementById("importBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const bgBtn = document.getElementById("bgBtn");
+  const midiLibBtn = document.getElementById("midiLibBtn");
 
-    /***********************
-     * Audio Engine (WebAudio)
-     ***********************/
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const audio = new AudioContext();
+  const drumGrid = document.getElementById("drumGrid");
+  const drInfo = document.getElementById("drInfo");
+  const drGroupInfo = document.getElementById("drGroupInfo");
 
-    // master
-    const master = audio.createGain();
-    master.gain.value = 0.85;
-    master.connect(audio.destination);
+  const instBtns = document.getElementById("instBtns");
+  const transposeKnobs = document.getElementById("transposeKnobs");
+  const keysEl = document.getElementById("keys");
+  const rollStepsInner = document.getElementById("rollStepsInner");
 
-    // global reverb (simple convolution)
-    function createImpulse(duration=1.2, decay=2.4){
-      const rate = audio.sampleRate;
-      const len = rate * duration;
-      const buf = audio.createBuffer(2, len, rate);
-      for(let c=0;c<2;c++){
-        const data = buf.getChannelData(c);
-        for(let i=0;i<len;i++){
-          data[i] = (Math.random()*2-1) * Math.pow(1 - i/len, decay);
+  const stripRow = document.getElementById("stripRow");
+
+  const midiModalBack = document.getElementById("midiModalBack");
+  const midiModalClose = document.getElementById("midiModalClose");
+  const midiPackInfo = document.getElementById("midiPackInfo");
+  const midiList = document.getElementById("midiList");
+  const midiFileStatus = document.getElementById("midiFileStatus");
+  const targetLaneBadge = document.getElementById("targetLaneBadge");
+
+  const fileInput = document.getElementById("fileInput");
+
+  const colorPop = document.getElementById("colorPop");
+  const colorPopClose = document.getElementById("colorPopClose");
+  const colorPicker = document.getElementById("colorPicker");
+  const colorPopTitle = document.getElementById("colorPopTitle");
+
+  // 4 bars, base grid = 1/16 in "music land", but UI can be 1/16 1/32 1/64
+  const BARS = 4;
+  const BEATS_PER_BAR = 4;
+  const STEPS_PER_BEAT_AT_16 = 4; // 1/16
+  const BASE_STEPS_16 = BARS * BEATS_PER_BAR * STEPS_PER_BEAT_AT_16; // 64
+
+  const RES_OPTIONS = [16,32,64];
+
+  // Piano roll keys C3..C5 (inclusive)
+  const PITCHES = [];
+  const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const MIDI_C3 = 48;
+  const MIDI_C5 = 72;
+  for(let m=MIDI_C5; m>=MIDI_C3; m--){
+    PITCHES.push(m);
+  }
+  const isBlack = (midi)=> {
+    const nn = NOTE_NAMES[midi%12];
+    return nn.includes("#");
+  }
+  const midiToLabel = (m)=>{
+    const n = NOTE_NAMES[m%12];
+    const oct = Math.floor(m/12)-1;
+    return `${n}${oct}`;
+  }
+
+  // Instruments / lanes
+  const LANES = [
+    { key:"bass",  label:"Bass",  color:"#3ddc97", osc:"triangle" },
+    { key:"piano", label:"Piano", color:"#7aa7ff", osc:"sine" },
+    { key:"synth", label:"Synth", color:"#ff7ad9", osc:"sawtooth" },
+    { key:"pad",   label:"Pad",   color:"#ffd26a", osc:"square" },
+    { key:"ep",    label:"EP",    color:"#6ff7ff", osc:"sine" },
+    { key:"bell",  label:"Bell",  color:"#c8a6ff", osc:"sine" },
+    { key:"poly",  label:"Poly",  color:"#ffb36a", osc:"sawtooth" }
+  ];
+
+  // Drum rows
+  const DRUMS = [
+    { key:"kick",   label:"Kick",   color:"#ff6b6b" },
+    { key:"snare",  label:"Snare",  color:"#f4d35e" },
+    { key:"clhat",  label:"Closed Hat", color:"#a0e7ff" },
+    { key:"ophat",  label:"Open Hat",   color:"#6fa8ff" },
+    { key:"shaker", label:"Shaker", color:"#7cffc4" },
+    { key:"tom",    label:"Tom",    color:"#ff9d6b" },
+    { key:"ride",   label:"Ride",   color:"#9ad06b" },
+    { key:"crash",  label:"Crash",  color:"#d7d7d7" }
+  ];
+
+  // mixer channels: lanes + drum bus
+  const CHANNELS = [
+    ...LANES.map(l=>({ key:l.key, label:l.label, color:l.color, type:"inst" })),
+    { key:"drums", label:"Drum Bus", color:"#c0c0c0", type:"bus" }
+  ];
+
+  // project state
+  let state = {
+    bpm: 115,
+    resolution: 64,
+    background: {
+      a:"#111f37",
+      b:"#0b0f14",
+      c:"#05070a",
+      x:40,
+      y:20
+    },
+
+    colors: {
+      lanes: Object.fromEntries(LANES.map(l=>[l.key,l.color])),
+      drums: Object.fromEntries(DRUMS.map(d=>[d.key,d.color])),
+      channels: Object.fromEntries(CHANNELS.map(c=>[c.key,c.color]))
+    },
+
+    transpose: Object.fromEntries(LANES.map(l=>[l.key,0])),
+
+    drums: Object.fromEntries(DRUMS.map(d=>[d.key, new Set()])), // selected steps
+    notes: Object.fromEntries(LANES.map(l=>[l.key, []])) // each note: {midi, start, len}
+  };
+
+  // UI selection
+  let activeRoll = "piano";
+
+  // Playback
+  let playing = false;
+  let nextTickId = null;
+  let stepIndex = 0;
+  let startTime = 0;
+
+  // derived
+  function stepsPerLoop(){
+    const res = state.resolution;
+    return (BASE_STEPS_16 * (res/16));
+  }
+
+  // ============================================================
+  // Utilities
+  // ============================================================
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function hexToRgb(hex){
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if(!m) return {r:255,g:255,b:255};
+    return {r:parseInt(m[1],16), g:parseInt(m[2],16), b:parseInt(m[3],16)};
+  }
+  function luminance(hex){
+    const {r,g,b} = hexToRgb(hex);
+    const srgb=[r,g,b].map(v=>{
+      v/=255;
+      return v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+    });
+    return 0.2126*srgb[0]+0.7152*srgb[1]+0.0722*srgb[2];
+  }
+  function contrastText(bg){
+    // simple: pick black/white based on luminance
+    return luminance(bg) > 0.55 ? "#0b0f14" : "#e6edf3";
+  }
+
+  function setBodyBackground(){
+    const bg = state.background;
+    document.body.style.background =
+      `radial-gradient(1200px 800px at ${bg.x}% ${bg.y}%, ${bg.a} 0%, ${bg.b} 45%, ${bg.c} 100%)`;
+  }
+
+  // ============================================================
+  // Audio Graph
+  // ============================================================
+  const master = actx.createGain();
+  master.gain.value = 0.9;
+  master.connect(actx.destination);
+
+  // Global reverb
+  const reverb = actx.createConvolver();
+  const reverbGain = actx.createGain();
+  reverbGain.gain.value = 0.35;
+  reverb.connect(reverbGain);
+  reverbGain.connect(master);
+
+  // simple impulse
+  (function makeImpulse(){
+    const len = actx.sampleRate * 1.2;
+    const buf = actx.createBuffer(2, len, actx.sampleRate);
+    for(let ch=0; ch<2; ch++){
+      const d = buf.getChannelData(ch);
+      for(let i=0;i<len;i++){
+        d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.8);
+      }
+    }
+    reverb.buffer = buf;
+  })();
+
+  // Channels
+  const ch = {};
+  for(const c of CHANNELS){
+    const inGain = actx.createGain();
+    const pan = actx.createStereoPanner();
+    const filter = actx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 16000;
+    const outGain = actx.createGain();
+    const send = actx.createGain();
+    send.gain.value = 0.0;
+
+    inGain.connect(pan);
+    pan.connect(filter);
+    filter.connect(outGain);
+    outGain.connect(master);
+
+    // reverb send taps AFTER filter for a "DAW-ish" feel
+    filter.connect(send);
+    send.connect(reverb);
+
+    ch[c.key] = { inGain, pan, filter, outGain, send };
+
+    // defaults
+    outGain.gain.value = 0.85;
+    pan.pan.value = 0;
+    filter.frequency.value = 16000;
+    send.gain.value = 0.0;
+  }
+
+  // ============================================================
+  // Synth helpers
+  // ============================================================
+  function midiToFreq(m){ return 440 * Math.pow(2, (m-69)/12); }
+
+  function triggerTone({midi, t, dur, laneKey}){
+    const lane = LANES.find(l=>l.key===laneKey);
+    const oscType = lane?.osc || "sine";
+    const transpose = state.transpose[laneKey] || 0;
+    const freq = midiToFreq(midi + transpose);
+
+    const osc = actx.createOscillator();
+    const g = actx.createGain();
+    const f = actx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = 18000;
+
+    osc.type = oscType;
+    osc.frequency.setValueAtTime(freq, t);
+
+    // ADSR-ish
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.55, t + 0.01);
+    g.gain.linearRampToValueAtTime(0.42, t + Math.min(0.08, dur*0.2));
+    g.gain.setValueAtTime(0.42, t + Math.max(0.01, dur-0.05));
+    g.gain.linearRampToValueAtTime(0.0001, t + dur);
+
+    osc.connect(f);
+    f.connect(g);
+    g.connect(ch[laneKey].inGain);
+
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  }
+
+  // Drums (simple synthesized)
+  function triggerDrum({key, t}){
+    const out = ch["drums"].inGain;
+
+    if(key==="kick"){
+      const osc = actx.createOscillator();
+      const g = actx.createGain();
+      osc.type="sine";
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(50, t+0.08);
+      g.gain.setValueAtTime(0.9, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+0.12);
+      osc.connect(g);
+      g.connect(out);
+      osc.start(t); osc.stop(t+0.14);
+      return;
+    }
+
+    if(key==="snare"){
+      const noise = actx.createBufferSource();
+      const buf = actx.createBuffer(1, actx.sampleRate*0.2, actx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+      noise.buffer=buf;
+
+      const hp = actx.createBiquadFilter();
+      hp.type="highpass";
+      hp.frequency.value=1200;
+
+      const g = actx.createGain();
+      g.gain.setValueAtTime(0.55, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+0.16);
+
+      noise.connect(hp);
+      hp.connect(g);
+      g.connect(out);
+      noise.start(t);
+      noise.stop(t+0.18);
+      return;
+    }
+
+    // hats/shaker/ride/crash -> noise bursts with filtering
+    const isOpen = (key==="ophat" || key==="crash");
+    const isRide = (key==="ride");
+    const isTom  = (key==="tom");
+    const isShaker = (key==="shaker");
+    const noise = actx.createBufferSource();
+    const lenSec = isOpen ? 0.35 : (isRide?0.22:(isTom?0.25:(isShaker?0.18:0.10)));
+    const buf = actx.createBuffer(1, actx.sampleRate*lenSec, actx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    noise.buffer=buf;
+
+    const bp = actx.createBiquadFilter();
+    bp.type = isTom ? "bandpass" : "highpass";
+    bp.frequency.value = isTom ? 220 : (isRide?7000:(isShaker?5200:8200));
+    bp.Q.value = isTom ? 2.0 : 0.7;
+
+    const g = actx.createGain();
+    const a = isOpen ? 0.32 : 0.22;
+    g.gain.setValueAtTime(a, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+lenSec);
+
+    noise.connect(bp);
+    bp.connect(g);
+    g.connect(out);
+
+    noise.start(t);
+    noise.stop(t+lenSec+0.02);
+  }
+
+  // ============================================================
+  // Sequencing (ABSOLUTE BPM: resolution only changes loop length)
+  // ============================================================
+  function stepDurSeconds(){
+    // base: one beat = 60/bpm
+    const beat = 60 / state.bpm;
+
+    // for a given resolution:
+    // 1/16 => 4 steps per beat
+    // 1/32 => 8 steps per beat
+    // 1/64 => 16 steps per beat
+    const stepsPerBeat = (state.resolution/4); // 16->4, 32->8, 64->16
+    return beat / stepsPerBeat;
+  }
+
+  function loopDuration(){
+    return stepsPerLoop() * stepDurSeconds();
+  }
+
+  function scheduleTick(){
+    if(!playing) return;
+    const sd = stepDurSeconds();
+    const now = actx.currentTime;
+
+    // schedule in small slices
+    const lookahead = 0.12;
+
+    while(startTime + stepIndex*sd < now + lookahead){
+      const t = startTime + stepIndex*sd;
+
+      // drums
+      for(const d of DRUMS){
+        if(state.drums[d.key].has(stepIndex)){
+          triggerDrum({key:d.key, t});
         }
       }
-      return buf;
-    }
-    const convolver = audio.createConvolver();
-    convolver.buffer = createImpulse(1.4, 2.7);
-    const reverbReturn = audio.createGain();
-    reverbReturn.gain.value = 0.35;
-    convolver.connect(reverbReturn);
-    reverbReturn.connect(master);
 
-    function biquadLPF(){
-      const f = audio.createBiquadFilter();
-      f.type = "lowpass";
-      f.frequency.value = 16000;
-      f.Q.value = 0.7;
-      return f;
-    }
-
-    function panNode(){
-      return audio.createStereoPanner ? audio.createStereoPanner() : null;
-    }
-
-    function makeChannel(){
-      const input = audio.createGain();
-      const vol = audio.createGain(); vol.gain.value = 0.85;
-      const lpf = biquadLPF();
-      const p = panNode();
-      const send = audio.createGain(); send.gain.value = 0.0;
-
-      // routing: input -> vol -> lpf -> pan -> master
-      input.connect(vol);
-      vol.connect(lpf);
-
-      if (p){
-        lpf.connect(p);
-        p.connect(master);
-      } else {
-        lpf.connect(master);
+      // notes
+      for(const lane of LANES){
+        for(const n of state.notes[lane.key]){
+          if(n.start === stepIndex){
+            const dur = n.len * sd;
+            triggerTone({midi:n.midi, t, dur, laneKey: lane.key});
+          }
+        }
       }
 
-      // reverb send from post-vol (common)
-      vol.connect(send);
-      send.connect(convolver);
-
-      return { input, vol, lpf, pan:p, send };
+      stepIndex = (stepIndex + 1) % stepsPerLoop();
+      updatePlayheads();
     }
 
-    const channels = {
-      piano: makeChannel(),
-      bass: makeChannel(),
-      synth: makeChannel(),
-      pad: makeChannel(),
-      ep: makeChannel(),
-      bell: makeChannel(),
-      poly: makeChannel(),
-      drums: makeChannel(),
-    };
+    nextTickId = requestAnimationFrame(scheduleTick);
+  }
 
-    /***********************
-     * Instruments (simple synth voices)
-     ***********************/
-    function midiToFreq(m){
-      return 440 * Math.pow(2, (m-69)/12);
-    }
+  function play(){
+    if(playing) return;
+    playing = true;
+    statusPill.textContent = "Playing";
+    statusPill.style.borderColor = "rgba(57,217,138,.45)";
+    statusPill.style.background = "rgba(57,217,138,.12)";
+    startTime = actx.currentTime + 0.03;
+    stepIndex = 0;
+    updatePlayheads(true);
+    scheduleTick();
+  }
 
-    function envGain(g, t, a=0.004, d=0.06, s=0.8, r=0.08, hold=0.12){
-      const now = t;
-      g.gain.cancelScheduledValues(now);
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.linearRampToValueAtTime(1.0, now+a);
-      g.gain.linearRampToValueAtTime(s, now+a+d);
-      g.gain.setValueAtTime(s, now+a+d+hold);
-      g.gain.linearRampToValueAtTime(0.0001, now+a+d+hold+r);
-      return now+a+d+hold+r;
-    }
+  function stop(){
+    playing = false;
+    statusPill.textContent = "Stopped";
+    statusPill.style.borderColor = "";
+    statusPill.style.background = "";
+    if(nextTickId) cancelAnimationFrame(nextTickId);
+    nextTickId = null;
+    clearPlayheads();
+  }
 
-    const transposes = {
-      piano: 0, bass: 0, synth: 0, pad: 0, ep: 0, bell: 0, poly: 0
-    };
+  function togglePlay(){
+    if(playing) stop();
+    else play();
+  }
 
-    function playNote(laneKey, midi, vel=98, startTime=audio.currentTime, durSec=0.15){
-      const t = startTime;
-      const ch = channels[laneKey];
+  // ============================================================
+  // UI: Build drums grid
+  // ============================================================
+  function groupClass(i){
+    // 4-group coloring, but keep a repeating A/B/C/D for clarity
+    const g = Math.floor(i/4) % 4;
+    return g===0?"grpA":g===1?"grpB":g===2?"grpC":"grpD";
+  }
 
-      const m = midi + (transposes[laneKey] || 0);
-      const f = midiToFreq(m);
+  function rebuildDrums(){
+    drumGrid.innerHTML = "";
 
-      const v = clamp(vel/127, 0, 1);
+    const steps = stepsPerLoop();
+    drInfo.textContent = `Steps: ${steps}`;
+    drGroupInfo.textContent = `Resolution: 1/${state.resolution}`;
 
-      const g = audio.createGain();
-      g.gain.value = 0.0001;
+    const labels = document.createElement("div");
+    labels.className = "drumLabels";
 
-      // voice
-      let osc1 = audio.createOscillator();
-      let osc2 = audio.createOscillator();
-      let mix = audio.createGain();
-      mix.gain.value = 0.75;
+    const stepsWrap = document.createElement("div");
+    stepsWrap.className = "drSteps";
 
-      // choose per-lane timbre
-      if (laneKey === "bass"){
-        osc1.type="sawtooth";
-        osc2.type="square";
-        osc2.detune.value = -7;
-      } else if (laneKey === "piano"){
-        osc1.type="triangle";
-        osc2.type="sine";
-        osc2.detune.value = 6;
-      } else if (laneKey === "synth"){
-        osc1.type="square";
-        osc2.type="sawtooth";
-        osc2.detune.value = 14;
-      } else if (laneKey === "pad"){
-        osc1.type="sine";
-        osc2.type="triangle";
-        osc2.detune.value = -10;
-      } else if (laneKey === "ep"){
-        osc1.type="triangle";
-        osc2.type="triangle";
-        osc2.detune.value = 2;
-      } else if (laneKey === "bell"){
-        osc1.type="sine";
-        osc2.type="sine";
-        osc2.detune.value = 1200; // octave up
-      } else if (laneKey === "poly"){
-        osc1.type="sawtooth";
-        osc2.type="sawtooth";
-        osc2.detune.value = 7;
+    const stepsInner = document.createElement("div");
+    stepsInner.className = "drStepsInner";
+    stepsInner.style.gridAutoColumns = `${100/steps}%`;
+
+    // Create per drum row: label + steps row
+    DRUMS.forEach((d, rowIdx)=>{
+      const lab = document.createElement("div");
+      lab.className = "drLabel";
+      lab.dataset.kind = "drum";
+      lab.dataset.key = d.key;
+
+      const name = document.createElement("div");
+      name.className = "name";
+      const sw = document.createElement("span");
+      sw.className = "tag";
+      sw.textContent = "DR";
+      const nm = document.createElement("span");
+      nm.textContent = d.label;
+      nm.style.color = contrastText(getDrumColor(d.key));
+      nm.style.fontWeight = "900";
+      name.appendChild(sw);
+      name.appendChild(nm);
+
+      lab.style.borderColor = "rgba(255,255,255,.10)";
+      lab.style.background = "rgba(0,0,0,.14)";
+      lab.style.boxShadow = `inset 0 0 0 2px ${hexWithAlpha(getDrumColor(d.key), .22)}`;
+
+      labels.appendChild(lab);
+
+      // row steps
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridAutoFlow = "column";
+      row.style.gridAutoColumns = `${100/steps}%`;
+
+      for(let i=0;i<steps;i++){
+        const s = document.createElement("div");
+        s.className = `step ${groupClass(i)}`;
+        s.dataset.row = rowIdx;
+        s.dataset.drum = d.key;
+        s.dataset.step = i;
+
+        if(state.drums[d.key].has(i)) s.classList.add("on");
+
+        row.appendChild(s);
       }
 
-      osc1.frequency.setValueAtTime(f, t);
-      osc2.frequency.setValueAtTime(f, t);
-
-      osc1.connect(mix);
-      osc2.connect(mix);
-      mix.connect(g);
-
-      // scale by velocity
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.linearRampToValueAtTime(v, t + 0.006);
-
-      g.connect(ch.input);
-
-      // envelope using durSec as sustain hold
-      const endTime = envGain(g, t, 0.005, 0.05, 0.7, 0.08, Math.max(0.02, durSec));
-
-      osc1.start(t);
-      osc2.start(t);
-      osc1.stop(endTime + 0.02);
-      osc2.stop(endTime + 0.02);
-    }
-
-    /***********************
-     * Drums (noise + simple tone)
-     ***********************/
-    const drumNames = [
-      { key:"kick", label:"Kick", hint:"Low thump" },
-      { key:"snare", label:"Snare", hint:"Clap / snap" },
-      { key:"shaker", label:"Shaker", hint:"Was Hat" },
-      { key:"ch", label:"Closed Hat", hint:"Tight hat" },
-      { key:"oh", label:"Open Hat", hint:"Open hat" },
-      { key:"tom", label:"Tom", hint:"Low tom" },
-      { key:"ride", label:"Ride", hint:"Ride cym" },
-      { key:"crash", label:"Crash", hint:"Crash" },
-    ];
-
-    const drumState = {}; // per drum row: steps bool[], vol 0..1, solo/mute
-    drumNames.forEach(d => drumState[d.key] = {
-      steps: [], vol: 0.85, mute:false, solo:false,
-      color: theme.lanes[d.key] || "#9ca3af",
-      text: theme.labelText.lanes[d.key] || "#e6edf3"
+      stepsInner.appendChild(row);
     });
 
-    function burstNoise(t, dur=0.05){
-      const bufferSize = audio.sampleRate * dur;
-      const buffer = audio.createBuffer(1, bufferSize, audio.sampleRate);
-      const data = buffer.getChannelData(0);
-      for(let i=0;i<bufferSize;i++){
-        data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
+    stepsWrap.appendChild(stepsInner);
+
+    drumGrid.appendChild(labels);
+    drumGrid.appendChild(stepsWrap);
+
+    wireDrumPainting();
+  }
+
+  // ============================================================
+  // Drum painting with drag (row-locked)
+  // ============================================================
+  let drumDrag = null; // { drumKey, mode: "add"|"remove" }
+
+  function wireDrumPainting(){
+    const stepsEl = drumGrid.querySelectorAll(".step");
+    stepsEl.forEach(el=>{
+      el.addEventListener("pointerdown", onDrumPointerDown);
+      el.addEventListener("pointerenter", onDrumPointerEnter);
+    });
+    window.addEventListener("pointerup", onDrumPointerUp);
+  }
+
+  function onDrumPointerDown(e){
+    e.preventDefault();
+    const el = e.currentTarget;
+    el.setPointerCapture?.(e.pointerId);
+    const drumKey = el.dataset.drum;
+    const step = +el.dataset.step;
+    const set = state.drums[drumKey];
+
+    const willAdd = !set.has(step);
+    drumDrag = { drumKey, mode: willAdd ? "add":"remove" };
+
+    applyDrumPaint(el, drumKey, step, drumDrag.mode);
+  }
+
+  function onDrumPointerEnter(e){
+    if(!drumDrag) return;
+    const el = e.currentTarget;
+    const drumKey = el.dataset.drum;
+    if(drumKey !== drumDrag.drumKey) return; // row-locked
+    const step = +el.dataset.step;
+    applyDrumPaint(el, drumKey, step, drumDrag.mode, true);
+  }
+
+  function onDrumPointerUp(){
+    if(!drumDrag) return;
+    drumDrag = null;
+    drumGrid.querySelectorAll(".step.dragHover").forEach(el=>el.classList.remove("dragHover"));
+  }
+
+  function applyDrumPaint(el, drumKey, step, mode, hover=false){
+    const set = state.drums[drumKey];
+    if(mode==="add") set.add(step);
+    else set.delete(step);
+
+    // update UI in row
+    const row = el.parentElement;
+    const node = row.querySelector(`.step[data-step="${step}"]`);
+    if(node){
+      node.classList.toggle("on", set.has(step));
+      if(hover) node.classList.add("dragHover");
+    }
+  }
+
+  // ============================================================
+  // Piano roll UI
+  // ============================================================
+  function rebuildInstrumentButtons(){
+    instBtns.innerHTML = "";
+    LANES.forEach(l=>{
+      const b = document.createElement("button");
+      b.className = "instBtn";
+      b.dataset.kind = "lane";
+      b.dataset.key = l.key;
+
+      const dot = document.createElement("span");
+      dot.className = "dot";
+      dot.style.background = getLaneColor(l.key);
+
+      const txt = document.createElement("span");
+      txt.textContent = l.label;
+
+      b.appendChild(dot);
+      b.appendChild(txt);
+
+      if(l.key===activeRoll) b.classList.add("active");
+      applySelectedColorToButton(b, l.key, "lane");
+
+      b.addEventListener("click", ()=>{
+        activeRoll = l.key;
+        rebuildInstrumentButtons();
+        rebuildRoll();
+        updateTargetLaneBadge();
+      });
+
+      instBtns.appendChild(b);
+    });
+  }
+
+  function rebuildTransposeKnobs(){
+    transposeKnobs.innerHTML = "";
+    LANES.forEach(l=>{
+      const wrap = document.createElement("div");
+      wrap.className = "kCol";
+      wrap.style.width = "62px";
+
+      const k = makeKnob({
+        label: l.label,
+        min:-24,
+        max:24,
+        step:1,
+        value: state.transpose[l.key] || 0,
+        onChange:(v)=>{
+          state.transpose[l.key] = v;
+        }
+      });
+      wrap.appendChild(k);
+      transposeKnobs.appendChild(wrap);
+    });
+  }
+
+  function rebuildKeys(){
+    keysEl.innerHTML = "";
+    PITCHES.forEach(m=>{
+      const k = document.createElement("div");
+      k.className = "key " + (isBlack(m) ? "black":"white");
+      k.dataset.midi = m;
+
+      const label = midiToLabel(m);
+      k.textContent = label;
+
+      // preview
+      k.addEventListener("pointerdown", (e)=>{
+        e.preventDefault();
+        previewKey(m);
+      });
+
+      keysEl.appendChild(k);
+    });
+  }
+
+  let keyPreviewOsc = null;
+  function previewKey(midi){
+    stopKeyPreview();
+    const t = actx.currentTime + 0.01;
+    keyPreviewOsc = actx.createOscillator();
+    const g = actx.createGain();
+    keyPreviewOsc.type = "sine";
+    keyPreviewOsc.frequency.value = midiToFreq(midi + (state.transpose[activeRoll]||0));
+    g.gain.value = 0.22;
+    keyPreviewOsc.connect(g);
+    g.connect(ch[activeRoll].inGain);
+    keyPreviewOsc.start(t);
+    keyPreviewOsc.stop(t+0.22);
+    keyPreviewOsc.onended = ()=>{ keyPreviewOsc=null; };
+  }
+  function stopKeyPreview(){
+    try{ keyPreviewOsc?.stop(); }catch(_){}
+    keyPreviewOsc=null;
+  }
+
+  function rebuildRoll(){
+    rollStepsInner.innerHTML = "";
+    const steps = stepsPerLoop();
+    rollStepsInner.style.setProperty("--steps", steps);
+    rollStepsInner.style.gridTemplateColumns = `repeat(${steps}, 1fr)`;
+
+    // build cells row by row
+    PITCHES.forEach((m, rIdx)=>{
+      for(let i=0;i<steps;i++){
+        const c = document.createElement("div");
+        c.className = `cell ${groupClass(i)}`;
+        c.dataset.midi = m;
+        c.dataset.step = i;
+        c.dataset.row = rIdx;
+        rollStepsInner.appendChild(c);
       }
-      const src = audio.createBufferSource();
-      src.buffer = buffer;
-      return src;
+    });
+
+    // draw notes
+    drawNotes();
+
+    // wire painting (supports sustain length)
+    wireRollPainting();
+  }
+
+  function drawNotes(){
+    // clear old
+    rollStepsInner.querySelectorAll(".note").forEach(n=>n.remove());
+
+    const notes = state.notes[activeRoll];
+    const steps = stepsPerLoop();
+
+    // map midi->rowIndex
+    const pitchToRow = new Map();
+    PITCHES.forEach((m, idx)=>pitchToRow.set(m, idx));
+
+    for(const n of notes){
+      const row = pitchToRow.get(n.midi);
+      if(row==null) continue;
+
+      const idx = row*steps + n.start;
+      const cell = rollStepsInner.children[idx];
+      if(!cell) continue;
+
+      const div = document.createElement("div");
+      div.className = "note";
+      const laneColor = getLaneColor(activeRoll);
+      div.style.background = hexWithAlpha(laneColor, .86);
+      div.style.borderColor = hexWithAlpha(laneColor, .95);
+      div.style.width = `calc(${(n.len)} * 100% + ${(n.len-1)}px)`;
+      cell.appendChild(div);
+    }
+  }
+
+  function normalizeNotes(){
+    // clamp notes to loop
+    const steps = stepsPerLoop();
+    for(const lane of LANES){
+      const arr = state.notes[lane.key];
+      for(const n of arr){
+        n.start = clamp(n.start, 0, steps-1);
+        n.len = clamp(n.len, 1, steps - n.start);
+      }
+      // remove overlaps duplicates? keep as-is (user may want overlaps)
+    }
+  }
+
+  // roll painting / resizing notes
+  let rollDrag = null; // {midi, start, mode, noteRefIndex, startStep}
+  function wireRollPainting(){
+    const cells = rollStepsInner.querySelectorAll(".cell");
+    cells.forEach(c=>{
+      c.addEventListener("pointerdown", onRollDown);
+      c.addEventListener("pointerenter", onRollEnter);
+    });
+    window.addEventListener("pointerup", onRollUp);
+  }
+
+  function findNoteAt(midi, step){
+    const arr = state.notes[activeRoll];
+    return arr.findIndex(n => n.midi===midi && step>=n.start && step<(n.start+n.len));
+  }
+
+  function onRollDown(e){
+    e.preventDefault();
+    const el = e.currentTarget;
+    el.setPointerCapture?.(e.pointerId);
+
+    const midi = +el.dataset.midi;
+    const step = +el.dataset.step;
+
+    const arr = state.notes[activeRoll];
+    const idx = findNoteAt(midi, step);
+
+    if(idx>=0){
+      // remove note
+      arr.splice(idx,1);
+      rollDrag = { mode:"remove" };
+      drawNotes();
+      return;
     }
 
-    function playDrum(key, t){
-      const ch = channels.drums;
-      const row = drumState[key];
-      if (!row) return;
+    // add new note; drag to extend length
+    const note = { midi, start: step, len: 1 };
+    arr.push(note);
+    rollDrag = { mode:"add", midi, start, noteRef: note, startStep: step };
+    drawNotes();
+  }
 
-      // solo/mute logic handled upstream, but keep safety
-      if (row.mute) return;
+  function onRollEnter(e){
+    if(!rollDrag || rollDrag.mode!=="add") return;
+    const el = e.currentTarget;
+    const midi = +el.dataset.midi;
+    const step = +el.dataset.step;
 
-      const level = row.vol;
+    if(midi !== rollDrag.midi) return;
+    const steps = stepsPerLoop();
+    const len = clamp(step - rollDrag.startStep + 1, 1, steps-rollDrag.startStep);
+    rollDrag.noteRef.len = len;
+    drawNotes();
+  }
 
-      const out = audio.createGain();
-      out.gain.value = level;
-      out.connect(ch.input);
+  function onRollUp(){
+    if(!rollDrag) return;
+    rollDrag = null;
+    normalizeNotes();
+    drawNotes();
+  }
 
-      if (key === "kick"){
-        const osc = audio.createOscillator();
-        const g = audio.createGain();
-        osc.type="sine";
-        osc.frequency.setValueAtTime(150, t);
-        osc.frequency.exponentialRampToValueAtTime(50, t+0.08);
-        g.gain.setValueAtTime(1.0, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t+0.10);
-        osc.connect(g);
-        g.connect(out);
-        osc.start(t);
-        osc.stop(t+0.12);
-      } else if (key === "snare"){
-        const n = burstNoise(t, 0.10);
-        const nf = audio.createBiquadFilter();
-        nf.type="highpass"; nf.frequency.value = 1200;
-        const g = audio.createGain();
-        g.gain.setValueAtTime(0.9, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t+0.12);
-        n.connect(nf); nf.connect(g); g.connect(out);
-        n.start(t);
-        n.stop(t+0.13);
-      } else if (key === "shaker"){
-        const n = burstNoise(t, 0.045);
-        const nf = audio.createBiquadFilter();
-        nf.type="bandpass"; nf.frequency.value = 6500; nf.Q.value = 1.2;
-        const g = audio.createGain();
-        g.gain.setValueAtTime(0.6, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t+0.06);
-        n.connect(nf); nf.connect(g); g.connect(out);
-        n.start(t);
-        n.stop(t+0.07);
-      } else if (key === "ch"){
-        const n = burstNoise(t, 0.03);
-        const nf = audio.createBiquadFilter();
-        nf.type="highpass"; nf.frequency.value = 7000;
-        const g = audio.createGain();
-        g.gain.setValueAtTime(0.4, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t+0.04);
-        n.connect(nf); nf.connect(g); g.connect(out);
-        n.start(t);
-        n.stop(t+0.05);
-      } else if (key === "oh"){
-        const n = burstNoise(t, 0.12);
-        const nf = audio.createBiquadFilter();
-        nf.type="highpass"; nf.frequency.value = 6500;
-        const g = audio.createGain();
-        g.gain.setValueAtTime(0.35, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t+0.14);
-        n.connect(nf); nf.connect(g); g.connect(out);
-        n.start(t);
-        n.stop(t+0.15);
-      } else if (key === "tom"){
-        const osc = audio.createOscillator();
-        const g = audio.createGain();
-        osc.type="sine";
-        osc.frequency.setValueAtTime(180, t);
-        osc.frequency.exponentialRampToValueAtTime(120, t+0.12);
-        g.gain.setValueAtTime(0.8, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t+0.15);
-        osc.connect(g); g.connect(out);
-        osc.start(t);
-        osc.stop(t+0.17);
-      } else if (key === "ride"){
-        const n = burstNoise(t, 0.25);
-        const nf = audio.createBiquadFilter();
-        nf.type="bandpass"; nf.frequency.value = 9000; nf.Q.value = 0.8;
-        const g = audio.createGain();
-        g.gain.setValueAtTime(0.25, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t+0.28);
-        n.connect(nf); nf.connect(g); g.connect(out);
-        n.start(t);
-        n.stop(t+0.3);
-      } else if (key === "crash"){
-        const n = burstNoise(t, 0.5);
-        const nf = audio.createBiquadFilter();
-        nf.type="highpass"; nf.frequency.value = 4000;
-        const g = audio.createGain();
-        g.gain.setValueAtTime(0.35, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t+0.55);
-        n.connect(nf); nf.connect(g); g.connect(out);
-        n.start(t);
-        n.stop(t+0.57);
-      }
+  // ============================================================
+  // Playheads
+  // ============================================================
+  function clearPlayheads(){
+    drumGrid.querySelectorAll(".step.playing").forEach(el=>el.classList.remove("playing"));
+  }
+  function updatePlayheads(reset=false){
+    if(reset) clearPlayheads();
+    const steps = stepsPerLoop();
+
+    // drums highlight column in each row
+    drumGrid.querySelectorAll(".drStepsInner > div").forEach(row=>{
+      row.querySelectorAll(".step.playing").forEach(el=>el.classList.remove("playing"));
+      const el = row.querySelector(`.step[data-step="${stepIndex}"]`);
+      if(el) el.classList.add("playing");
+    });
+  }
+
+  // ============================================================
+  // Colors (customizable via color wheel)
+  // ============================================================
+  function getLaneColor(key){ return state.colors.lanes[key] || LANES.find(l=>l.key===key)?.color || "#7aa7ff"; }
+  function getDrumColor(key){ return state.colors.drums[key] || DRUMS.find(d=>d.key===key)?.color || "#ff6b6b"; }
+  function getChannelColor(key){ return state.colors.channels[key] || CHANNELS.find(c=>c.key===key)?.color || "#c0c0c0"; }
+
+  function hexWithAlpha(hex,a){
+    const {r,g,b} = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function applySelectedColorToButton(btn, key, kind){
+    // kind: lane|drum
+    const col = kind==="lane" ? getLaneColor(key) : getDrumColor(key);
+    if(btn.classList.contains("active")){
+      btn.style.background = hexWithAlpha(col, .22);
+      btn.style.borderColor = hexWithAlpha(col, .55);
+      btn.style.boxShadow = `inset 0 0 0 2px ${hexWithAlpha(col, .18)}`;
+    }else{
+      btn.style.background = "rgba(0,0,0,.14)";
+      btn.style.borderColor = "var(--line)";
+      btn.style.boxShadow = "";
     }
+    btn.style.color = "var(--text)";
+  }
 
-    /***********************
-     * State
-     ***********************/
-    let bpm = 115;
-    let isPlaying = false;
-    let schedulerId = null;
-    let currentStep = 0;
+  // Double click/tap color pop
+  let colorTarget = null; // {kind, key, applyFn}
+  let lastTap = {t:0, key:""};
 
-    // Drum resolution
-    const RES_OPTIONS = [16, 32, 64];
-    let drumRes = 64;     // default launch
-    let drumSteps = 64*4; // 4 bars at current res
-    let barCount = 4;
+  function setupColorWheel(){
+    // drums labels
+    drumGrid.addEventListener("pointerdown", (e)=>{
+      const lab = e.target.closest(".drLabel");
+      if(!lab) return;
+      const key = lab.dataset.key;
+      const now = performance.now();
+      const id = `drum:${key}`;
+      if(now - lastTap.t < 320 && lastTap.key === id){
+        openColorPop(e.clientX, e.clientY, `Drum: ${DRUMS.find(d=>d.key===key)?.label||key}`, getDrumColor(key), (hex)=>{
+          state.colors.drums[key] = hex;
+          rebuildDrums();
+          rebuildMixer();
+        });
+      }
+      lastTap = {t:now, key:id};
+    });
 
-    // Piano roll
-    let activeRoll = "piano";
-    let rollSteps = 64;
-    let rollQuant = 64;
-    let rollVel = 98;
-    let rollSnap = true;
-    let rollNoteLen = 16;
+    // instrument buttons
+    instBtns.addEventListener("pointerdown", (e)=>{
+      const b = e.target.closest(".instBtn");
+      if(!b) return;
+      const key = b.dataset.key;
+      const now = performance.now();
+      const id = `lane:${key}`;
+      if(now - lastTap.t < 320 && lastTap.key === id){
+        openColorPop(e.clientX, e.clientY, `Instrument: ${LANES.find(l=>l.key===key)?.label||key}`, getLaneColor(key), (hex)=>{
+          state.colors.lanes[key] = hex;
+          rebuildInstrumentButtons();
+          rebuildRoll();
+          rebuildMixer();
+        });
+      }
+      lastTap = {t:now, key:id};
+    });
 
-    // notes per lane: array of {midi, start, len, vel}
-    const notes = {};
-    LANES.forEach(l => notes[l.key] = []);
+    // mixer strip titles
+    stripRow.addEventListener("pointerdown", (e)=>{
+      const st = e.target.closest(".stripTitle");
+      if(!st) return;
+      const key = st.dataset.key;
+      const now = performance.now();
+      const id = `ch:${key}`;
+      if(now - lastTap.t < 320 && lastTap.key === id){
+        openColorPop(e.clientX, e.clientY, `Channel: ${CHANNELS.find(c=>c.key===key)?.label||key}`, getChannelColor(key), (hex)=>{
+          state.colors.channels[key] = hex;
+          rebuildMixer();
+        });
+      }
+      lastTap = {t:now, key:id};
+    });
+  }
 
-    // background
-    let bgColors = {
-      a:"rgba(90, 200, 255, 0.12)",
-      b:"rgba(255, 120, 200, 0.08)",
-      c:"rgba(120, 255, 190, 0.07)"
+  function openColorPop(x,y,title,initial,applyFn){
+    colorPopTitle.textContent = title;
+    colorPicker.value = initial;
+    colorPop.style.left = clamp(x-90, 12, window.innerWidth-220) + "px";
+    colorPop.style.top  = clamp(y+10, 12, window.innerHeight-90) + "px";
+    colorPop.classList.add("show");
+    colorTarget = {applyFn};
+  }
+
+  colorPicker.addEventListener("input", ()=>{
+    if(!colorTarget) return;
+    colorTarget.applyFn(colorPicker.value);
+  });
+  colorPopClose.addEventListener("click", ()=>{
+    colorPop.classList.remove("show");
+    colorTarget=null;
+  });
+
+  // ============================================================
+  // Mixer UI
+  // ============================================================
+  function makeKnob({label,min,max,step,value,onChange}){
+    const wrap = document.createElement("div");
+    wrap.className = "kCol";
+    const k = document.createElement("div");
+    k.className = "knob";
+    const ring = document.createElement("div");
+    ring.className = "ring";
+    const needle = document.createElement("div");
+    needle.className = "needle";
+    k.appendChild(ring);
+    k.appendChild(needle);
+
+    const lab = document.createElement("div");
+    lab.className = "kLab";
+    lab.textContent = label;
+
+    // angle mapping -135..135
+    function setNeedle(v){
+      const t = (v-min)/(max-min);
+      const ang = -135 + t*270;
+      needle.style.transform = `translate(-50%,-100%) rotate(${ang}deg)`;
+    }
+    setNeedle(value);
+
+    let dragging = false;
+    let startY=0;
+    let startVal=value;
+
+    const getV = ()=>value;
+    const setV = (v)=>{
+      v = Math.round(v/step)*step;
+      v = clamp(v, min, max);
+      value = v;
+      setNeedle(v);
+      onChange?.(v);
     };
 
-    /***********************
-     * Elements
-     ***********************/
-    const playBtn = document.getElementById("playBtn");
-    const bpmEl = document.getElementById("bpm");
-    const drumGridEl = document.getElementById("drumGrid");
-    const drumResLabel = document.getElementById("drumResLabel");
-    const groupLabel = document.getElementById("groupLabel");
+    k.addEventListener("pointerdown", (e)=>{
+      e.preventDefault();
+      dragging=true;
+      startY = e.clientY;
+      startVal = getV();
+      k.setPointerCapture?.(e.pointerId);
+    });
+    k.addEventListener("pointermove", (e)=>{
+      if(!dragging) return;
+      const dy = startY - e.clientY;
+      const span = (max-min);
+      const delta = (dy/120) * span;
+      setV(startVal + delta);
+    });
+    window.addEventListener("pointerup", ()=> dragging=false);
 
-    const tabsEl = document.getElementById("tabs");
-    const keysEl = document.getElementById("keys");
-    const rollEl = document.getElementById("roll");
-    const rollCanvas = document.getElementById("rollCanvas");
-    const ctx = rollCanvas.getContext("2d");
+    wrap.appendChild(lab);
+    wrap.appendChild(k);
+    return wrap;
+  }
 
-    const rollStepsEl = document.getElementById("rollSteps");
-    const rollQuantEl = document.getElementById("rollQuant");
-    const rollVelEl = document.getElementById("rollVel");
-    const rollSnapEl = document.getElementById("rollSnap");
-    const rollNoteLenEl = document.getElementById("rollNoteLen");
+  function rebuildMixer(){
+    stripRow.innerHTML = "";
+    CHANNELS.forEach(c=>{
+      const strip = document.createElement("div");
+      strip.className = "strip";
 
-    const mixerGridEl = document.getElementById("mixerGrid");
+      const top = document.createElement("div");
+      top.className = "stripTop";
 
-    const saveBtn = document.getElementById("saveBtn");
-    const loadBtn = document.getElementById("loadBtn");
-    const importBtn = document.getElementById("importBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const bgBtn = document.getElementById("bgBtn");
+      const title = document.createElement("div");
+      title.className = "stripTitle";
+      title.dataset.key = c.key;
 
-    // MIDI library modal
-    const midiOverlay = document.getElementById("midiOverlay");
-    const midiCloseBtn = document.getElementById("midiCloseBtn");
-    const midiRefreshBtn = document.getElementById("midiRefreshBtn");
-    const midiSearch = document.getElementById("midiSearch");
-    const midiList = document.getElementById("midiList");
-    const midiLibBtn = document.getElementById("midiLibBtn");
-    const targetLaneBadge = document.getElementById("targetLaneBadge");
-    const suggestLaneBadge = document.getElementById("suggestLaneBadge");
+      const left = document.createElement("div");
+      left.className = "left";
+      const sw = document.createElement("span");
+      sw.className = "sw";
+      sw.style.background = hexWithAlpha(getChannelColor(c.key), .65);
+      const nm = document.createElement("span");
+      nm.className = "nm";
+      nm.textContent = c.label;
+      nm.style.color = contrastText(getChannelColor(c.key));
+      left.appendChild(sw);
+      left.appendChild(nm);
 
-    // color popover
-    const colorPop = document.getElementById("colorPop");
-    const colorPicker = document.getElementById("colorPicker");
-    const colorApplyBtn = document.getElementById("colorApplyBtn");
-    const colorCancelBtn = document.getElementById("colorCancelBtn");
+      const btns = document.createElement("div");
+      btns.className = "stripBtns";
 
-    /***********************
-     * Auto-detect lane suggestion
-     ***********************/
-    function suggestLaneForFileName(fileName, packName="", packPath=""){
-      const s = `${fileName} ${packName} ${packPath}`.toLowerCase();
+      const solo = document.createElement("button");
+      solo.className = "miniBtn";
+      solo.textContent = "S";
+      solo.dataset.key = c.key;
+      solo.dataset.type = "solo";
 
-      if (/\b(bass|pluck|sub|808)\b/.test(s)) return "bass";
-      if (/\b(chord|chords|keys|piano|rhodes|ep|e-?piano)\b/.test(s)) return "piano";
-      if (/\b(pad|atmos|ambient)\b/.test(s)) return "pad";
-      if (/\b(arp|arpeggio|lead|synth)\b/.test(s)) return "synth";
-      if (/\b(poly)\b/.test(s)) return "poly";
-      if (/\b(bell|mallet)\b/.test(s)) return "bell";
+      const mute = document.createElement("button");
+      mute.className = "miniBtn";
+      mute.textContent = "M";
+      mute.dataset.key = c.key;
+      mute.dataset.type = "mute";
 
-      return null;
-    }
+      btns.appendChild(solo);
+      btns.appendChild(mute);
 
-    function labelForLaneKey(key){
-      return (LANES.find(l => l.key === key)?.label) || key;
-    }
+      title.appendChild(left);
+      title.appendChild(btns);
 
-    function setSuggestedLaneBadge(laneKey){
-      if (!suggestLaneBadge) return;
-      if (!laneKey){
-        suggestLaneBadge.textContent = "Suggested: —";
-        suggestLaneBadge.style.background = "rgba(0,0,0,.22)";
-        suggestLaneBadge.style.borderColor = "rgba(255,255,255,.12)";
-        suggestLaneBadge.style.color = "var(--muted)";
-        return;
-      }
-      const hex = theme.lanes[laneKey] || "#888888";
-      suggestLaneBadge.textContent = `Suggested: ${labelForLaneKey(laneKey)}`;
-      suggestLaneBadge.style.background = hexToRgba(hex, 0.16);
-      suggestLaneBadge.style.borderColor = hexToRgba(hex, 0.45);
-      suggestLaneBadge.style.color = theme.labelText.lanes[laneKey] || contrastText(hex);
-    }
+      top.appendChild(title);
 
-    function selectLane(laneKey){
-      const tab = tabsEl.querySelector(`.tab[data-roll="${laneKey}"]`);
-      if (tab){
-        tab.click();
-      } else {
-        activeRoll = laneKey;
-        updateActiveTabStyles();
-        drawRoll(isPlaying ? currentStep : -1);
-      }
-      targetLaneBadge.textContent = `Target: ${labelForLaneKey(activeRoll)}`;
-    }
+      const body = document.createElement("div");
+      body.className = "stripBody";
 
-    /***********************
-     * Build UI: Tabs, Keys
-     ***********************/
-    function buildTabs(){
-      tabsEl.innerHTML = "";
-      LANES.forEach(l => {
-        const b = document.createElement("button");
-        b.className = "tab";
-        b.dataset.roll = l.key;
-        b.textContent = l.label;
-        b.style.borderColor = hexToRgba(theme.lanes[l.key], .35);
+      const faderCol = document.createElement("div");
+      faderCol.className = "faderCol";
 
-        b.addEventListener("click", () => {
-          activeRoll = l.key;
-          updateActiveTabStyles();
-          targetLaneBadge.textContent = `Target: ${l.label}`;
-          drawRoll(isPlaying ? currentStep : -1);
-        });
+      const fader = document.createElement("input");
+      fader.type = "range";
+      fader.min = "0";
+      fader.max = "1";
+      fader.step = "0.01";
+      fader.value = ch[c.key].outGain.gain.value;
+      fader.className = "fader";
 
-        tabsEl.appendChild(b);
+      const fval = document.createElement("div");
+      fval.className = "fval";
+      fval.textContent = Math.round(ch[c.key].outGain.gain.value*100);
+
+      fader.addEventListener("input", ()=>{
+        const v = +fader.value;
+        ch[c.key].outGain.gain.value = v;
+        fval.textContent = Math.round(v*100);
       });
-      updateActiveTabStyles();
-    }
 
-    function updateActiveTabStyles(){
-      tabsEl.querySelectorAll(".tab").forEach(t => {
-        const k = t.dataset.roll;
-        const on = (k === activeRoll);
-        t.classList.toggle("active", on);
-        if (on){
-          t.style.background = hexToRgba(theme.lanes[k], 0.16);
-          t.style.borderColor = hexToRgba(theme.lanes[k], 0.5);
-        } else {
-          t.style.background = "rgba(0,0,0,.15)";
-          t.style.borderColor = "rgba(255,255,255,.14)";
+      faderCol.appendChild(fader);
+      faderCol.appendChild(fval);
+
+      const knobs = document.createElement("div");
+      knobs.className = "stripKnobs";
+
+      const panK = makeKnob({
+        label:"PAN",
+        min:-1, max:1, step:0.01,
+        value: ch[c.key].pan.pan.value,
+        onChange:(v)=> ch[c.key].pan.pan.value = v
+      });
+      const lpfK = makeKnob({
+        label:"LPF",
+        min: 200, max: 16000, step: 1,
+        value: ch[c.key].filter.frequency.value,
+        onChange:(v)=> ch[c.key].filter.frequency.value = v
+      });
+      const verbK = makeKnob({
+        label:"VERB",
+        min:0, max:1, step:0.01,
+        value: ch[c.key].send.gain.value,
+        onChange:(v)=> ch[c.key].send.gain.value = v
+      });
+
+      knobs.appendChild(panK);
+      knobs.appendChild(lpfK);
+      knobs.appendChild(verbK);
+
+      body.appendChild(faderCol);
+      body.appendChild(knobs);
+
+      strip.appendChild(top);
+      strip.appendChild(body);
+
+      stripRow.appendChild(strip);
+    });
+
+    wireSoloMute();
+  }
+
+  let soloState = Object.fromEntries(CHANNELS.map(c=>[c.key,false]));
+  let muteState = Object.fromEntries(CHANNELS.map(c=>[c.key,false]));
+
+  function applySoloMute(){
+    const anySolo = Object.values(soloState).some(v=>v);
+    CHANNELS.forEach(c=>{
+      const g = ch[c.key].outGain.gain;
+      const base = +document.querySelector(`.stripTitle[data-key="${c.key}"]`) ? ch[c.key].outGain.gain.value : g.value;
+      // We don't have a separate "base" store; instead use current slider.
+      const slider = document.querySelector(`.stripTitle[data-key="${c.key}"]`)?.closest(".strip")?.querySelector(".fader");
+      const baseVal = slider ? +slider.value : g.value;
+
+      const muted = muteState[c.key];
+      const soloed = soloState[c.key];
+
+      let v = baseVal;
+      if(anySolo && !soloed) v = 0;
+      if(muted) v = 0;
+
+      g.value = v;
+    });
+  }
+
+  function wireSoloMute(){
+    stripRow.querySelectorAll(".miniBtn").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const key = b.dataset.key;
+        const type = b.dataset.type;
+        if(type==="solo"){
+          soloState[key] = !soloState[key];
+          b.classList.toggle("on", soloState[key]);
+        }else{
+          muteState[key] = !muteState[key];
+          b.classList.toggle("on", muteState[key]);
         }
+        applySoloMute();
       });
+    });
+  }
+
+  // ============================================================
+  // Background control
+  // ============================================================
+  bgBtn.addEventListener("click", ()=>{
+    // quick + simple: cycle a few nice gradients
+    const presets = [
+      {a:"#111f37", b:"#0b0f14", c:"#05070a", x:40, y:20},
+      {a:"#2a1138", b:"#0b0f14", c:"#030305", x:50, y:30},
+      {a:"#11382a", b:"#0b0f14", c:"#05070a", x:30, y:20},
+      {a:"#2a2f4a", b:"#0b0f14", c:"#05070a", x:50, y:10},
+    ];
+    const cur = JSON.stringify(state.background);
+    let idx = presets.findIndex(p=>JSON.stringify(p)===cur);
+    idx = (idx+1) % presets.length;
+    state.background = presets[idx];
+    setBodyBackground();
+  });
+
+  // ============================================================
+  // Save / Load / Clear
+  // ============================================================
+  function serialize(){
+    // convert Sets to arrays
+    const drums = {};
+    for(const d of DRUMS){
+      drums[d.key] = Array.from(state.drums[d.key]).sort((a,b)=>a-b);
+    }
+    return {
+      bpm: state.bpm,
+      resolution: state.resolution,
+      background: state.background,
+      colors: state.colors,
+      transpose: state.transpose,
+      drums,
+      notes: state.notes
+    };
+  }
+
+  function loadFrom(obj){
+    if(!obj) return;
+
+    state.bpm = obj.bpm ?? state.bpm;
+    state.resolution = obj.resolution ?? state.resolution;
+    state.background = obj.background ?? state.background;
+
+    state.colors = obj.colors ?? state.colors;
+    state.transpose = obj.transpose ?? state.transpose;
+
+    // drums
+    const dmap = {};
+    for(const d of DRUMS){
+      const arr = (obj.drums && obj.drums[d.key]) ? obj.drums[d.key] : [];
+      dmap[d.key] = new Set(arr);
+    }
+    state.drums = dmap;
+
+    // notes
+    const nmap = {};
+    for(const l of LANES){
+      nmap[l.key] = (obj.notes && obj.notes[l.key]) ? obj.notes[l.key].map(n=>({...n})) : [];
+    }
+    state.notes = nmap;
+
+    // reflect UI
+    bpmEl.value = state.bpm;
+    resSel.value = String(state.resolution);
+    resPill.textContent = `1/${state.resolution}`;
+    setBodyBackground();
+
+    rebuildAll();
+  }
+
+  saveBtn.addEventListener("click", ()=>{
+    const data = serialize();
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "project.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  loadBtn.addEventListener("click", ()=>{
+    fileInput.accept = "application/json";
+    fileInput.click();
+    fileInput.onchange = async ()=>{
+      const f = fileInput.files?.[0];
+      if(!f) return;
+      const txt = await f.text();
+      const obj = JSON.parse(txt);
+      loadFrom(obj);
+      fileInput.value = "";
+    };
+  });
+
+  clearBtn.addEventListener("click", ()=>{
+    stop();
+    // reset state but keep colors/background
+    const keepColors = state.colors;
+    const keepBg = state.background;
+    const keepTranspose = state.transpose;
+
+    state = {
+      bpm: state.bpm,
+      resolution: state.resolution,
+      background: keepBg,
+      colors: keepColors,
+      transpose: keepTranspose,
+      drums: Object.fromEntries(DRUMS.map(d=>[d.key, new Set()])),
+      notes: Object.fromEntries(LANES.map(l=>[l.key, []]))
+    };
+    rebuildAll();
+  });
+
+  // ============================================================
+  // MIDI Import + Demo
+  // ============================================================
+  importBtn.addEventListener("click", ()=>{
+    fileInput.accept = ".mid,.midi";
+    fileInput.click();
+    fileInput.onchange = async ()=>{
+      const f = fileInput.files?.[0];
+      if(!f) return;
+      const ab = await f.arrayBuffer();
+      importMidiArrayBufferToActiveLane(ab);
+      fileInput.value = "";
+    };
+  });
+
+  function quantizeToSteps(seconds){
+    const sd = stepDurSeconds();
+    return Math.round(seconds / sd);
+  }
+
+  function importMidiArrayBufferToActiveLane(arrayBuffer, {fit=true} = {}){
+    if (!window.Midi){
+      alert("MIDI parser failed to load.");
+      return;
+    }
+    const midi = new Midi(arrayBuffer);
+
+    // Auto-detect lane suggestion (non-intrusive): show hint, do NOT switch lanes automatically.
+    try{
+      const suggested = suggestLaneForMidi(midi);
+      if (suggested && suggested !== activeRoll && midiFileStatus){
+        const current = laneLabel(activeRoll);
+        midiFileStatus.textContent = `Imported MIDI detected as ${laneLabel(suggested)}-range; keeping target lane: ${current}.`;
+      }
+    }catch(_){}
+
+    // Collect notes from all tracks
+    const notes = [];
+    midi.tracks.forEach(tr=>{
+      tr.notes.forEach(n=>notes.push(n));
+    });
+
+    if(!notes.length) return;
+
+    // Convert to our grid: step start + length (in steps)
+    const steps = stepsPerLoop();
+    const sd = stepDurSeconds();
+
+    // Determine span in seconds and map into loop if fit
+    const maxEnd = Math.max(...notes.map(n=>n.time+n.duration));
+    const fitScale = fit ? (loopDuration() / maxEnd) : 1;
+
+    const laneArr = state.notes[activeRoll];
+    for(const n of notes){
+      const t = n.time * fitScale;
+      const d = n.duration * fitScale;
+      let s = Math.max(0, Math.round(t/sd));
+      let l = Math.max(1, Math.round(d/sd));
+      if(s>=steps) continue;
+      l = clamp(l, 1, steps - s);
+      laneArr.push({ midi: n.midi, start: s, len: l });
     }
 
-    // build keys C3..C5
-    const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-    function midiToName(m){
-      const o = Math.floor(m/12)-1;
-      const n = NOTE_NAMES[m%12];
-      return `${n}${o}`;
+    // sort by start then midi
+    laneArr.sort((a,b)=>a.start-b.start || a.midi-b.midi);
+
+    rebuildRoll();
+  }
+
+  // Load demo from /demos/demo01.json
+  async function loadDefaultDemo(){
+    try{
+      const r = await fetch("./demos/demo01.json", {cache:"no-store"});
+      if(!r.ok) throw new Error("no demo01.json");
+      const obj = await r.json();
+      loadFrom(obj);
+    }catch(e){
+      // if demo missing, just build UI defaults
+      rebuildAll();
     }
+  }
 
-    const KEY_MIDI_TOP = 84; // C6? but we'll stop at C5 inclusive -> 72
-    const KEY_MIDI_BOTTOM = 48; // C3
-    const KEY_RANGE = [];
-    for(let m=72; m>=48; m--){ KEY_RANGE.push(m); } // C5 down to C3
+  // ============================================================
+  // MIDI Library (loads /midi directory packs via midi_index.json)
+  // ============================================================
+  midiLibBtn.addEventListener("click", openMidiLibrary);
+  midiModalClose.addEventListener("click", closeMidiLibrary);
+  midiModalBack.addEventListener("click", (e)=>{
+    if(e.target === midiModalBack) closeMidiLibrary();
+  });
 
-    function isBlack(m){
-      const n = NOTE_NAMES[m%12];
-      return n.includes("#");
+  function updateTargetLaneBadge(){
+    const lab = LANES.find(l=>l.key===activeRoll)?.label || "Piano";
+    targetLaneBadge.textContent = `Target: ${lab}`;
+  }
+
+  async function openMidiLibrary(){
+    updateTargetLaneBadge();
+    midiModalBack.classList.add("show");
+    await loadMidiIndexAndRender();
+  }
+  function closeMidiLibrary(){
+    stopPreview();
+    midiModalBack.classList.remove("show");
+  }
+
+  let midiIndex = null;
+  let previewTimer = null;
+
+  function stopPreview(){
+    if(previewTimer){
+      clearTimeout(previewTimer);
+      previewTimer = null;
     }
+  }
 
-    function buildKeys(){
-      keysEl.innerHTML = "";
-      KEY_RANGE.forEach(m => {
-        const k = document.createElement("div");
-        k.className = "key " + (isBlack(m) ? "black" : "white");
-        const txt = document.createElement("div");
-        txt.className = "noteTxt";
-        txt.textContent = midiToName(m);
-        // black text on white, white text on black
-        txt.style.color = isBlack(m) ? "rgba(255,255,255,.92)" : "#0b0f14";
-        k.appendChild(txt);
+  async function loadMidiIndexAndRender(){
+    midiPackInfo.textContent = "Loading…";
+    midiList.innerHTML = "";
+    midiFileStatus.textContent = "Pick a MIDI to preview/import.";
 
-        k.addEventListener("pointerdown", async (e) => {
-          e.preventDefault();
-          await audio.resume();
-          playNote(activeRoll, m, 105, audio.currentTime, 0.18);
-        });
-
-        keysEl.appendChild(k);
-      });
+    try{
+      // Expect a generated index at /midi/midi_index.json
+      const r = await fetch("./midi/midi_index.json", {cache:"no-store"});
+      if(!r.ok) throw new Error("Missing midi_index.json");
+      midiIndex = await r.json();
+      renderMidiLibrary(midiIndex);
+    }catch(err){
+      midiPackInfo.textContent = "No library index found. Add /midi/midi_index.json";
+      midiList.innerHTML = "";
     }
+  }
 
-    /***********************
-     * Drum Sequencer UI
-     ***********************/
-    function ensureDrumSteps(){
-      drumSteps = drumRes * barCount;
-      drumNames.forEach(d => {
-        const row = drumState[d.key];
-        // keep selections: extend but never delete
-        if (row.steps.length < drumSteps){
-          const add = drumSteps - row.steps.length;
-          row.steps.push(...Array(add).fill(false));
-        }
-      });
-    }
+  function renderMidiLibrary(idx){
+    const packs = idx.packs || [];
+    midiPackInfo.textContent = `${packs.length} folder(s)`;
 
-    function stepGroupClass(i){
-      // group visual every 4 notes *relative to current resolution*
-      // Use 4-step groups at the current resolution for clarity
-      const g = Math.floor(i/4) % 4;
-      return ["groupA","groupB","groupC","groupD"][g];
-    }
+    midiList.innerHTML = "";
+    for(const p of packs){
+      const header = document.createElement("div");
+      header.className = "pill";
+      header.textContent = p.name || p.folder;
+      midiList.appendChild(header);
 
-    function renderDrums(){
-      ensureDrumSteps();
-      drumGridEl.innerHTML = "";
-      groupLabel.textContent = `1/${drumRes}`;
-      drumResLabel.textContent = `Resolution: 1/${drumRes}`;
-
-      drumNames.forEach((d, rowIdx) => {
-        const row = document.createElement("div");
-        row.className = "drumRow";
+      for(const f of (p.files||[])){
+        const item = document.createElement("div");
+        item.className = "listItem";
 
         const meta = document.createElement("div");
-        meta.className = "drumMeta";
+        meta.className = "meta";
+        const t = document.createElement("div");
+        t.className = "t";
+        t.textContent = f.name || f.file;
+        const s = document.createElement("div");
+        s.className = "s";
+        s.textContent = `• ${f.bpm ? f.bpm+" BPM" : "MIDI"} • ${f.bars ? f.bars+" bars" : "loop"}`;
+        meta.appendChild(t);
+        meta.appendChild(s);
 
-        const label = document.createElement("div");
-        label.className = "drumLabel";
+        const actions = document.createElement("div");
+        actions.className = "row tight";
+        const prev = document.createElement("button");
+        prev.className = "btn small";
+        prev.textContent = "Preview";
+        prev.addEventListener("click", ()=> previewMidiFromLibrary(p, f));
 
-        const name = document.createElement("div");
-        name.className = "name";
-        name.textContent = d.label;
-        name.style.color = drumState[d.key].text || contrastText(drumState[d.key].color);
-        name.addEventListener("dblclick", (e)=> openColorPickerFor("drum", d.key, e.clientX, e.clientY));
-        name.addEventListener("pointerdown", (e)=>{
-          // double-tap support
-          if (e.pointerType === "touch") handleDoubleTap(name, () => openColorPickerFor("drum", d.key, e.clientX, e.clientY));
-        });
+        const imp = document.createElement("button");
+        imp.className = "btn small primary";
+        imp.textContent = "Import";
+        imp.addEventListener("click", ()=> importMidiFromLibrary(p, f));
 
-        const hint = document.createElement("div");
-        hint.className = "hint";
-        hint.textContent = d.hint;
+        actions.appendChild(prev);
+        actions.appendChild(imp);
 
-        label.appendChild(name);
-        label.appendChild(hint);
+        item.appendChild(meta);
+        item.appendChild(actions);
+        midiList.appendChild(item);
+      }
+    }
+  }
 
-        const knobs = document.createElement("div");
-        knobs.className = "drumKnobs";
+  function buildMidiPath(pack, file){
+    // pack.folder + file.file relative to /midi
+    const folder = pack.folder || pack.name || "";
+    return `./midi/${folder}/${file.file || file.name}`;
+  }
 
-        const soloBtn = document.createElement("div");
-        soloBtn.className = "miniToggle";
-        soloBtn.textContent = "S";
-        soloBtn.title = "Solo";
-        soloBtn.addEventListener("click", ()=>{
-          drumState[d.key].solo = !drumState[d.key].solo;
-          soloBtn.classList.toggle("on", drumState[d.key].solo);
-        });
+  // ---------- Auto-detect lane suggestion (lightweight heuristics) ----------
+  // Goal: suggest a lane based on MIDI pitch range + chord density, without changing user selection.
+  function suggestLaneForMidi(midi){
+    const notes = [];
+    midi.tracks.forEach(tr => (tr.notes||[]).forEach(n => notes.push(n)));
+    if (!notes.length) return "piano";
 
-        const muteBtn = document.createElement("div");
-        muteBtn.className = "miniToggle mute";
-        muteBtn.textContent = "M";
-        muteBtn.title = "Mute";
-        muteBtn.addEventListener("click", ()=>{
-          drumState[d.key].mute = !drumState[d.key].mute;
-          muteBtn.classList.toggle("on", drumState[d.key].mute);
-        });
+    // basic pitch stats
+    const midis = notes.map(n => n.midi).sort((a,b)=>a-b);
+    const avg = midis.reduce((a,b)=>a+b,0) / midis.length;
+    const low = midis[0], high = midis[midis.length-1];
 
-        const volKnob = document.createElement("div");
-        volKnob.className = "knob";
-        volKnob.title = "Volume";
-        const sp = document.createElement("span");
-        sp.textContent = Math.round(drumState[d.key].vol*100);
-        volKnob.appendChild(sp);
-
-        setupKnob(volKnob, drumState[d.key].vol, (v)=>{
-          drumState[d.key].vol = v;
-          sp.textContent = Math.round(v*100);
-        });
-
-        knobs.appendChild(soloBtn);
-        knobs.appendChild(muteBtn);
-        knobs.appendChild(volKnob);
-
-        meta.appendChild(label);
-        meta.appendChild(knobs);
-
-        const stepsWrap = document.createElement("div");
-        stepsWrap.className = "stepsWrap";
-        const steps = document.createElement("div");
-        steps.className = "steps";
-
-        // paint logic: lock to initial row on pointer down
-        let paintOn = null;
-        let paintRowKey = null;
-
-        for(let i=0;i<drumSteps;i++){
-          const cell = document.createElement("div");
-          cell.className = "step " + stepGroupClass(i);
-          const on = drumState[d.key].steps[i];
-          cell.classList.toggle("on", !!on);
-
-          cell.addEventListener("pointerdown", async (e) => {
-            e.preventDefault();
-            await audio.resume();
-            paintRowKey = d.key;
-            paintOn = !drumState[d.key].steps[i];
-            drumState[d.key].steps[i] = paintOn;
-            cell.classList.toggle("on", paintOn);
-            cell.setPointerCapture(e.pointerId);
-            cell.classList.add("dragHover");
-          });
-
-          cell.addEventListener("pointerenter", (e)=>{
-            if (paintOn === null) return;
-            if (paintRowKey !== d.key) return;
-            drumState[d.key].steps[i] = paintOn;
-            cell.classList.toggle("on", paintOn);
-            cell.classList.add("dragHover");
-          });
-
-          cell.addEventListener("pointerup", (e)=>{
-            paintOn = null;
-            paintRowKey = null;
-            steps.querySelectorAll(".dragHover").forEach(x=>x.classList.remove("dragHover"));
-          });
-
-          steps.appendChild(cell);
-        }
-
-        stepsWrap.appendChild(steps);
-
-        row.appendChild(meta);
-        row.appendChild(stepsWrap);
-        drumGridEl.appendChild(row);
-      });
+    // estimate chord density: sample overlaps via simple sweep
+    const events = [];
+    for (const n of notes){
+      const s = n.time;
+      const e = n.time + (n.duration || 0);
+      events.push([s, +1]);
+      events.push([e, -1]);
+    }
+    events.sort((a,b)=>a[0]-b[0] || b[1]-a[1]);
+    let active=0, maxActive=0;
+    for (const [t, delta] of events){
+      active += delta;
+      if (active > maxActive) maxActive = active;
     }
 
-    // ---------- MIDI LIBRARY ----------
-    let midiIndex = null;  // structure: [{name, path, files:[{name, file}]}]
-    let currentPack = null;
+    // Heuristics:
+    // - Very low average or low range -> Bass
+    if (avg < 54 || high <= 60) return "bass";
 
-    async function fetchMidiIndex(){
+    // - Dense chords -> Piano (keeps it familiar; user can swap to Poly/Pad manually)
+    if (maxActive >= 3) return "piano";
+
+    // - High register / melodic -> Synth (lead lane)
+    if (avg >= 70 || low >= 62) return "synth";
+
+    // default
+    return "piano";
+  }
+
+  function laneLabel(key){
+    return (LANES.find(l=>l.key===key)?.label) || key;
+  }
+
+  async function fetchMidiArrayBuffer(path){
+    const r = await fetch(path, {cache:"no-store"});
+    if(!r.ok) throw new Error("Failed to fetch MIDI: "+path);
+    return await r.arrayBuffer();
+  }
+
+  async function previewMidiFromLibrary(pack, file){
+    try{
+      midiFileStatus.textContent = `Loading preview…`;
+      await ensureRunning();
+      stopPreview();
+
+      const ab = await fetchMidiArrayBuffer(buildMidiPath(pack, file));
+      const midi = new Midi(ab);
+
+      const suggested = suggestLaneForMidi(midi);
+      const sugTxt = (suggested && suggested !== activeRoll)
+        ? ` • Suggested lane: ${laneLabel(suggested)}`
+        : "";
+
+      // play first 1 bar quickly using current active lane sound
+      const sd = stepDurSeconds();
+      const now = actx.currentTime + 0.03;
+
+      const notes = [];
+      midi.tracks.forEach(tr=>tr.notes.forEach(n=>notes.push(n)));
+      if(!notes.length){
+        midiFileStatus.textContent = `No notes in file.`;
+        return;
+      }
+
+      const maxEnd = Math.max(...notes.map(n=>n.time+n.duration));
+      const fitScale = loopDuration() / maxEnd;
+
+      notes.forEach(n=>{
+        const t = now + (n.time*fitScale);
+        const dur = Math.max(0.05, n.duration*fitScale);
+        triggerTone({midi:n.midi, t, dur, laneKey: activeRoll});
+      });
+
+      midiFileStatus.textContent = `Previewing: ${file.name || file.file}${sugTxt}`;
+      previewTimer = setTimeout(()=>{ midiFileStatus.textContent = `Pick a MIDI to preview/import.`; }, 1200);
+    }catch(e){
+      midiFileStatus.textContent = `Preview failed.`;
+      console.warn(e);
+    }
+  }
+
+  async function importMidiFromLibrary(pack, file){
+    try{
+      midiFileStatus.textContent = `Importing…`;
+      const ab = await fetchMidiArrayBuffer(buildMidiPath(pack, file));
+
+      let suggested = null;
       try{
-        // expects /midi/index.json generated by you, or directory-like list
-        const res = await fetch("./midi/index.json", { cache:"no-store" });
-        if (!res.ok) throw new Error("No /midi/index.json found");
-        midiIndex = await res.json();
-      }catch(err){
-        midiIndex = [];
-        console.warn("MIDI index fetch failed:", err);
-      }
+        const midi = new Midi(ab);
+        suggested = suggestLaneForMidi(midi);
+      }catch(_){}
+      const sugTxt = (suggested && suggested !== activeRoll)
+        ? ` • Suggested lane: ${laneLabel(suggested)}`
+        : "";
+
+      importMidiArrayBufferToActiveLane(ab, {fit:true});
+      midiFileStatus.textContent = `Imported into ${LANES.find(l=>l.key===activeRoll)?.label ?? "Piano"}: ${file.name || file.file}${sugTxt}`;
+      setTimeout(()=>{ midiFileStatus.textContent = `Pick a MIDI to preview/import.`; }, 1400);
+    }catch(e){
+      midiFileStatus.textContent = `Import failed.`;
+      console.warn(e);
     }
+  }
 
-    function showMidiModal(){
-      midiOverlay.style.display = "flex";
-      targetLaneBadge.textContent = `Target: ${labelForLaneKey(activeRoll)}`;
-      midiSearch.value = "";
-      setSuggestedLaneBadge(null);
-      renderMidiList();
+  async function ensureRunning(){
+    if(actx.state !== "running"){
+      await actx.resume();
     }
-    function hideMidiModal(){
-      midiOverlay.style.display = "none";
-    }
-
-    midiLibBtn.addEventListener("click", async ()=>{
-      await audio.resume();
-      if (!midiIndex) await fetchMidiIndex();
-      showMidiModal();
-    });
-    midiCloseBtn.addEventListener("click", hideMidiModal);
-    midiOverlay.addEventListener("click", (e)=>{ if (e.target === midiOverlay) hideMidiModal(); });
-    midiRefreshBtn.addEventListener("click", async ()=>{ await fetchMidiIndex(); renderMidiList(); });
-    midiSearch.addEventListener("input", ()=> renderMidiList());
-
-    function renderMidiList(){
-      const q = (midiSearch.value||"").trim().toLowerCase();
-      midiList.innerHTML = "";
-
-      const packs = (midiIndex || []).filter(p=>{
-        if (!q) return true;
-        const pn = (p.name||"").toLowerCase();
-        if (pn.includes(q)) return true;
-        return (p.files||[]).some(f => ((f.name||f.file||"").toLowerCase().includes(q)));
-      });
-
-      packs.forEach(pack=>{
-        const header = document.createElement("div");
-        header.className = "fileRow";
-        header.style.background = "rgba(0,0,0,.18)";
-        header.innerHTML = `<div class="fileName">${escapeHtml(pack.name || pack.path || "Pack")}</div>`;
-        const openBtn = document.createElement("button");
-        openBtn.className = "miniBtn";
-        openBtn.textContent = "Open";
-        openBtn.addEventListener("click", ()=>{ currentPack = pack; renderFileList(pack, q); });
-        const right = document.createElement("div");
-        right.className = "fileBtns";
-        right.appendChild(openBtn);
-        header.appendChild(right);
-        midiList.appendChild(header);
-      });
-
-      if (!packs.length){
-        const empty = document.createElement("div");
-        empty.className = "fileRow";
-        empty.innerHTML = `<div class="fileName">No MIDI packs found.</div>`;
-        midiList.appendChild(empty);
-      }
-    }
-
-    function renderFileList(pack, q){
-      midiList.innerHTML = "";
-      const back = document.createElement("div");
-      back.className = "fileRow";
-      back.innerHTML = `<div class="fileName">← Back</div>`;
-      const backBtn = document.createElement("button");
-      backBtn.className = "miniBtn";
-      backBtn.textContent = "Back";
-      backBtn.addEventListener("click", ()=> renderMidiList());
-      const right = document.createElement("div");
-      right.className = "fileBtns";
-      right.appendChild(backBtn);
-      back.appendChild(right);
-      midiList.appendChild(back);
-
-      const filteredFiles = (pack.files || []).filter(f=>{
-        if (!q) return true;
-        return ((f.name||f.file||"").toLowerCase().includes(q));
-      });
-
-      filteredFiles.forEach((f) => {
-        const row = document.createElement("div");
-        row.className = "fileRow";
-
-        const left = document.createElement("div");
-        left.style.minWidth = "0";
-        left.innerHTML = `<div class="fileName">${escapeHtml(f.name || f.file)}</div>`;
-
-        const btns = document.createElement("div");
-        btns.className = "fileBtns";
-
-        const previewBtn = document.createElement("button");
-        previewBtn.className = "miniBtn";
-        previewBtn.textContent = "Preview";
-
-        const importBtn = document.createElement("button");
-        importBtn.className = "miniBtn primary";
-        importBtn.textContent = `Import → ${LANES.find(l=>l.key===activeRoll)?.label ?? "Piano"}`;
-
-        // Auto-detect lane suggestion from filename (non-destructive: just suggests)
-        const suggestedLane = suggestLaneForFileName((f.name || f.file || ""), currentPack?.name || "", currentPack?.path || "");
-        if (suggestedLane){
-          left.innerHTML = `<div class="fileName">${escapeHtml(f.name || f.file)} <span class="kbd" style="margin-left:8px; font-size:11px; opacity:.9; background:${hexToRgba(theme.lanes[suggestedLane]||"#888",0.14)}; border-color:${hexToRgba(theme.lanes[suggestedLane]||"#888",0.35)}; color:${theme.labelText.lanes[suggestedLane]||contrastText(theme.lanes[suggestedLane]||"#888")}">Suggest: ${escapeHtml(labelForLaneKey(suggestedLane))}</span></div>`;
-          setSuggestedLaneBadge(suggestedLane);
-        }
-
-        const useSugBtn = document.createElement("button");
-        useSugBtn.className = "miniBtn";
-        useSugBtn.textContent = "Use Suggested";
-        useSugBtn.style.display = (suggestedLane && suggestedLane !== activeRoll) ? "inline-flex" : "none";
-
-        useSugBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (suggestedLane) selectLane(suggestedLane);
-          useSugBtn.style.display = (suggestedLane && suggestedLane !== activeRoll) ? "inline-flex" : "none";
-        });
-
-        row.addEventListener("click", (e) => {
-          // Clicking the row (not buttons) updates the suggestion badge (helps on mobile)
-          if (e.target && e.target.closest && e.target.closest("button")) return;
-          setSuggestedLaneBadge(suggestedLane);
-          useSugBtn.style.display = (suggestedLane && suggestedLane !== activeRoll) ? "inline-flex" : "none";
-        });
-
-        previewBtn.addEventListener("click", async () => {
-          await previewMidiFromLibrary(pack, f);
-        });
-
-        importBtn.addEventListener("click", async () => {
-          await importMidiFromLibrary(pack, f);
-        });
-
-        btns.appendChild(previewBtn);
-        btns.appendChild(useSugBtn);
-        btns.appendChild(importBtn);
-
-        row.appendChild(left);
-        row.appendChild(btns);
-        midiList.appendChild(row);
-      });
-
-      if (!filteredFiles.length){
-        const empty = document.createElement("div");
-        empty.className = "fileRow";
-        empty.innerHTML = `<div class="fileName">No files found.</div>`;
-        midiList.appendChild(empty);
-      }
-    }
-
-    async function previewMidiFromLibrary(pack, file){
-      try{
-        await audio.resume();
-        const url = `./midi/${pack.path}/${file.file || file.name}`;
-        const midi = await loadMidi(url);
-        // preview: play 1 bar worth on the current target lane
-        const lane = activeRoll;
-        const seq = midiToNoteEvents(midi, lane);
-        const now = audio.currentTime + 0.02;
-        const secPerStep = (60/bpm) / 16; // base 1/16 "grid" for preview timing
-        const maxTime = now + (60/bpm) * 4; // 1 bar
-        seq.forEach(ev=>{
-          const t = now + ev.start * secPerStep;
-          if (t <= maxTime) playNote(lane, ev.midi, ev.vel, t, ev.durSteps * secPerStep);
-        });
-      }catch(err){
-        console.warn("Preview failed:", err);
-      }
-    }
-
-    async function importMidiFromLibrary(pack, file){
-      try{
-        const url = `./midi/${pack.path}/${file.file || file.name}`;
-        const midi = await loadMidi(url);
-
-        // non-destructive: import to currently selected lane
-        const lane = activeRoll;
-
-        const evs = midiToNoteEvents(midi, lane);
-        // convert to roll grid steps
-        // assume rollQuant represents steps per whole note? We'll map to rollSteps grid.
-        evs.forEach(ev=>{
-          const start = clamp(Math.round(ev.start), 0, rollSteps-1);
-          const len = clamp(Math.round(ev.durSteps), 1, rollSteps-start);
-          notes[lane].push({ midi: ev.midi, start, len, vel: ev.vel });
-        });
-
-        normalizeNotes(lane);
-        drawRoll(isPlaying ? currentStep : -1);
-      }catch(err){
-        console.warn("Import failed:", err);
-      }
-    }
-
-    /***********************
-     * MIDI parsing (lightweight)
-     ***********************/
-    async function loadMidi(url){
-      const res = await fetch(url, { cache:"no-store" });
-      if (!res.ok) throw new Error("MIDI fetch failed");
-      const buf = await res.arrayBuffer();
-      return parseMidi(buf);
-    }
-
-    // Minimal MIDI parser for type 0/1; enough for note on/off + tempo
-    function parseMidi(arrayBuffer){
-      const data = new DataView(arrayBuffer);
-      let p=0;
-      function readU8(){ return data.getUint8(p++); }
-      function readU16(){ const v=data.getUint16(p); p+=2; return v; }
-      function readU32(){ const v=data.getUint32(p); p+=4; return v; }
-      function readStr(n){
-        let s=""; for(let i=0;i<n;i++) s+=String.fromCharCode(readU8());
-        return s;
-      }
-      function readVar(){
-        let v=0;
-        while(true){
-          const b = readU8();
-          v = (v<<7) | (b & 0x7f);
-          if (!(b & 0x80)) break;
-        }
-        return v;
-      }
-
-      const header = readStr(4);
-      if (header !== "MThd") throw new Error("Bad MIDI");
-      const headerLen = readU32();
-      const format = readU16();
-      const ntrks = readU16();
-      const division = readU16();
-      p += (headerLen - 6);
-
-      const tracks = [];
-      for(let ti=0; ti<ntrks; ti++){
-        const th = readStr(4);
-        if (th !== "MTrk") throw new Error("Bad track");
-        const len = readU32();
-        const end = p + len;
-
-        let t = 0;
-        let running = null;
-        const events = [];
-
-        while(p < end){
-          const delta = readVar();
-          t += delta;
-          let status = readU8();
-          if (status < 0x80){
-            // running status
-            p--;
-            status = running;
-          } else {
-            running = status;
-          }
-
-          if (status === 0xFF){
-            const type = readU8();
-            const l = readVar();
-            const bytes = [];
-            for(let i=0;i<l;i++) bytes.push(readU8());
-            events.push({ t, type:"meta", metaType:type, data:bytes });
-          } else if ((status & 0xF0) === 0x90){
-            const ch = status & 0x0F;
-            const note = readU8();
-            const vel = readU8();
-            events.push({ t, type:"noteon", ch, note, vel });
-          } else if ((status & 0xF0) === 0x80){
-            const ch = status & 0x0F;
-            const note = readU8();
-            const vel = readU8();
-            events.push({ t, type:"noteoff", ch, note, vel });
-          } else if ((status & 0xF0) === 0xA0 || (status & 0xF0) === 0xB0 || (status & 0xF0) === 0xE0){
-            // 2 bytes
-            readU8(); readU8();
-          } else if ((status & 0xF0) === 0xC0 || (status & 0xF0) === 0xD0){
-            readU8();
-          } else if (status === 0xF0 || status === 0xF7){
-            const l = readVar();
-            p += l;
-          } else {
-            // skip unknown gracefully
-            // (rare)
-          }
-        }
-        tracks.push(events);
-      }
-
-      return { format, division, tracks };
-    }
-
-    function midiToNoteEvents(midi, laneKey){
-      // Collect note on/off pairs across tracks.
-      // Convert to a step grid where 1 step = 1/64 note by default (fits our roll)
-      const div = midi.division;
-      const perQuarter = div;
-      const stepsPerQuarter = 16; // 1/64 in 4/4 relative to quarter note => quarter has 16 * 1/64-steps
-      const noteOns = new Map();
-      const out = [];
-
-      midi.tracks.forEach(tr=>{
-        tr.forEach(ev=>{
-          if (ev.type==="noteon" && ev.vel>0){
-            noteOns.set(`${ev.ch}:${ev.note}`, { t: ev.t, vel: ev.vel });
-          } else if (ev.type==="noteoff" || (ev.type==="noteon" && ev.vel===0)){
-            const k = `${ev.ch}:${ev.note}`;
-            const on = noteOns.get(k);
-            if (on){
-              const dtTicks = ev.t - on.t;
-              const startQ = on.t / perQuarter;
-              const durQ = dtTicks / perQuarter;
-              const startSteps = Math.round(startQ * stepsPerQuarter);
-              const durSteps = Math.max(1, Math.round(durQ * stepsPerQuarter));
-              out.push({ midi: ev.note, start: startSteps, durSteps, vel: on.vel });
-              noteOns.delete(k);
-            }
-          } else if (ev.type==="meta" && ev.metaType===0x51){
-            // tempo; ignore for now (we keep BPM absolute)
-          }
-        });
-      });
-
-      // fit into 4 bars default region
-      return out.filter(n => n.start < rollSteps);
-    }
-
-    function normalizeNotes(lane){
-      // remove out-of-range, merge duplicates
-      notes[lane] = notes[lane]
-        .filter(n => n.start >=0 && n.start < rollSteps && n.len>0)
-        .map(n => ({...n, len: clamp(n.len, 1, rollSteps-n.start)}));
-
-      // sort by start then pitch
-      notes[lane].sort((a,b)=> a.start-b.start || a.midi-b.midi);
-    }
-
-    /***********************
-     * Mixer UI
-     ***********************/
-    function setupKnob(knobEl, initial, onChange){
-      let dragging = false;
-      let startY = 0;
-      let startV = initial;
-
-      const setV = (v)=>{
-        v = clamp(v, 0, 1);
-        const ang = lerp(-135, 135, v);
-        knobEl.style.transform = `rotate(${ang}deg)`;
-        onChange(v);
-      };
-
-      setV(initial);
-
-      knobEl.addEventListener("pointerdown", (e)=>{
-        e.preventDefault();
-        dragging = true;
-        startY = e.clientY;
-        startV = initial = (typeof initial === "number" ? initial : 0);
-        knobEl.setPointerCapture(e.pointerId);
-      });
-
-      knobEl.addEventListener("pointermove", (e)=>{
-        if (!dragging) return;
-        const dy = (startY - e.clientY) / 120;
-        const v = clamp(startV + dy, 0, 1);
-        initial = v;
-        setV(v);
-      });
-
-      knobEl.addEventListener("pointerup", ()=>{
-        dragging = false;
-      });
-
-      knobEl.addEventListener("dblclick", ()=>{
-        initial = 0.5;
-        setV(initial);
-      });
-    }
-
-    function buildTransposeKnobs(){
-      const wrap = document.getElementById("transposeKnobs");
-      wrap.innerHTML = "";
-      LANES.forEach(l=>{
-        const col = document.createElement("div");
-        col.style.display="flex";
-        col.style.flexDirection="column";
-        col.style.alignItems="center";
-        col.style.gap="6px";
-        col.style.width="52px";
-
-        const lab = document.createElement("div");
-        lab.style.fontSize="11px";
-        lab.style.fontWeight="800";
-        lab.style.color="var(--muted)";
-        lab.textContent = l.label;
-
-        const knob = document.createElement("div");
-        knob.className = "knob knobBig";
-        knob.title = "Transpose";
-        const sp = document.createElement("span");
-        sp.textContent = "0";
-        knob.appendChild(sp);
-
-        const setTxt = (semi)=>{
-          sp.textContent = semi>0 ? `+${semi}` : `${semi}`;
-        };
-
-        // map -24..+24 semis to 0..1
-        const toNorm = (semi)=> (semi + 24) / 48;
-        const fromNorm = (v)=> Math.round(v*48 - 24);
-
-        setupKnob(knob, toNorm(transposes[l.key]||0), (v)=>{
-          const semi = fromNorm(v);
-          transposes[l.key] = semi;
-          setTxt(semi);
-        });
-
-        setTxt(transposes[l.key]||0);
-
-        col.appendChild(lab);
-        col.appendChild(knob);
-        wrap.appendChild(col);
-      });
-    }
-
-    function buildMixer(){
-      mixerGridEl.innerHTML = "";
-
-      const strips = [
-        { key:"piano", label:"Piano" },
-        { key:"bass", label:"Bass" },
-        { key:"synth", label:"Synth" },
-        { key:"pad", label:"Pad" },
-        { key:"ep", label:"EP" },
-        { key:"bell", label:"Bell" },
-        { key:"poly", label:"Poly" },
-        { key:"drums", label:"Drum Bus" },
-      ];
-
-      strips.forEach(s=>{
-        const ch = channels[s.key];
-
-        const strip = document.createElement("div");
-        strip.className = "strip";
-
-        const head = document.createElement("div");
-        head.className = "stripHead";
-
-        const nm = document.createElement("div");
-        nm.className = "stripName";
-        nm.textContent = s.label;
-        nm.style.color = theme.labelText.lanes[s.key] || contrastText(theme.lanes[s.key]||"#9ca3af");
-        nm.addEventListener("dblclick", (e)=> openColorPickerFor("lane", s.key, e.clientX, e.clientY));
-        nm.addEventListener("pointerdown", (e)=>{
-          if (e.pointerType === "touch") handleDoubleTap(nm, () => openColorPickerFor("lane", s.key, e.clientX, e.clientY));
-        });
-
-        const toggles = document.createElement("div");
-        toggles.className = "stripToggles";
-
-        const solo = document.createElement("div");
-        solo.className = "miniToggle";
-        solo.textContent = "S";
-        solo.title="Solo";
-
-        const mute = document.createElement("div");
-        mute.className = "miniToggle mute";
-        mute.textContent = "M";
-        mute.title="Mute";
-
-        toggles.appendChild(solo);
-        toggles.appendChild(mute);
-
-        head.appendChild(nm);
-        head.appendChild(toggles);
-
-        const body = document.createElement("div");
-        body.className = "stripBody";
-
-        // fader
-        const faderCol = document.createElement("div");
-        faderCol.className = "faderCol";
-        const fl = document.createElement("div");
-        fl.className = "faderLabel";
-        fl.textContent = "VOL";
-        const f = document.createElement("input");
-        f.className = "vFader";
-        f.type="range"; f.min="0"; f.max="1"; f.step="0.01";
-        f.value = ch.vol.gain.value;
-
-        f.addEventListener("input", ()=>{
-          ch.vol.gain.value = parseFloat(f.value);
-        });
-
-        faderCol.appendChild(fl);
-        faderCol.appendChild(f);
-
-        // knobs: PAN, LPF, VERB (locked alignment by CSS grid)
-        const knobs = document.createElement("div");
-        knobs.className = "stripKnobs";
-
-        // PAN
-        const panCol = document.createElement("div");
-        panCol.className = "kCol";
-        const panLab = document.createElement("label");
-        panLab.textContent = "PAN";
-        const panKn = document.createElement("div");
-        panKn.className = "knob knobBig";
-        const panSp = document.createElement("span");
-        panSp.textContent = "C";
-        panKn.appendChild(panSp);
-
-        // LPF
-        const lpfCol = document.createElement("div");
-        lpfCol.className = "kCol";
-        const lpfLab = document.createElement("label");
-        lpfLab.textContent = "LPF";
-        const lpfKn = document.createElement("div");
-        lpfKn.className = "knob knobBig";
-        const lpfSp = document.createElement("span");
-        lpfSp.textContent = "MAX";
-        lpfKn.appendChild(lpfSp);
-
-        // VERB
-        const verbCol = document.createElement("div");
-        verbCol.className = "kCol";
-        const verbLab = document.createElement("label");
-        verbLab.textContent = "VERB";
-        const verbKn = document.createElement("div");
-        verbKn.className = "knob knobBig";
-        const verbSp = document.createElement("span");
-        verbSp.textContent = "0";
-        verbKn.appendChild(verbSp);
-
-        // knob wiring
-        // PAN: -1..+1 mapped from 0..1
-        setupKnob(panKn, 0.5, (v)=>{
-          const pv = (v*2 - 1);
-          if (ch.pan) ch.pan.pan.value = pv;
-          panSp.textContent = pv < -0.05 ? "L" : (pv > 0.05 ? "R" : "C");
-        });
-
-        // LPF: 200..16000
-        setupKnob(lpfKn, 1.0, (v)=>{
-          const hz = Math.round(200 * Math.pow(80, v)); // 200..16000-ish
-          ch.lpf.frequency.value = hz;
-          lpfSp.textContent = (hz >= 15000) ? "MAX" : `${hz}`;
-        });
-
-        // VERB: 0..0.85
-        setupKnob(verbKn, 0.0, (v)=>{
-          const sv = v * 0.85;
-          ch.send.gain.value = sv;
-          verbSp.textContent = `${Math.round(v*100)}`;
-        });
-
-        panCol.appendChild(panLab);
-        panCol.appendChild(panKn);
-
-        lpfCol.appendChild(lpfLab);
-        lpfCol.appendChild(lpfKn);
-
-        verbCol.appendChild(verbLab);
-        verbCol.appendChild(verbKn);
-
-        knobs.appendChild(panCol);
-        knobs.appendChild(lpfCol);
-        knobs.appendChild(verbCol);
-
-        body.appendChild(faderCol);
-        body.appendChild(knobs);
-
-        strip.appendChild(head);
-        strip.appendChild(body);
-
-        mixerGridEl.appendChild(strip);
-      });
-    }
-
-    /***********************
-     * Piano Roll Drawing + Interaction
-     ***********************/
-    const CELL_W = 18; // step width
-    const CELL_H = 26; // note height
-
-    function rollSize(){
-      const w = rollSteps * CELL_W;
-      const h = KEY_RANGE.length * CELL_H;
-      rollCanvas.width = w;
-      rollCanvas.height = Math.max(h, 520);
-    }
-
-    function drawRoll(playStep=-1){
-      rollSize();
-      ctx.clearRect(0,0,rollCanvas.width, rollCanvas.height);
-
-      // grid
-      for(let i=0;i<=rollSteps;i++){
-        const x = i * CELL_W;
-        ctx.beginPath();
-        ctx.moveTo(x,0);
-        ctx.lineTo(x, rollCanvas.height);
-        const major = (i % 16 === 0);
-        const mid = (i % 4 === 0);
-        ctx.strokeStyle = major ? "rgba(255,255,255,.10)" : mid ? "rgba(255,255,255,.06)" : "rgba(255,255,255,.035)";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-
-      for(let r=0;r<KEY_RANGE.length;r++){
-        const y = r * CELL_H;
-        ctx.beginPath();
-        ctx.moveTo(0,y);
-        ctx.lineTo(rollCanvas.width, y);
-        ctx.strokeStyle = "rgba(255,255,255,.04)";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-
-      // notes
-      const lane = activeRoll;
-      const hex = theme.lanes[lane] || "#6ae4ff";
-      notes[lane].forEach(n=>{
-        const row = KEY_RANGE.indexOf(n.midi);
-        if (row < 0) return;
-        const x = n.start * CELL_W;
-        const y = row * CELL_H;
-        const w = n.len * CELL_W;
-        ctx.fillStyle = hexToRgba(hex, 0.65);
-        ctx.fillRect(x+1, y+2, w-2, CELL_H-4);
-        ctx.strokeStyle = hexToRgba(hex, 0.95);
-        ctx.strokeRect(x+1, y+2, w-2, CELL_H-4);
-      });
-
-      if (playStep >= 0){
-        const px = playStep * CELL_W;
-        ctx.fillStyle = "rgba(106,228,255,.12)";
-        ctx.fillRect(px, 0, CELL_W, rollCanvas.height);
-        ctx.strokeStyle = "rgba(106,228,255,.65)";
-        ctx.strokeRect(px+0.5,0.5,CELL_W-1,rollCanvas.height-1);
-      }
-    }
-
-    // paint notes with sustain length control
-    let rollPainting = false;
-    let rollErase = false;
-    let rollDownStart = null;
-    let rollDownMidi = null;
-
-    function screenToRoll(e){
-      const rect = rollCanvas.getBoundingClientRect();
-      const x = e.clientX - rect.left + rollEl.scrollLeft;
-      const y = e.clientY - rect.top + rollEl.scrollTop;
-      const step = clamp(Math.floor(x / CELL_W), 0, rollSteps-1);
-      const row = clamp(Math.floor(y / CELL_H), 0, KEY_RANGE.length-1);
-      const midi = KEY_RANGE[row];
-      return { step, row, midi };
-    }
-
-    function findNoteAt(lane, midi, step){
-      return notes[lane].find(n => n.midi === midi && step >= n.start && step < n.start + n.len);
-    }
-
-    rollCanvas.addEventListener("pointerdown", async (e)=>{
+  }
+
+  // ============================================================
+  // Drum demo pattern (kept in demo JSON normally)
+  // ============================================================
+  // (No changes here to avoid regressions as requested)
+
+  // ============================================================
+  // Events
+  // ============================================================
+  playBtn.addEventListener("click", async ()=>{
+    await ensureRunning();
+    togglePlay();
+  });
+  stopBtn.addEventListener("click", ()=> stop());
+
+  bpmEl.addEventListener("input", ()=>{
+    state.bpm = clamp(+bpmEl.value, 40, 240);
+  });
+
+  resSel.addEventListener("change", ()=>{
+    // keep selections; just change timing/loop length
+    state.resolution = +resSel.value;
+    resPill.textContent = `1/${state.resolution}`;
+    rebuildAll();
+  });
+
+  document.addEventListener("keydown", (e)=>{
+    if(e.code==="Space"){
       e.preventDefault();
-      await audio.resume();
-      const { step, midi } = screenToRoll(e);
-      const lane = activeRoll;
-
-      const existing = findNoteAt(lane, midi, step);
-      rollErase = !!existing;
-      rollPainting = true;
-      rollDownStart = step;
-      rollDownMidi = midi;
-
-      if (rollErase){
-        // remove that note
-        notes[lane] = notes[lane].filter(n => n !== existing);
-        drawRoll(isPlaying ? currentStep : -1);
-      } else {
-        // preview
-        playNote(lane, midi, rollVel, audio.currentTime, 0.18);
-        // add temp 1-len; will expand on drag
-        const len = rollSnap ? Math.max(1, Math.round(rollNoteLen)) : 1;
-        notes[lane].push({ midi, start: step, len, vel: rollVel });
-        normalizeNotes(lane);
-        drawRoll(isPlaying ? currentStep : -1);
-      }
-
-      rollCanvas.setPointerCapture(e.pointerId);
-    });
-
-    rollCanvas.addEventListener("pointermove", (e)=>{
-      if (!rollPainting || rollErase) return;
-      const { step } = screenToRoll(e);
-      const lane = activeRoll;
-      // extend last painted note length based on drag
-      const last = notes[lane].slice().reverse().find(n => n.midi === rollDownMidi && n.start === rollDownStart);
-      if (!last) return;
-      const newLen = clamp(step - last.start + 1, 1, rollSteps - last.start);
-      last.len = rollSnap ? snapLen(newLen) : newLen;
-      drawRoll(isPlaying ? currentStep : -1);
-    });
-
-    rollCanvas.addEventListener("pointerup", ()=>{
-      rollPainting = false;
-      rollErase = false;
-      rollDownStart = null;
-      rollDownMidi = null;
-    });
-
-    function snapLen(len){
-      // snap length to rollNoteLen multiples
-      const q = parseInt(rollNoteLenEl.value,10) || 1;
-      return Math.max(1, Math.round(len / q) * q);
+      togglePlay();
     }
+  });
 
-    /***********************
-     * Transport + Scheduler
-     ***********************/
-    function stepsPerSecond(){
-      // absolute BPM; steps are based on current drum grid step size
-      // 1 step = 1/(drumRes) note (where drumRes = 16,32,64)
-      // In 4/4: 1 beat = quarter note. quarter = 60/bpm seconds.
-      // note length of 1/drumRes relative to whole note:
-      // whole note = 4 beats.
-      // seconds per step = (60/bpm) * 4 / drumRes
-      return 1 / ((60/bpm) * 4 / drumRes);
-    }
+  // ============================================================
+  // Build everything
+  // ============================================================
+  function rebuildAll(){
+    rebuildDrums();
+    rebuildInstrumentButtons();
+    rebuildTransposeKnobs();
+    rebuildKeys();
+    rebuildRoll();
+    rebuildMixer();
+    setupColorWheel(); // safe (idempotent-ish in this version)
+    updateTargetLaneBadge();
+  }
 
-    function secPerDrumStep(){
-      return (60/bpm) * 4 / drumRes;
-    }
+  // init
+  setBodyBackground();
+  loadDefaultDemo();
 
-    function schedule(){
-      const now = audio.currentTime;
-      const lookAhead = 0.12;
-      const sp = secPerDrumStep();
-
-      // play current step
-      const t = now + 0.02;
-      playStepAt(currentStep, t);
-
-      // update UI
-      updatePlayheadUI(currentStep);
-
-      currentStep = (currentStep + 1) % drumSteps;
-    }
-
-    function playStepAt(step, t){
-      // drums: apply solo/mute rules
-      const anySolo = drumNames.some(d => drumState[d.key].solo);
-      drumNames.forEach(d=>{
-        const row = drumState[d.key];
-        const on = row.steps[step];
-        if (!on) return;
-        if (row.mute) return;
-        if (anySolo && !row.solo) return;
-        playDrum(d.key, t);
-      });
-
-      // piano roll: schedule notes starting at this step
-      LANES.forEach(l=>{
-        const lane = l.key;
-        notes[lane].forEach(n=>{
-          if (n.start === step){
-            const dur = n.len * secPerDrumStep(); // sustain matches painted length
-            playNote(lane, n.midi, n.vel, t, dur);
-          }
-        });
-      });
-    }
-
-    function updatePlayheadUI(step){
-      // drum playhead
-      drumGridEl.querySelectorAll(".steps").forEach((stepsEl)=>{
-        const cells = stepsEl.children;
-        for(let i=0;i<cells.length;i++){
-          cells[i].classList.toggle("playhead", i === step);
-        }
-      });
-      drawRoll(step);
-    }
-
-    function start(){
-      if (isPlaying) return;
-      isPlaying = true;
-      playBtn.textContent = "Pause";
-      currentStep = 0;
-      schedulerId = setInterval(schedule, secPerDrumStep()*1000);
-      schedule();
-    }
-    function stop(){
-      if (!isPlaying) return;
-      isPlaying = false;
-      playBtn.textContent = "Play";
-      clearInterval(schedulerId);
-      schedulerId = null;
-      drawRoll(-1);
-      // clear playhead
-      drumGridEl.querySelectorAll(".step").forEach(s=>s.classList.remove("playhead"));
-    }
-
-    playBtn.addEventListener("click", async ()=>{
-      await audio.resume();
-      isPlaying ? stop() : start();
-    });
-    window.addEventListener("keydown", async (e)=>{
-      if (e.code === "Space"){
-        e.preventDefault();
-        await audio.resume();
-        isPlaying ? stop() : start();
-      }
-    });
-
-    bpmEl.addEventListener("change", ()=>{
-      bpm = clamp(parseInt(bpmEl.value,10)||115, 40, 260);
-      if (isPlaying){
-        clearInterval(schedulerId);
-        schedulerId = setInterval(schedule, secPerDrumStep()*1000);
-      }
-    });
-
-    // Drum resolution buttons
-    document.querySelectorAll(".resBtn").forEach(b=>{
-      b.addEventListener("click", ()=>{
-        document.querySelectorAll(".resBtn").forEach(x=>x.classList.remove("active"));
-        b.classList.add("active");
-        drumRes = parseInt(b.dataset.res, 10);
-        ensureDrumSteps();
-        renderDrums();
-        if (isPlaying){
-          clearInterval(schedulerId);
-          schedulerId = setInterval(schedule, secPerDrumStep()*1000);
-        }
-      });
-    });
-
-    /***********************
-     * Save / Load / Import / Clear
-     ***********************/
-    function projectJson(){
-      return {
-        version: 1,
-        bpm,
-        drumRes,
-        barCount,
-        bgColors,
-        laneColors: theme.lanes,
-        laneText: theme.labelText.lanes,
-        transposes,
-        drumState: Object.fromEntries(Object.entries(drumState).map(([k,v])=>({
-          0:[k,{
-            steps:v.steps,
-            vol:v.vol,
-            mute:v.mute,
-            solo:v.solo,
-            color:v.color,
-            text:v.text,
-          }]
-        })).flat()),
-        notes
-      };
-    }
-
-    function loadProject(obj){
-      if (!obj) return;
-      bpm = obj.bpm ?? bpm;
-      bpmEl.value = bpm;
-
-      drumRes = obj.drumRes ?? drumRes;
-      barCount = obj.barCount ?? barCount;
-      bgColors = obj.bgColors ?? bgColors;
-
-      // colors
-      if (obj.laneColors){
-        Object.assign(theme.lanes, obj.laneColors);
-      }
-      if (obj.laneText){
-        Object.assign(theme.labelText.lanes, obj.laneText);
-      }
-
-      if (obj.transposes){
-        Object.assign(transposes, obj.transposes);
-      }
-
-      // drum state
-      if (obj.drumState){
-        Object.keys(obj.drumState).forEach(k=>{
-          if (drumState[k]){
-            const s = obj.drumState[k];
-            drumState[k].steps = Array.isArray(s.steps) ? s.steps.slice() : drumState[k].steps;
-            drumState[k].vol = typeof s.vol==="number" ? s.vol : drumState[k].vol;
-            drumState[k].mute = !!s.mute;
-            drumState[k].solo = !!s.solo;
-            drumState[k].color = s.color || drumState[k].color;
-            drumState[k].text = s.text || drumState[k].text;
-          }
-        });
-      }
-
-      // notes
-      if (obj.notes){
-        LANES.forEach(l=>{
-          notes[l.key] = Array.isArray(obj.notes[l.key]) ? obj.notes[l.key].map(n=>({...n})) : [];
-        });
-      }
-
-      applyBackground();
-      ensureDrumSteps();
-      renderDrums();
-      buildMixer();
-      buildTransposeKnobs();
-      updateActiveTabStyles();
-      drawRoll(isPlaying ? currentStep : -1);
-
-      if (isPlaying){
-        clearInterval(schedulerId);
-        schedulerId = setInterval(schedule, secPerDrumStep()*1000);
-      }
-    }
-
-    saveBtn.addEventListener("click", ()=>{
-      const data = JSON.stringify(projectJson(), null, 2);
-      const blob = new Blob([data], { type:"application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "project.json";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    loadBtn.addEventListener("click", ()=>{
-      const inp = document.createElement("input");
-      inp.type="file";
-      inp.accept="application/json";
-      inp.onchange = async ()=>{
-        const f = inp.files[0];
-        if (!f) return;
-        const txt = await f.text();
-        const obj = JSON.parse(txt);
-        loadProject(obj);
-      };
-      inp.click();
-    });
-
-    importBtn.addEventListener("click", ()=>{
-      // import JSON demo or project
-      const inp = document.createElement("input");
-      inp.type="file";
-      inp.accept=".json";
-      inp.onchange = async ()=>{
-        const f = inp.files[0];
-        if (!f) return;
-        const txt = await f.text();
-        const obj = JSON.parse(txt);
-        loadProject(obj);
-      };
-      inp.click();
-    });
-
-    clearBtn.addEventListener("click", ()=>{
-      // clear all notes + drums
-      LANES.forEach(l=> notes[l.key]=[]);
-      drumNames.forEach(d => drumState[d.key].steps = Array(drumSteps).fill(false));
-      drawRoll(isPlaying ? currentStep : -1);
-      renderDrums();
-    });
-
-    /***********************
-     * Background picker button
-     ***********************/
-    function applyBackground(){
-      document.body.style.background =
-        `radial-gradient(1200px 700px at 20% 10%, ${bgColors.a}, transparent 55%),
-         radial-gradient(900px 650px at 80% 15%, ${bgColors.b}, transparent 58%),
-         radial-gradient(1200px 900px at 60% 90%, ${bgColors.c}, transparent 60%),
-         linear-gradient(180deg, var(--bg0), #070a0f 60%, #04060a)`;
-    }
-
-    bgBtn.addEventListener("click", ()=>{
-      // simple prompt cycle; keep stable
-      const c1 = prompt("Gradient Color A (rgba or hex)", bgColors.a) ?? bgColors.a;
-      const c2 = prompt("Gradient Color B (rgba or hex)", bgColors.b) ?? bgColors.b;
-      const c3 = prompt("Gradient Color C (rgba or hex)", bgColors.c) ?? bgColors.c;
-      bgColors = { a:c1, b:c2, c:c3 };
-      applyBackground();
-    });
-
-    /***********************
-     * Color customization popover
-     ***********************/
-    let popTarget = null; // {type:"lane|drum", key:"..."}
-    let lastTapTime = 0;
-
-    function handleDoubleTap(el, fn){
-      const now = performance.now();
-      if (now - lastTapTime < 350){
-        fn();
-        lastTapTime = 0;
-      } else {
-        lastTapTime = now;
-      }
-    }
-
-    function openColorPickerFor(type, key, x, y){
-      popTarget = { type, key };
-      const current = (type==="lane") ? (theme.lanes[key] || "#ffffff") : (drumState[key]?.color || "#ffffff");
-      colorPicker.value = current.startsWith("#") ? current : "#ffffff";
-      colorPop.style.left = `${clamp(x, 10, window.innerWidth-170)}px`;
-      colorPop.style.top = `${clamp(y, 10, window.innerHeight-90)}px`;
-      colorPop.style.display = "block";
-    }
-
-    function closeColorPop(){
-      colorPop.style.display = "none";
-      popTarget = null;
-    }
-
-    colorCancelBtn.addEventListener("click", closeColorPop);
-    colorApplyBtn.addEventListener("click", ()=>{
-      if (!popTarget) return closeColorPop();
-      const hex = colorPicker.value;
-      const txt = contrastText(hex);
-
-      if (popTarget.type === "lane"){
-        theme.lanes[popTarget.key] = hex;
-        theme.labelText.lanes[popTarget.key] = txt;
-        buildTabs();
-        buildMixer();
-        drawRoll(isPlaying ? currentStep : -1);
-      } else {
-        drumState[popTarget.key].color = hex;
-        drumState[popTarget.key].text = txt;
-        renderDrums();
-      }
-      closeColorPop();
-    });
-
-    window.addEventListener("pointerdown", (e)=>{
-      if (colorPop.style.display !== "block") return;
-      if (e.target.closest && e.target.closest("#colorPop")) return;
-      closeColorPop();
-    });
-
-    /***********************
-     * Roll tool bindings
-     ***********************/
-    rollStepsEl.addEventListener("change", ()=>{
-      rollSteps = parseInt(rollStepsEl.value, 10);
-      LANES.forEach(l=> normalizeNotes(l.key));
-      drawRoll(isPlaying ? currentStep : -1);
-    });
-    rollQuantEl.addEventListener("change", ()=> rollQuant = parseInt(rollQuantEl.value,10));
-    rollVelEl.addEventListener("input", ()=> rollVel = parseInt(rollVelEl.value,10));
-    rollSnapEl.addEventListener("change", ()=> rollSnap = rollSnapEl.value==="1");
-    rollNoteLenEl.addEventListener("change", ()=> rollNoteLen = parseInt(rollNoteLenEl.value,10));
-
-    /***********************
-     * Demo Load (demo01.json)
-     ***********************/
-    async function loadDefaultDemo(){
-      try{
-        const res = await fetch("./demos/demo01.json", { cache:"no-store" });
-        if (res.ok){
-          const obj = await res.json();
-          loadProject(obj);
-          return;
-        }
-      }catch(e){}
-
-      // if missing demo, keep defaults
-      ensureDrumSteps();
-      renderDrums();
-      buildMixer();
-      buildTabs();
-      buildKeys();
-      buildTransposeKnobs();
-      applyBackground();
-      drawRoll(-1);
-    }
-
-    /***********************
-     * Init
-     ***********************/
-    function init(){
-      bpm = parseInt(bpmEl.value,10) || 115;
-      ensureDrumSteps();
-      buildTabs();
-      buildKeys();
-      renderDrums();
-      buildMixer();
-      buildTransposeKnobs();
-      applyBackground();
-      drawRoll(-1);
-
-      // keep target label in sync
-      targetLaneBadge.textContent = `Target: ${labelForLaneKey(activeRoll)}`;
-      setSuggestedLaneBadge(null);
-    }
-
-    init();
-    loadDefaultDemo();
   </script>
 </body>
 </html>
