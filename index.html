@@ -788,6 +788,7 @@
     .workspace{
       position: relative;
     }
+    #transportSpacer{ height: 140px; }
 
     #transportCard .hd.transportHd{
       display:flex;
@@ -902,45 +903,7 @@
       </div>
     </div>
 
-      <div class="bd">
-        <div class="btnRow" style="margin-bottom:10px;">
-          <div class="pill">
-            <span style="min-width:38px;">BPM</span>
-            <input id="bpm" type="range" min="70" max="180" value="115"/>
-            <span id="bpmLabel" class="kbd">115</span>
-          </div>
-
-          <div class="pill">
-            <span>Loop</span>
-            <input id="resolution" type="range" min="0" max="2" step="1" value="2"/>
-            <span id="resolutionLabel" class="kbd">1/64</span>
-          </div>
-        </div>
-
-        
-        <div class="btnRow" style="margin-top:10px;">
-          <button id="loadDemo">Reload Demo</button>
-          <button id="clearProject">Clear Project</button>
-
-          <button id="saveProjectBtn">Save Project</button>
-          <button id="loadProjectBtn">Load Project</button>
-          <input id="projectFile" type="file" accept=".json,application/json"/>
-
-          <button id="importMidiBtn">Import MIDI</button>
-          <input id="midiFile" type="file" accept=".mid,.midi" />
-
-          <button id="midiLibraryBtn">MIDI Library</button>
-
-          <button id="bgBtn">Background</button>
-        </div>
-
-        <p class="hint">
-          <span class="kbd">Space</span> toggles Play/Pause (desktop).
-          Double-click / double-tap any <span class="kbd">instrument</span> or <span class="kbd">drum label</span> to customize its color.
-        </p>
-      </div>
-    </div>
-
+    <div id="transportSpacer" aria-hidden="true"></div>
 
     <div class="card module" id="mixerModule" style="grid-column: 1 / -1;">
       <div class="hd">
@@ -3469,10 +3432,58 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
     const onMove = (e) => {
       if (!dragging || e.pointerId !== pid) return;
       e.preventDefault();
+
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      const x = baseX + dx;
-      const y = baseY + dy;
+
+      // Proposed translation
+      let x = baseX + dx;
+      let y = baseY + dy;
+
+      // --- Clamp: never allow a module to go above the transport bar ---
+      const t = document.getElementById("transportCard");
+      const barBottom = t ? t.getBoundingClientRect().bottom : 0;
+      const currentRect = card.getBoundingClientRect();
+      // currentRect.top corresponds to current y; translate delta adjusts top by (y - currentY)
+      const currentY = Number(card.dataset.ty || 0);
+      const proposedTop = currentRect.top + (y - currentY);
+      const minTop = barBottom + 8;
+      if (proposedTop < minTop){
+        // adjust y so proposedTop == minTop
+        y += (minTop - proposedTop);
+      }
+
+      // --- No-overlap: prevent modules from overlapping each other ---
+      // Build proposed rect based on current rect + delta
+      const proposedLeft = currentRect.left + (x - Number(card.dataset.tx || 0));
+      const proposedTop2 = currentRect.top + (y - Number(card.dataset.ty || 0));
+      const proposedRect = {
+        left: proposedLeft,
+        top: proposedTop2,
+        right: proposedLeft + currentRect.width,
+        bottom: proposedTop2 + currentRect.height
+      };
+
+      const intersects = (a,b) => !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+
+      let blocked = false;
+      for (const id of MODULE_IDS){
+        if (id === card.id) continue;
+        const other = document.getElementById(id);
+        if (!other) continue;
+        const r = other.getBoundingClientRect();
+        // tiny tolerance so edge-to-edge is allowed
+        const otherRect = { left:r.left+1, top:r.top+1, right:r.right-1, bottom:r.bottom-1 };
+        if (intersects(proposedRect, otherRect)){
+          blocked = true;
+          break;
+        }
+      }
+      if (blocked){
+        // refuse the move; keep last valid position
+        return;
+      }
+
       card.dataset.tx = String(x);
       card.dataset.ty = String(y);
       card.style.transform = `translate(${x}px, ${y}px)`;
