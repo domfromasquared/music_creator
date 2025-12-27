@@ -87,10 +87,6 @@
 
       --knobFillFx: rgba(186,140,255,.92);
       --knobGlowFx: rgba(186,140,255,.22);
-    
-      --drumControlsW: 280px;
-      --drumCell: 56px;
-      --drumRowH: 56px;
     }
 
     *{box-sizing:border-box}
@@ -379,32 +375,20 @@
     }
 
     .knob{
-      width:42px;
-      height:42px;
-      border-radius: 999px;
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.10), rgba(0,0,0,.24)), var(--knobBg);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.25), 0 0 0 2px rgba(0,0,0,.12);
       position:relative;
-      background:
-        radial-gradient(circle at 30% 28%, rgba(255,255,255,.12), rgba(0,0,0,.20)),
-        var(--knobBg);
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow: 0 10px 22px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);
-      cursor: ns-resize;
+      touch-action:none;
       user-select:none;
-      flex: 0 0 auto;
-    }
-    .knob::after{
-      content: attr(data-pct);
-      position:absolute;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .02em;
-      color: rgba(255,255,255,.88);
-      text-shadow: 0 2px 10px rgba(0,0,0,.6);
-      pointer-events:none;
+      -webkit-tap-highlight-color: transparent;
+      --knobDeg: 0deg;
+      --knobRot: -135deg;
+      --knobFill: rgba(0,140,255,.95);
+      --knobGlow: rgba(0,140,255,.28);
     }
     .knob::before{
       content:"";
@@ -471,47 +455,42 @@
       min-width: 0;
     }
     .stripKnobs .kCol{
-      /* Force all three knob modules to share the same width so their centers align p.drumGrid{
-      display:grid;
-      grid-template-columns: var(--drumControlsW) minmax(0, 1fr);
-      gap:12px;
-      align-items:start;
-      touch-action:none;
+      /* Force all three knob modules to share the same width so their centers align perfectly */
+      width: 64px;
+      align-items:center;
     }
-    .trackNames{display:grid; gap:10px; align-content:start;}
+
+    /* Drum */
+    .drumGrid{
+      display:grid;
+      grid-template-columns: var(--drumControlsW, 260px) minmax(0, 1fr);
+      gap:10px;
+      align-items:start;
+      touch-action: none;
+    }
     .stepsWrap{
       overflow-x:auto;
       overflow-y:hidden;
-      padding-bottom:8px;
-      min-width:0;
-      border-radius: 14px;
-      background: rgba(0,0,0,.10);
-      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 12px;
+      min-width: 0;
+      /* Make visible pattern width ~ pattern height (square-ish) */
+      width: 100%;
+      max-width: 100%;
+padding-bottom: 2px;
     }
-    .steps{
-      display:grid;
-      gap:10px;
-      width:max-content;
-      padding:10px;
-      align-content:start;
-      min-width:0;
-    }
+    .trackNames{display:grid; gap:8px;}
     .trackName{
-      height:var(--drumRowH);
-      border-radius: 14px;
+      height: var(--drumRowH, 40px);
+      border-radius: 12px;
       background: rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.08);
-      padding: 10px 10px;
+      padding: 6px 8px;
       user-select:none;
-      display:flex;
+      display:grid;
+      grid-template-columns: 30px 1fr 54px;
       align-items:center;
-      justify-content:space-between;
       gap:10px;
       min-width: 0;
-    }
- align-items:center;
-      justify-content:space-between;
-      gap:8px;
     }
     .trackLabel{
       font-size:12px;
@@ -526,33 +505,100 @@
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.18);
+    
+    .rowDel{
+      width:28px; height:28px;
+      border-radius:999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: var(--muted);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
     }
+    .rowDel:hover{ background: rgba(0,0,0,.34); border-color: rgba(255,255,255,.18); transform: translateY(-1px); }
+    .rowDel:active{ transform: translateY(0); }
+
+    .trackSelect{
+      appearance:none;
+      -webkit-appearance:none;
+      width:100%;
+      min-width: 0;
+      height: 30px;
+      border-radius: 10px;
+      padding: 0 28px 0 12px;
+      font-weight: 600;
+      color: var(--ink);
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      outline:none;
+    }
+    .trackSelect:focus{ box-shadow: 0 0 0 2px rgba(88,166,255,.25); border-color: rgba(88,166,255,.35); }
+
+    .trackSelectWrap{
+      position:relative;
+      min-width:0;
+    }
+    .trackSelectWrap::after{
+      content:"";
+      position:absolute;
+      right:10px;
+      top:50%;
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid rgba(233,238,245,.70);
+      transform: translateY(-30%);
+      pointer-events:none;
+      opacity:.85;
+    }
+
+    .knob{
+      position:relative;
+    }
+    .knobVal{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:700;
+      color: rgba(233,238,245,.82);
+      pointer-events:none;
+      text-shadow: 0 1px 2px rgba(0,0,0,.6);
+    }
+}
 
     .steps{
       display:grid;
       gap:8px;
-      overflow:hidden;
       border-radius: 12px;
       min-width: 0;
+      width: max-content;
     }
     .rowSteps{
       display:grid;
-      gap:10px;
-      height:var(--drumRowH);
+      gap:6px;
+      height: var(--drumRowH, 40px);
       align-items:stretch;
-      touch-action:none;
-      width:max-content;
-      min-width:0;
+      touch-action: none;
+      width: 100%;
+      min-width: 0;
     }
     .cell{
-      width:var(--drumCell);
-      height:var(--drumCell);
-      border-radius: 14px;
+      border-radius: 10px;
       border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.22);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+      position:relative;
+      overflow:hidden;
       cursor:pointer;
-      transition: transform .06s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+      min-width: 0;
     }
     .cell.groupA{ background: var(--groupA); }
     .cell.groupB{ background: var(--groupB); }
@@ -2816,6 +2862,11 @@ function applyMixerNodes(busKey){
   function buildDrumGrid(){
     drumGridEl.innerHTML = "";
 
+    const ROW_H = 40;
+    drumGridEl.style.setProperty("--drumRows", String(project.drumRows.length || 8));
+    drumGridEl.style.setProperty("--drumRowH", ROW_H + "px");
+    drumGridEl.style.setProperty("--drumControlsW", "260px");
+
     const namesCol = document.createElement("div");
     namesCol.className = "trackNames";
 
@@ -2824,63 +2875,52 @@ function applyMixerNodes(busKey){
 
     const stepsCol = document.createElement("div");
     stepsCol.className = "steps";
-    stepsCol.style.gridAutoRows = "var(--drumRowH)";
-    stepsCol.style.width = "max-content";
+    stepsCol.style.gridAutoRows = ROW_H + "px";
 
     project.drumRows.forEach((row, idx) => {
-      // --- name / controls column ---
+      // --- name / controls column (fixed width, no overlap) ---
       const nameRow = document.createElement("div");
       nameRow.className = "trackName";
 
       const del = document.createElement("button");
-      del.className = "miniBtn";
+      del.className = "rowDel";
       del.title = "Delete row";
       del.textContent = "×";
-      del.style.padding = "6px 10px";
-      del.style.borderRadius = "999px";
-      del.style.opacity = "0.85";
       del.addEventListener("click", () => removeDrumRow(idx));
 
+      const selectWrap = document.createElement("div");
+      selectWrap.className = "trackSelectWrap";
+
       const select = document.createElement("select");
-      select.className = "input";
-      select.style.width = "160px"; select.style.flex = "1 1 auto"; select.style.minWidth = "120px";
-      select.style.padding = "8px 10px";
-      select.style.borderRadius = "999px";
-      select.style.cursor = "pointer";
-      select.setAttribute("aria-label", "Drum sound");
-      DRUM_SOUNDS.forEach(d => {
+      select.className = "trackSelect";
+      DRUM_SOUNDS.forEach(s => {
         const opt = document.createElement("option");
-        opt.value = d.key;
-        opt.textContent = d.label;
+        opt.value = s.key;
+        opt.textContent = s.name;
         select.appendChild(opt);
       });
-      select.value = row.soundKey;
+      select.value = row.soundKey || "kick";
       select.addEventListener("change", () => {
         row.soundKey = select.value;
-        row.label = (DRUM_SOUNDS.find(d => d.key === row.soundKey)?.label) || row.soundKey;
-        refreshDrumUI(); // recolor
+        refreshDrumUI();
         saveToLocal();
       });
-      });
-
-      const knobWrap = document.createElement("div");
-      knobWrap.style.display = "flex";
-      knobWrap.style.alignItems = "center";
-      knobWrap.style.gap = "8px";
+      selectWrap.appendChild(select);
 
       const knob = document.createElement("div");
       knob.className = "knob";
       knob.dataset.row = String(idx);
 
-      knob.dataset.pct = `${row.vol|0}%`;
-      knobWrap.appendChild(knob);
+      const knobVal = document.createElement("div");
+      knobVal.className = "knobVal";
+      knob.appendChild(knobVal);
 
       // knob interaction (volume)
       let dragging = false, startY=0, startVal=0;
       const setVol = (v) => {
         row.vol = Math.max(0, Math.min(120, v));
         knob.style.setProperty("--knob", (row.vol/120).toFixed(3));
-        knobLabel.textContent = `${row.vol|0}%`;
+        knobVal.textContent = `${row.vol|0}%`;
         if (drumRowGains[idx]) drumRowGains[idx].gain.value = (row.vol/100);
       };
       setVol(row.vol);
@@ -2891,39 +2931,29 @@ function applyMixerNodes(busKey){
       });
       knob.addEventListener("pointermove", (e) => {
         if (!dragging) return;
-        const dy = (startY - e.clientY);
-        setVol(startVal + dy * 0.35);
-        saveToLocal();
+        const dy = startY - e.clientY;
+        setVol(startVal + dy * 0.25);
       });
-      knob.addEventListener("pointerup", () => { dragging = false; });
-      knob.addEventListener("lostpointercapture", () => { dragging = false; });
+      knob.addEventListener("pointerup", () => dragging = false);
+      knob.addEventListener("pointercancel", () => dragging = false);
+      knob.addEventListener("dblclick", () => { setVol(80); saveToLocal(); });
 
-      // layout row
-      const left = document.createElement("div");
-      left.style.display = "flex";
-      left.style.alignItems = "center";
-      left.style.gap = "10px";
-      left.style.minWidth = "0";
-
-      // x immediately left of sound control
-      left.appendChild(del);
-      left.appendChild(select);
-      left.appendChild(knobWrap);
-
-      nameRow.appendChild(left);
+      nameRow.appendChild(del);
+      nameRow.appendChild(selectWrap);
+      nameRow.appendChild(knob);
 
       namesCol.appendChild(nameRow);
 
-      // --- steps column ---
+      // --- steps row ---
       const rowSteps = document.createElement("div");
       rowSteps.className = "rowSteps";
       rowSteps.dataset.row = String(idx);
-      rowSteps.style.gridTemplateColumns = `repeat(${LOOP_STEPS}, var(--drumCell))`;
-      rowSteps.style.width = "max-content";
+      // square cells: width matches row height
+      rowSteps.style.gridTemplateColumns = `repeat(${LOOP_STEPS}, ${ROW_H}px)`;
 
       for (let s=0; s<LOOP_STEPS; s++){
         const cell = document.createElement("div");
-        cell.className = "cell";
+        cell.className = "cell group" + ((s%8<4) ? "A" : "B");
         cell.dataset.row = String(idx);
         cell.dataset.step = String(s);
         rowSteps.appendChild(cell);
@@ -2936,6 +2966,7 @@ function applyMixerNodes(busKey){
     drumGridEl.appendChild(namesCol);
     drumGridEl.appendChild(stepsWrap);
   }
+
 
   
 
