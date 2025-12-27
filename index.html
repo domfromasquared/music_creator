@@ -841,6 +841,199 @@
       overflow: auto;
     }
 
+
+/* ===========================
+   Premium UI Facelift (CSS-only)
+   Keeps all functionality intact
+   =========================== */
+
+:root{
+  --userBg: #0b0f17;
+  --bg:#0b0f17;
+  --ink:#eef3fb;
+  --muted:#a9b4c8;
+
+  --btn:#171d2b;
+  --btn2:#222b44;
+
+  --shadow: 0 18px 60px rgba(0,0,0,.55);
+
+  --groupA: rgba(18,26,40,0.90);
+  --groupB: rgba(28,20,45,0.90);
+  --inactiveOverlay: rgba(0,0,0,0.42);
+  --playheadOutline: rgba(255,255,255,0.36);
+  --beatDivider: rgba(255,255,255,0.16);
+  --dragOutline: rgba(255,255,255,0.55);
+  --dragFill: rgba(255,255,255,0.10);
+
+  --rollBg: rgba(0,0,0,.20);
+  --rollStrip: rgba(0,0,0,.36);
+  --gridLine: rgba(255,255,255,.06);
+  --gridBeat: rgba(255,255,255,.16);
+
+  --knobBg: rgba(0,0,0,.30);
+}
+
+/* subtle premium background */
+body{
+  background:
+    radial-gradient(900px 520px at 15% -10%, rgba(115,140,255,.22) 0%, transparent 60%),
+    radial-gradient(880px 520px at 90% 0%, rgba(124,255,178,.16) 0%, transparent 55%),
+    radial-gradient(900px 520px at 70% 110%, rgba(186,140,255,.18) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0) 40%),
+    var(--userBg);
+  letter-spacing: .2px;
+}
+
+/* global typography polish */
+h1{
+  font-weight: 900;
+  letter-spacing: .5px;
+}
+.sub{
+  color: rgba(233,240,255,.70);
+}
+
+/* premium “glass” cards without changing layout */
+.card{
+  background:
+    radial-gradient(1200px 600px at 10% 0%, rgba(255,255,255,.06) 0%, rgba(255,255,255,.02) 55%, rgba(0,0,0,.06) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* tighter, more premium header */
+.card .hd{
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,0));
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+/* transport bar: stays “executive” */
+#transportCard{
+  background:
+    radial-gradient(1200px 600px at 0% 0%, rgba(255,255,255,.07) 0%, rgba(255,255,255,.02) 55%, rgba(0,0,0,.10) 100%),
+    linear-gradient(180deg, rgba(18,22,34,.88), rgba(10,10,15,.70));
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 22px 90px rgba(0,0,0,.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* module shells: match transport “glass” feel */
+.module{
+  background:
+    radial-gradient(1200px 600px at 10% 0%, rgba(255,255,255,.06) 0%, rgba(255,255,255,.02) 55%, rgba(0,0,0,.10) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.016));
+  border:1px solid rgba(255,255,255,.11);
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.module .hd{
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,0));
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+/* buttons: premium hover/focus; no layout changes */
+button{
+  border-color: rgba(255,255,255,.14);
+  box-shadow: 0 8px 24px rgba(0,0,0,.30);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;
+}
+button:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 12px 34px rgba(0,0,0,.36);
+  border-color: rgba(255,255,255,.22);
+}
+button:active{
+  transform: translateY(0px);
+  filter: brightness(0.98);
+  box-shadow: 0 8px 22px rgba(0,0,0,.30);
+}
+button:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124,255,178,.20), 0 12px 34px rgba(0,0,0,.36);
+  border-color: rgba(124,255,178,.35);
+}
+
+/* pills + kbd feel more “product” */
+.pill{
+  background: rgba(255,255,255,.07);
+  border-color: rgba(255,255,255,.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.kbd{
+  border-color: rgba(255,255,255,.18);
+  background: rgba(0,0,0,.30);
+}
+
+/* tabs: more premium selection */
+.tab{
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.12);
+}
+.tab:hover{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.18);
+}
+
+/* knobs: more depth */
+.knob{
+  border-color: rgba(255,255,255,.14);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.30), 0 10px 28px rgba(0,0,0,.35);
+}
+.knob::before{
+  filter: drop-shadow(0 0 12px var(--knobGlow));
+}
+
+/* sliders: nicer track/thumb */
+input[type="range"]{
+  accent-color: rgba(124,255,178,.92);
+}
+.vFader::-webkit-slider-runnable-track{
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.12);
+}
+.vFader::-webkit-slider-thumb{
+  border-color: rgba(255,255,255,.22);
+  box-shadow: 0 10px 24px rgba(0,0,0,.40);
+}
+.vFader::-moz-range-track{
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.12);
+}
+.vFader::-moz-range-thumb{
+  border-color: rgba(255,255,255,.22);
+  box-shadow: 0 10px 24px rgba(0,0,0,.40);
+}
+
+/* drum cells: crisp */
+.cell{
+  border-color: rgba(255,255,255,.12);
+}
+.cell.playhead{
+  outline-color: rgba(255,255,255,.44);
+}
+
+/* scrollbars (webkit) */
+*::-webkit-scrollbar{ height: 10px; width: 10px; }
+*::-webkit-scrollbar-track{ background: rgba(255,255,255,.04); border-radius: 999px; }
+*::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.20); }
+
+/* reduce motion support */
+@media (prefers-reduced-motion: reduce){
+  button{ transition:none !important; }
+}
+
 </style>
 </head>
 
