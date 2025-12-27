@@ -870,12 +870,6 @@
             <input id="bpm" type="range" min="70" max="180" value="115"/>
             <span id="bpmLabel" class="kbd">115</span>
           </div>
-
-          <div class="pill">
-            <span>Loop</span>
-            <input id="resolution" type="range" min="0" max="2" step="1" value="2"/>
-            <span id="resolutionLabel" class="kbd">1/64</span>
-          </div>
         </div>
       </div>
 
@@ -930,10 +924,7 @@
     <div class="card module" id="drumModule">
       <div class="hd">
         <div class="title">Drum Sequencer</div>
-        <div class="pill">
-          <span>Loop</span>
-          <span class="kbd" id="groupText">1/64</span>
-        </div>
+        <div class="pill"><span>Loop</span><select class="kbd" id="loopSelectDrum"></select></div>
       </div>
       <div class="bd">
         <div class="drumGrid" id="drumGrid"></div>
@@ -946,7 +937,7 @@
         <div class="rollHeaderRight">
           <div class="tabs" id="tabs"></div>
           <div class="trKnobs" id="trKnobs" aria-label="Transpose knobs"></div>
-        </div>
+        <div class="pill" style="padding:6px 10px;"><span>Loop</span><select class="kbd" id="loopSelectRoll"></select></div></div>
       </div>
 
       <div class="bd">
@@ -1027,6 +1018,12 @@
     { key:"bass",  label:"Bass",   noteVar:"--bassNote",  knobFill:"--knobFillBass",  knobGlow:"--knobGlowBass" },
     { key:"pad",   label:"Pad",    noteVar:"--padNote",   knobFill:"--knobFillPad",   knobGlow:"--knobGlowPad" },
   ];
+
+  function laneLabel(key){
+    return (LANES.find(l => l.key === key)?.label) || key;
+  }
+
+
 
   const transpose = Object.fromEntries(LANES.map(l => [l.key, 0]));
 
@@ -1120,6 +1117,7 @@
 
   const project = makeEmptyProject();
   let LOOP_STEPS = 64;
+  let currentResIndex = 2; // 0=1/16,1=1/32,2=1/64
 
   let ctx = null;
   let master = null;
@@ -1150,11 +1148,9 @@
 
   const bpmEl = document.getElementById("bpm");
   const bpmLabel = document.getElementById("bpmLabel");
-
-  const resEl = document.getElementById("resolution");
-  const resLabel = document.getElementById("resolutionLabel");
   const resText = document.getElementById("resText");
-  const groupText = document.getElementById("groupText");
+  const loopSelectDrum = document.getElementById("loopSelectDrum");
+  const loopSelectRoll = document.getElementById("loopSelectRoll");
 
   const loadDemoBtn = document.getElementById("loadDemo");
   const clearProjectBtn = document.getElementById("clearProject");
@@ -1416,7 +1412,28 @@
   attachDoubleTap(bgBtn, () => openColorPicker(theme.bgBase || "#0f1115", (hex) => applyBgColor(hex)));
   bgBtn.addEventListener("click", () => openColorPicker(theme.bgBase || "#0f1115", (hex) => applyBgColor(hex)));
 
-  // ---------- Mixer (existing) ----------
+  
+  // ---------- Loop dropdowns ----------
+  function buildLoopDropdowns(){
+    const sels = [loopSelectDrum, loopSelectRoll].filter(Boolean);
+    sels.forEach(sel => {
+      sel.innerHTML = "";
+      RES_OPTIONS.forEach((opt, i) => {
+        const o = document.createElement("option");
+        o.value = String(i);
+        o.textContent = opt.label;
+        sel.appendChild(o);
+      });
+      sel.value = String(currentResIndex);
+      sel.addEventListener("change", () => {
+        const idx = Number(sel.value);
+        const opt = RES_OPTIONS[idx] || RES_OPTIONS[currentResIndex];
+        currentResIndex = idx;
+        applyLoopSize(opt.steps, opt.label);
+      });
+    });
+  }
+// ---------- Mixer (existing) ----------
   const busOrder = [...LANES.map(l => l.key), "drum"];
   const busMeta = {
     piano:{ label:"Piano", fill:"--knobFillPiano", glow:"--knobGlowPiano" },
@@ -2681,17 +2698,20 @@
   pauseBtn.addEventListener("click", pause);
   stopBtn.addEventListener("click", stopTransportOnly);
 
-  resEl.addEventListener("input", () => {
-    const opt = RES_OPTIONS[Number(resEl.value)];
-    applyLoopSize(opt.steps, opt.label);
-  });
-
   function applyLoopSize(newLoopSteps, label){
     stopTransportOnly();
     LOOP_STEPS = newLoopSteps;
-    resLabel.textContent = label;
-    resText.textContent = label;
-    groupText.textContent = label;
+
+    // derive currentResIndex from steps
+    const idx = RES_OPTIONS.findIndex(o => o.steps === newLoopSteps);
+    currentResIndex = (idx >= 0 ? idx : currentResIndex);
+
+    if (resText) resText.textContent = label;
+
+    // keep both dropdowns in sync
+    if (loopSelectDrum) loopSelectDrum.value = String(currentResIndex);
+    if (loopSelectRoll) loopSelectRoll.value = String(currentResIndex);
+
     buildDrumGrid();
     drawRoll(-1);
   }
@@ -3007,9 +3027,6 @@
     return { laneKey, confidence, reason, byTrack };
   }
 
-  function laneLabel(key){
-    return (LANES.find(l=>l.key===key)?.label) || key;
-  }
 
 async function fetchMidiArrayBuffer(path){
     const url = new URL(path, window.location.href).toString();
@@ -3194,8 +3211,8 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
       version: 5,
       savedAt: new Date().toISOString(),
       bpm,
-      resolutionLabel: RES_OPTIONS[Number(resEl.value)]?.label ?? "1/64",
-      resolutionIndex: Number(resEl.value),
+      resolutionLabel: RES_OPTIONS[currentResIndex]?.label ?? "1/64",
+      resolutionIndex: currentResIndex,
       loopSteps: LOOP_STEPS,
       project: {
         drums: project.drums,
@@ -3277,13 +3294,13 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
       if (found >= 0) idx = found;
     }
     if (idx === null) idx = 2;
-    resEl.value = String(idx);
+    currentResIndex = idx;
     const opt = RES_OPTIONS[idx];
     LOOP_STEPS = opt.steps;
-    resLabel.textContent = opt.label;
-    resText.textContent = opt.label;
-    groupText.textContent = opt.label;
-
+        resText.textContent = opt.label;
+    if (loopSelectDrum) loopSelectDrum.value = String(currentResIndex);
+    if (loopSelectRoll) loopSelectRoll.value = String(currentResIndex);
+    
     const srcDrums = data.project?.drums ?? data.drums;
     if (srcDrums){
       for (const k of drumKeys){
@@ -3540,17 +3557,16 @@ function initModules(){
   bpmEl.value = "115";
   bpmLabel.textContent = "115";
 
-  resEl.value = "2";
-  const initialOpt = RES_OPTIONS[Number(resEl.value)];
+  currentResIndex = 2;
+  const initialOpt = RES_OPTIONS[currentResIndex];
   LOOP_STEPS = initialOpt.steps;
-  resLabel.textContent = initialOpt.label;
   resText.textContent = initialOpt.label;
-  groupText.textContent = initialOpt.label;
 
   applyBgColor(theme.bgBase);
   for (const lane of LANES) if (theme.lanes[lane.key]) applyLaneColor(lane.key, theme.lanes[lane.key]);
   for (const dk of drumKeys) if (theme.drums[dk]) applyDrumColor(dk, theme.drums[dk]);
 
+  buildLoopDropdowns();
   buildTabs();
   buildTransposeKnobs();
   buildMixer();
