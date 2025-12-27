@@ -444,14 +444,18 @@
       user-select:none;
     }
     .stripKnobs{
+      /* PAN (top) / LPF (middle) / VERB (bottom) — locked to one vertical column */
       display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:flex-start;
+      flex-direction:column;
+      align-items:center;
       justify-content:flex-start;
-      min-width:0;
-      flex: 1 1 auto;
-      align-content:flex-start;
+      gap: 10px;
+      min-width: 0;
+    }
+    .stripKnobs .kCol{
+      /* Force all three knob modules to share the same width so their centers align perfectly */
+      width: 64px;
+      align-items:center;
     }
 
     /* Drum */
@@ -2763,7 +2767,53 @@
       `Tip: Preview plays the MIDI using the currently selected instrument sound (${LANES.find(l=>l.key===activeRoll)?.label ?? "Piano"}). Import writes notes into that lane’s piano roll.`;
   }
 
-  async function fetchMidiArrayBuffer(path){
+  
+  // ---------- Auto-detect lane suggestion (lightweight heuristics) ----------
+  // Goal: suggest a lane based on MIDI pitch range + chord density, without changing user selection.
+  function suggestLaneForMidi(midi){
+    const notes = [];
+    midi.tracks.forEach(tr => (tr.notes||[]).forEach(n => notes.push(n)));
+    if (!notes.length) return "piano";
+
+    // basic pitch stats
+    const midis = notes.map(n => n.midi).sort((a,b)=>a-b);
+    const avg = midis.reduce((a,b)=>a+b,0) / midis.length;
+    const low = midis[0], high = midis[midis.length-1];
+
+    // estimate chord density: sample overlaps via simple sweep
+    const events = [];
+    for (const n of notes){
+      const s = n.time;
+      const e = n.time + (n.duration || 0);
+      events.push([s, +1]);
+      events.push([e, -1]);
+    }
+    events.sort((a,b)=>a[0]-b[0] || b[1]-a[1]);
+    let active=0, maxActive=0;
+    for (const [t, delta] of events){
+      active += delta;
+      if (active > maxActive) maxActive = active;
+    }
+
+    // Heuristics:
+    // - Very low average or low range -> Bass
+    if (avg < 54 || high <= 60) return "bass";
+
+    // - Dense chords -> Piano (keeps it familiar; user can swap to Poly/Pad manually)
+    if (maxActive >= 3) return "piano";
+
+    // - High register / melodic -> Synth (lead lane)
+    if (avg >= 70 || low >= 62) return "synth";
+
+    // default
+    return "piano";
+  }
+
+  function laneLabel(key){
+    return (LANES.find(l=>l.key===key)?.label) || key;
+  }
+
+async function fetchMidiArrayBuffer(path){
     const url = new URL(path, window.location.href).toString();
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`Failed to fetch MIDI: ${path} (${res.status})`);
@@ -2785,7 +2835,12 @@
       const ab = await fetchMidiArrayBuffer(buildMidiPath(pack, file));
       const midi = new Midi(ab);
 
-      // play first ~2 bars worth at current BPM (audition), quantized to our step length
+      
+      const suggested = suggestLaneForMidi(midi);
+      const sugTxt = (suggested && suggested !== activeRoll)
+        ? ` • Suggested lane: ${laneLabel(suggested)}`
+        : "";
+// play first ~2 bars worth at current BPM (audition), quantized to our step length
       const stopper = previewStopper;
       const now = ctx.currentTime + 0.05;
       const quarter = 60 / bpm;
@@ -2821,7 +2876,7 @@
         }
       }
 
-      midiFileStatus.textContent = `Previewing: ${file.name || file.file}`;
+      midiFileStatus.textContent = `Previewing: ${file.name || file.file}${sugTxt}`;
     }catch(err){
       console.warn(err);
       midiFileStatus.textContent = `Preview failed. Check file path + index.json entries.`;
@@ -2832,8 +2887,17 @@
     try{
       midiFileStatus.textContent = `Importing…`;
       const ab = await fetchMidiArrayBuffer(buildMidiPath(pack, file));
-      importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
-      midiFileStatus.textContent = `Imported into ${LANES.find(l=>l.key===activeRoll)?.label ?? "Piano"}: ${file.name || file.file}`;
+      
+      let suggested = null;
+      try{
+        const midi = new Midi(ab);
+        suggested = suggestLaneForMidi(midi);
+      }catch(_){}
+      const sugTxt = (suggested && suggested !== activeRoll)
+        ? ` • Suggested lane: ${laneLabel(suggested)}`
+        : "";
+importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
+      midiFileStatus.textContent = `Imported into ${LANES.find(l=>l.key===activeRoll)?.label ?? "Piano"}: ${file.name || file.file}${sugTxt}`;
     }catch(err){
       console.warn(err);
       midiFileStatus.textContent = `Import failed. Check file path + index.json entries.`;
@@ -2848,7 +2912,16 @@
     }
     const midi = new Midi(arrayBuffer);
 
-    // Convert MIDI time -> steps.
+    
+    // Auto-detect lane suggestion (non-intrusive): show hint, do NOT switch lanes automatically.
+    try{
+      const suggested = suggestLaneForMidi(midi);
+      if (suggested && suggested !== activeRoll && midiFileStatus){
+        const current = laneLabel(activeRoll);
+        midiFileStatus.textContent = `Imported MIDI detected as ${laneLabel(suggested)}-range; keeping target lane: ${current}.`;
+      }
+    }catch(_){}
+// Convert MIDI time -> steps.
     // If fit=true: scale the MIDI clip duration so it fills exactly LOOP_STEPS
     // If fit=false: map using current BPM (quarter note mapping) (may truncate)
     const grid = getActiveGrid();
