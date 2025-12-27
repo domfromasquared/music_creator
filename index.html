@@ -778,9 +778,12 @@
   
     /* --- Modular workspace --- */
     #transportCard{
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      width: calc(100% - 24px);
+      z-index: 2147483647;
     }
     .workspace{
       position: relative;
@@ -3394,6 +3397,10 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
   
   // ---------- Modular UI: drag + persist positions ----------
   const MODULE_IDS = ["mixerModule","drumModule","rollModule"];
+  const TRANSPORT_Z = 2147483647; // keep transport always on top
+  const MODULE_MAX_Z = 2147483000; // never exceed transport
+  let moduleZ = 100;
+
   const moduleStateKey = "retroloop_module_layout_v1";
 
   function loadModuleLayout(){
@@ -3447,6 +3454,9 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
 
       e.preventDefault();
       dragging = true;
+      moduleZ = Math.min(MODULE_MAX_Z, moduleZ + 1);
+      card.style.zIndex = String(moduleZ);
+
       pid = e.pointerId;
       startX = e.clientX;
       startY = e.clientY;
@@ -3490,7 +3500,17 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
     card.addEventListener("pointerup", () => saveModuleLayout());
   }
 
-  function initModules(){
+  
+  function syncTransportSpacer(){
+    const t = document.getElementById("transportCard");
+    const s = document.getElementById("transportSpacer");
+    if (!t || !s) return;
+    const r = t.getBoundingClientRect();
+    // keep enough space so content starts below fixed bar
+    s.style.height = Math.ceil(r.height + 24) + "px";
+  }
+
+function initModules(){
     MODULE_IDS.forEach(id=>{
       const el = document.getElementById(id);
       if (!el) return;
@@ -3498,8 +3518,9 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
     });
 
     // Save on window resize as well
-    window.addEventListener("resize", () => saveModuleLayout());
+    window.addEventListener("resize", () => { saveModuleLayout(); syncTransportSpacer(); });
     loadModuleLayout();
+    syncTransportSpacer();
   }
 
 
