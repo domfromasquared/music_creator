@@ -1201,6 +1201,8 @@ input[type="range"]{
   const ROLL_TOP_MIDI  = 72; // C5
   const ROLL_PITCHES   = (ROLL_TOP_MIDI - ROLL_BASE_MIDI) + 1;
 
+  const KEY_PAD = 64; // piano roll left gutter (key labels)
+
   const DEMO_JSON_PATH = "demos/demo01.json";
   const MIDI_INDEX_PATH = "midi/index.json";
 
@@ -3138,7 +3140,7 @@ function applyMixerNodes(busKey){
     const H = rollCanvas.height;
     const grid = getActiveGrid();
 
-    const KEY_PAD = 64;
+    const leftPad = KEY_PAD;
     const cellW = (W - leftPad) / LOOP_STEPS;
     const cellH = H / ROLL_PITCHES;
 
