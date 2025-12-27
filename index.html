@@ -2790,6 +2790,7 @@ function applyMixerNodes(busKey){
 
     const stepsCol = document.createElement("div");
     stepsCol.className = "steps";
+    stepsCol.style.gridAutoRows = "40px";
 
     project.drumRows.forEach((row, idx) => {
       // --- name / controls column ---
@@ -2900,6 +2901,7 @@ function applyMixerNodes(busKey){
       const rowSteps = document.createElement("div");
       rowSteps.className = "rowSteps";
       rowSteps.dataset.row = String(idx);
+      rowSteps.style.gridTemplateColumns = `repeat(${LOOP_STEPS}, minmax(0, 1fr))`;
 
       for (let s=0; s<LOOP_STEPS; s++){
         const cell = document.createElement("div");
@@ -4074,6 +4076,25 @@ updateActiveTabStyles();
     const lanesObj = data.project?.lanes ?? data.lanes ?? null;
     function loadGrid(dst, src){
       if (!Array.isArray(src)) return;
+
+      // Migration: some older saves may have lane grids stored as [steps][pitches] instead of [pitches][steps].
+      const looksTransposed =
+        (src.length === MASTER_STEPS) &&
+        Array.isArray(src[0]) &&
+        (src[0].length === ROLL_PITCHES);
+
+      if (looksTransposed){
+        for (let s=0; s<MASTER_STEPS; s++){
+          const col = src[s];
+          if (!Array.isArray(col)) continue;
+          for (let p=0; p<ROLL_PITCHES; p++){
+            dst[p][s] = clampInt(col[p] ?? 0, 0, MASTER_STEPS);
+          }
+        }
+        return;
+      }
+
+      // Normal: [pitches][steps]
       for (let p=0; p<ROLL_PITCHES; p++){
         const row = src[p];
         if (!Array.isArray(row)) continue;
