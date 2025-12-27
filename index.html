@@ -1120,11 +1120,21 @@ input[type="range"]{
 }
 
 
-/* Drum Sequencer: ensure sound dropdown text is visible */
-#drumModule .trackSelect,
-#drumModule .trackSelect option{
-  color: #e6edf3 !important;
+/* Drum Sequencer dropdown: make text opposite/contrasting to background */
+#drumModule .trackSelect{
+  background: rgba(255,255,255,.88) !important;
+  color: #0b0f14 !important;
+  border-color: rgba(255,255,255,.30) !important;
 }
+#drumModule .trackSelect:focus{
+  box-shadow: 0 0 0 2px rgba(88,166,255,.25);
+  border-color: rgba(88,166,255,.45) !important;
+}
+#drumModule .trackSelect option{
+  background: #0b0f14;
+  color: #e9eef5;
+}
+
 
 </style>
 </head>
@@ -4286,7 +4296,7 @@ updateActiveTabStyles();
       const tag = (e.target?.tagName || "").toLowerCase();
       if (tag === "button" || tag === "input" || tag === "select" || tag === "textarea") return;
 
-      if (e.target && e.target.closest && e.target.closest(".tabs, .tab, .miniBtn, .pill, .kbd")) return;
+      if (e.target && e.target.closest && e.target.closest(".tabs, .tab, .miniBtn, .pill, .kbd, .trKnobs, .trKnob, .knob")) return;
 
       e.preventDefault();
       dragging = true;
