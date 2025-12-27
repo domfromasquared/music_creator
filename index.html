@@ -775,7 +775,36 @@
       margin-top: 8px;
       line-height: 1.35;
     }
-  </style>
+  
+    /* --- Modular workspace --- */
+    #transportCard{
+      position: sticky;
+      top: 12px;
+      z-index: 100;
+    }
+    .workspace{
+      position: relative;
+    }
+    .card.module{
+      display:flex;
+      flex-direction:column;
+      resize: both;
+      overflow: hidden;
+      min-width: 320px;
+      min-height: 220px;
+    }
+    .card.module .hd{
+      cursor: grab;
+      touch-action: none;
+      user-select:none;
+    }
+    .card.module.dragging .hd{ cursor: grabbing; }
+    .card.module .bd{
+      flex: 1 1 auto;
+      overflow: auto;
+    }
+
+</style>
 </head>
 
 <body>
@@ -785,8 +814,8 @@
     <span class="kbd" id="resText">1/64</span> • Keys: C3 → C5
   </p>
 
-  <div class="wrap">
-    <div class="card">
+  <div class="wrap workspace">
+    <div class="card" id="transportCard">
       <div class="hd">
         <div class="title">Transport</div>
         <div class="btnRow">
@@ -811,17 +840,7 @@
           </div>
         </div>
 
-        <div class="mixer">
-          <div class="mixerTop">
-            <div class="mixerTitle">Mixer</div>
-            <div class="pill" style="padding:6px 10px;">
-              <span>Reverb</span><span class="kbd">Return</span>
-            </div>
-          </div>
-
-          <div class="mixerGrid" id="mixerGrid"></div>
-        </div>
-
+        
         <div class="btnRow" style="margin-top:10px;">
           <button id="loadDemo">Reload Demo</button>
           <button id="clearProject">Clear Project</button>
@@ -845,7 +864,30 @@
       </div>
     </div>
 
-    <div class="card">
+
+    <div class="card module" id="mixerModule" style="grid-column: 1 / -1;">
+      <div class="hd">
+        <div class="title">Mixer</div>
+        <div class="pill" style="padding:6px 10px;">
+          <span>Reverb</span><span class="kbd">Return</span>
+        </div>
+      </div>
+      <div class="bd">
+        <div class="mixer" style="margin-top:0;">
+          <div class="mixerTop" style="display:none;">
+            <div class="mixerTitle">Mixer</div>
+            <div class="pill" style="padding:6px 10px;">
+              <span>Reverb</span><span class="kbd">Return</span>
+            </div>
+          </div>
+
+          <div class="mixerGrid" id="mixerGrid"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card module" id="drumModule">
       <div class="hd">
         <div class="title">Drum Sequencer</div>
         <div class="pill">
@@ -858,7 +900,7 @@
       </div>
     </div>
 
-    <div class="card" style="grid-column: 1 / -1;">
+    <div class="card module" id="rollModule" style="grid-column: 1 / -1;">
       <div class="hd">
         <div class="title">Piano Roll</div>
         <div class="rollHeaderRight">
@@ -3275,7 +3317,119 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
     catch (e){ console.warn("Demo JSON load failed.", e); }
   });
 
-  // ---------- Init ----------
+  
+  // ---------- Modular UI: drag + persist positions ----------
+  const MODULE_IDS = ["mixerModule","drumModule","rollModule"];
+  const moduleStateKey = "retroloop_module_layout_v1";
+
+  function loadModuleLayout(){
+    try{
+      const raw = localStorage.getItem(moduleStateKey);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      MODULE_IDS.forEach(id=>{
+        const el = document.getElementById(id);
+        if (!el) return;
+        const st = data[id];
+        if (!st) return;
+        if (Number.isFinite(st.x) && Number.isFinite(st.y)){
+          el.dataset.tx = String(st.x);
+          el.dataset.ty = String(st.y);
+          el.style.transform = `translate(${st.x}px, ${st.y}px)`;
+        }
+        if (Number.isFinite(st.w)) el.style.width = `${st.w}px`;
+        if (Number.isFinite(st.h)) el.style.height = `${st.h}px`;
+      });
+    }catch(_){}
+  }
+  function saveModuleLayout(){
+    try{
+      const out = {};
+      MODULE_IDS.forEach(id=>{
+        const el = document.getElementById(id);
+        if (!el) return;
+        const x = Number(el.dataset.tx || 0);
+        const y = Number(el.dataset.ty || 0);
+        const rect = el.getBoundingClientRect();
+        // width/height from inline style if set, else current
+        const w = Number((el.style.width || "").replace("px","")) || rect.width;
+        const h = Number((el.style.height || "").replace("px","")) || rect.height;
+        out[id] = { x, y, w, h };
+      });
+      localStorage.setItem(moduleStateKey, JSON.stringify(out));
+    }catch(_){}
+  }
+
+  function makeModuleDraggable(card){
+    const hd = card.querySelector(".hd");
+    if (!hd) return;
+
+    let dragging=false, pid=null, startX=0, startY=0, baseX=0, baseY=0;
+
+    const onDown = (e) => {
+      // ignore if user is trying to interact with controls inside header
+      const tag = (e.target?.tagName || "").toLowerCase();
+      if (tag === "button" || tag === "input" || tag === "select" || tag === "textarea") return;
+
+      e.preventDefault();
+      dragging = true;
+      pid = e.pointerId;
+      startX = e.clientX;
+      startY = e.clientY;
+      baseX = Number(card.dataset.tx || 0);
+      baseY = Number(card.dataset.ty || 0);
+      card.classList.add("dragging");
+      hd.setPointerCapture(pid);
+    };
+
+    const onMove = (e) => {
+      if (!dragging || e.pointerId !== pid) return;
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const x = baseX + dx;
+      const y = baseY + dy;
+      card.dataset.tx = String(x);
+      card.dataset.ty = String(y);
+      card.style.transform = `translate(${x}px, ${y}px)`;
+    };
+
+    const onUp = (e) => {
+      if (!dragging || e.pointerId !== pid) return;
+      dragging=false; pid=null;
+      card.classList.remove("dragging");
+      saveModuleLayout();
+    };
+
+    hd.addEventListener("pointerdown", onDown, {passive:false});
+    hd.addEventListener("pointermove", onMove, {passive:false});
+    hd.addEventListener("pointerup", onUp);
+    hd.addEventListener("pointercancel", onUp);
+    hd.addEventListener("lostpointercapture", () => {
+      if (!dragging) return;
+      dragging=false; pid=null;
+      card.classList.remove("dragging");
+      saveModuleLayout();
+    });
+
+    // persist resize (best-effort): watch pointerup anywhere on card
+    card.addEventListener("pointerup", () => saveModuleLayout());
+  }
+
+  function initModules(){
+    MODULE_IDS.forEach(id=>{
+      const el = document.getElementById(id);
+      if (!el) return;
+      makeModuleDraggable(el);
+    });
+
+    // Save on window resize as well
+    window.addEventListener("resize", () => saveModuleLayout());
+    loadModuleLayout();
+  }
+
+
+// ---------- Init ----------
   bpm = 115;
   bpmEl.value = "115";
   bpmLabel.textContent = "115";
@@ -3296,6 +3450,8 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
   buildMixer();
   buildDrumGrid();
   drawRoll(-1);
+
+  initModules();
 
   (async () => {
     try{ await loadDemoFromJson(); }
