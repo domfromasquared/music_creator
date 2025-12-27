@@ -1416,20 +1416,6 @@ input[type="range"]{
       if (drumRowGains[i]) drumRowGains[i].gain.value = ((project.drumRows[i].vol) ?? 80) / 100;
     }
   }
-    while (drumRowGains.length < project.drumRows.length){
-      const g = ctx.createGain();
-      g.gain.value = (project.drumRows[drumRowGains.length].vol ?? 80) / 100;
-      g.connect(buses.drum);
-      drumRowGains.push(g);
-    }
-    // If rows removed, drop extra gains
-    while (drumRowGains.length > project.drumRows.length){
-      const g = drumRowGains.pop();
-      try{ g.disconnect(); }catch(e){}
-    }
-    // sync vols
-    project.drumRows.forEach((r,i)=>{ if (drumRowGains[i]) drumRowGains[i].gain.value = (r.vol ?? 80)/100; });
-  }
 
 let isPlaying = false;
   let isPaused = false;
