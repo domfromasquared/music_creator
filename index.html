@@ -779,12 +779,45 @@
     /* --- Modular workspace --- */
     #transportCard{
       position: sticky;
-      top: 12px;
-      z-index: 100;
+      top: 0;
+      z-index: 1000;
     }
     .workspace{
       position: relative;
     }
+
+    #transportCard .hd.transportHd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    #transportCard .transportLeft{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 120px;
+    }
+    #transportCard .transportRight{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    #transportCard .bd.transportBd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    #transportCard .transportHint{
+      margin:0;
+      max-width: 640px;
+    }
+
     .card.module{
       display:flex;
       flex-direction:column;
@@ -815,15 +848,56 @@
   </p>
 
   <div class="wrap workspace">
-    <div class="card" id="transportCard">
-      <div class="hd">
-        <div class="title">Transport</div>
-        <div class="btnRow">
+    <div class="card" id="transportCard" style="grid-column: 1 / -1;">
+      <div class="hd transportHd">
+        <div class="transportLeft">
+          <div class="title">Transport</div>
+        </div>
+
+        <div class="btnRow transportBtns">
           <button id="playBtn">Play</button>
           <button id="pauseBtn" disabled>Pause</button>
           <button id="stopBtn" disabled>Stop</button>
         </div>
+
+        <div class="transportRight">
+          <div class="pill">
+            <span style="min-width:38px;">BPM</span>
+            <input id="bpm" type="range" min="70" max="180" value="115"/>
+            <span id="bpmLabel" class="kbd">115</span>
+          </div>
+
+          <div class="pill">
+            <span>Loop</span>
+            <input id="resolution" type="range" min="0" max="2" step="1" value="2"/>
+            <span id="resolutionLabel" class="kbd">1/64</span>
+          </div>
+        </div>
       </div>
+
+      <div class="bd transportBd">
+        <div class="btnRow transportActions">
+          <button id="loadDemo">Reload Demo</button>
+          <button id="clearProject">Clear Project</button>
+
+          <button id="saveProjectBtn">Save Project</button>
+          <button id="loadProjectBtn">Load Project</button>
+          <input id="projectFile" type="file" accept=".json,application/json"/>
+
+          <button id="importMidiBtn">Import MIDI</button>
+          <input id="midiFile" type="file" accept=".mid,.midi" />
+
+          <button id="midiLibraryBtn">MIDI Library</button>
+
+          <button id="bgBtn">Background</button>
+        </div>
+
+        <p class="hint transportHint">
+          <span class="kbd">Space</span> toggles Play/Pause (desktop).
+          Double-click / double-tap any <span class="kbd">instrument</span> or <span class="kbd">drum label</span> to customize its color.
+        </p>
+      </div>
+    </div>
 
       <div class="bd">
         <div class="btnRow" style="margin-bottom:10px;">
