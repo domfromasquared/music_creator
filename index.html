@@ -1120,20 +1120,30 @@ input[type="range"]{
 }
 
 
-/* Drum Sequencer dropdown: make text opposite/contrasting to background */
-#drumModule .trackSelect{
-  background: rgba(255,255,255,.88) !important;
-  color: #0b0f14 !important;
-  border-color: rgba(255,255,255,.30) !important;
+/* ================================
+   Drum Sequencer – Sound Dropdown
+   ================================ */
+
+/* Closed select */
+#drumModule .trackSelect {
+  background: #f2f3f5;
+  color: #0b0f14;            /* dark text */
+  border: 1px solid rgba(0,0,0,.25);
 }
-#drumModule .trackSelect:focus{
-  box-shadow: 0 0 0 2px rgba(88,166,255,.25);
-  border-color: rgba(88,166,255,.45) !important;
+
+/* Opened dropdown options */
+#drumModule .trackSelect option {
+  background: #f2f3f5;       /* SAME as select */
+  color: #0b0f14;            /* force readable text */
 }
-#drumModule .trackSelect option{
-  background: #0b0f14;
-  color: #e9eef5;
+
+/* Selected / hovered option (native-safe) */
+#drumModule .trackSelect option:checked,
+#drumModule .trackSelect option:hover {
+  background: #4c9df1;
+  color: #ffffff;
 }
+
 
 
 </style>
