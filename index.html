@@ -2960,7 +2960,7 @@ function applyMixerNodes(busKey){
   function clearDragHover(){
     drumGridEl.querySelectorAll(".cell.drag-hover").forEach(c => c.classList.remove("drag-hover"));
   }
-  fu  function applyDrumCell(cell, value){
+  function applyDrumCell(cell, value){
     const rowIdx = Number(cell.dataset.row);
     if (Number.isNaN(rowIdx)) return;
     if (drumPaint.row !== null && rowIdx !== drumPaint.row) return;
