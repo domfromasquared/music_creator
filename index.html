@@ -128,6 +128,8 @@
       justify-content:space-between;
       gap:10px;
     }
+    .hd .left{display:flex; align-items:center; gap:10px;}
+
     .title{
       font-size:13px;
       color:var(--muted);
@@ -1116,7 +1118,10 @@ input[type="range"]{
 
     <div class="card module" id="drumModule">
       <div class="hd">
-        <div class="title">Drum Sequencer</div>
+        <div class="left">
+          <button class="miniBtn" id="addDrumRowBtn" title="Add drum row" style="border-radius:999px; padding:6px 12px;">+</button>
+          <div class="title">Drum Sequencer</div>
+        </div>
         <div class="pill"><span>Loop</span><select class="kbd" id="loopSelectDrum"></select></div>
       </div>
       <div class="bd">
@@ -1199,8 +1204,37 @@ input[type="range"]{
   const DEMO_JSON_PATH = "demos/demo01.json";
   const MIDI_INDEX_PATH = "midi/index.json";
 
-  const drumNames = ["Kick", "Clap", "Shaker", "Snare", "CH", "OH", "Tom", "Ride", "Crash"];
-  const drumKeys  = ["kick", "clap", "shaker", "snare", "ch", "oh", "tom", "ride", "crash"];
+    // --- Drum sound catalog + default rows (modular drums) ---
+  const DRUM_SOUNDS = [
+    { key:"kick",      label:"Kick" },
+    { key:"kick808",   label:"808 Kick" },
+    { key:"clap",      label:"Clap" },
+    { key:"snare",     label:"Snare" },
+    { key:"ch",        label:"CH" },
+    { key:"oh",        label:"OH" },
+    { key:"ride",      label:"Ride" },
+    { key:"crash",     label:"Crash" },
+
+    // extras (all suggestions)
+    { key:"snare808",  label:"808 Snare" },
+    { key:"rim",       label:"Rim" },
+    { key:"cowbell",   label:"Cowbell" },
+    { key:"shaker",    label:"Shaker" },
+    { key:"tom",       label:"Tom" },
+
+    { key:"click",     label:"Click" },
+    { key:"blip",      label:"Blip" },
+    { key:"zap",       label:"Zap" },
+    { key:"laser",     label:"Laser" },
+
+    { key:"brushkick", label:"Brush Kick" },
+    { key:"brushsn",   label:"Brush Snare" },
+    { key:"brushhat",  label:"Brush Hat" },
+    { key:"noise",     label:"Noise Burst" },
+  ];
+
+  const DEFAULT_DRUM_ROWS = ["kick","kick808","clap","snare","ch","oh","ride","crash"];
+  const MAX_DRUM_ROWS = 16;
 
   const LANES = [
     { key:"piano", label:"Piano",  noteVar:"--pianoNote", knobFill:"--knobFillPiano", knobGlow:"--knobGlowPiano" },
@@ -1270,16 +1304,28 @@ input[type="range"]{
   // ---------- THEME (persisted in JSON) ----------
   const theme = {
     bgBase: cssVar("--userBg") || "#0f1115",
-    drums: {
+        drums: {
       kick: cssVar("--kick") || "#ff8b5a",
+      kick808: "#ff6a3d",
       snare: cssVar("--snare") || "#58a6ff",
+      snare808: "#3b86ff",
       clap: cssVar("--clap") || "#ffffff",
-      shaker: cssVar("--shaker") || "#ba8cff",
       ch: cssVar("--ch") || "#7cffb2",
       oh: cssVar("--oh") || "#ffd278",
-      tom: cssVar("--tom") || "#ff78c8",
       ride: cssVar("--ride") || "#78d2ff",
       crash: cssVar("--crash") || "#ff7878",
+      shaker: cssVar("--shaker") || "#ba8cff",
+      tom: cssVar("--tom") || "#ff78c8",
+      rim: "#e6edf3",
+      cowbell: "#ffd94a",
+      click: "#a6b0c3",
+      blip: "#78fff0",
+      zap: "#ba8cff",
+      laser: "#ff96e6",
+      brushkick: "#c7d1e4",
+      brushsn: "#b8c6de",
+      brushhat: "#d1d9e8",
+      noise: "#97a3b6",
     },
     lanes: {
       piano: "#7cffb2",
@@ -1293,10 +1339,29 @@ input[type="range"]{
     labelText: { drums:{}, lanes:{} }
   };
 
-  function makeEmptyProject(){
+    function makeEmptyProject(){
     const emptyGrid = () => Array.from({length: ROLL_PITCHES}, () => new Array(MASTER_STEPS).fill(0));
+
+    const defaultVolBySound = {
+      kick:100, kick808:92, clap:85, snare:92, ch:62, oh:70, ride:66, crash:70,
+      snare808:88, rim:70, cowbell:72, shaker:65, tom:78,
+      click:55, blip:60, zap:65, laser:70, brushkick:80, brushsn:78, brushhat:62, noise:58
+    };
+
+    const labelFor = (key) => (DRUM_SOUNDS.find(d => d.key === key)?.label) || key;
+
+    const makeRow = (soundKey) => ({
+      id: (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random())),
+      soundKey,
+      label: labelFor(soundKey),
+      steps: new Array(MASTER_STEPS).fill(false),
+      vol: (defaultVolBySound[soundKey] ?? 80)
+    });
+
+    const drumRows = DEFAULT_DRUM_ROWS.map(makeRow);
+
     return {
-      drums: Object.fromEntries(drumKeys.map(k => [k, new Array(MASTER_STEPS).fill(false)])),
+      drumRows,
       piano: emptyGrid(),
       ep:    emptyGrid(),
       poly:  emptyGrid(),
@@ -1304,10 +1369,8 @@ input[type="range"]{
       synth: emptyGrid(),
       bass:  emptyGrid(),
       pad:   emptyGrid(),
-      drumVols: { kick:100, clap:85, shaker:65, snare:92, ch:62, oh:70, tom:78, ride:66, crash:70 },
     };
   }
-
   const project = makeEmptyProject();
   let LOOP_STEPS = 64;
   let currentResIndex = 2; // 0=1/16,1=1/32,2=1/64
@@ -1323,9 +1386,52 @@ input[type="range"]{
   let rvSize = 45;
   let rvReturn = 22;
 
-  const drumGains = Object.fromEntries(drumKeys.map(k => [k, null]));
+  let drumRowGains = [];
 
-  let isPlaying = false;
+  function ensureDrumRowGains(rebuild=false){
+    if (!ctx || !buses.drum) return;
+
+    if (rebuild){
+      try{ drumRowGains.forEach(g => g.disconnect()); }catch(e){}
+      drumRowGains = [];
+    }
+
+    // Add missing gains
+    while (drumRowGains.length < project.drumRows.length){
+      const idx = drumRowGains.length;
+      const g = ctx.createGain();
+      g.gain.value = ((project.drumRows[idx]?.vol) ?? 80) / 100;
+      g.connect(buses.drum);
+      drumRowGains.push(g);
+    }
+
+    // Remove extra gains
+    while (drumRowGains.length > project.drumRows.length){
+      const g = drumRowGains.pop();
+      try{ g.disconnect(); }catch(e){}
+    }
+
+    // Sync gains with current volumes
+    for (let i=0; i<project.drumRows.length; i++){
+      if (drumRowGains[i]) drumRowGains[i].gain.value = ((project.drumRows[i].vol) ?? 80) / 100;
+    }
+  }
+    while (drumRowGains.length < project.drumRows.length){
+      const g = ctx.createGain();
+      g.gain.value = (project.drumRows[drumRowGains.length].vol ?? 80) / 100;
+      g.connect(buses.drum);
+      drumRowGains.push(g);
+    }
+    // If rows removed, drop extra gains
+    while (drumRowGains.length > project.drumRows.length){
+      const g = drumRowGains.pop();
+      try{ g.disconnect(); }catch(e){}
+    }
+    // sync vols
+    project.drumRows.forEach((r,i)=>{ if (drumRowGains[i]) drumRowGains[i].gain.value = (r.vol ?? 80)/100; });
+  }
+
+let isPlaying = false;
   let isPaused = false;
   let currentStep = 0;
   let nextNoteTime = 0;
@@ -1874,13 +1980,8 @@ input[type="range"]{
       mix[k].send = send;
     });
 
-    for (const dk of drumKeys){
-      drumGains[dk] = ctx.createGain();
-      drumGains[dk].gain.value = 1;
-      drumGains[dk].connect(buses.drum);
-    }
-
-    function applyMixerNodes(busKey){
+    ensureDrumRowGains(true);
+function applyMixerNodes(busKey){
       const m = mix[busKey];
       if (!m || !m.pan || !m.lpf || !m.send) return;
       m.pan.pan.value = clamp(m.panVal/100, -1, 1);
@@ -2194,8 +2295,8 @@ input[type="range"]{
     noiseBuf = b;
     return b;
   }
-  function playKick(time){
-    const out = drumGains.kick;
+  function playKick(time, outGain){
+    const out = outGain || buses.drum;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "sine";
@@ -2207,8 +2308,8 @@ input[type="range"]{
     osc.connect(gain).connect(out);
     osc.start(time); osc.stop(time + 0.16);
   }
-  function playSnare(time){
-    const out = drumGains.snare;
+  function playSnare(time, outGain){
+    const out = outGain || buses.drum;
     const src = ctx.createBufferSource();
     src.buffer = getNoiseBuffer();
     const bp = ctx.createBiquadFilter();
@@ -2222,8 +2323,8 @@ input[type="range"]{
     src.connect(bp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.12);
   }
-  function playClap(time){
-    const out = drumGains.clap;
+  function playClap(time, outGain){
+    const out = outGain || buses.drum;
     const src = ctx.createBufferSource();
     src.buffer = getNoiseBuffer();
     const bp = ctx.createBiquadFilter();
@@ -2237,8 +2338,8 @@ input[type="range"]{
     src.connect(bp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.09);
   }
-  function playShaker(time){
-    const out = drumGains.shaker;
+  function playShaker(time, outGain){
+    const out = outGain || buses.drum;
     const src = ctx.createBufferSource();
     src.buffer = getNoiseBuffer();
     const bp = ctx.createBiquadFilter();
@@ -2252,8 +2353,8 @@ input[type="range"]{
     src.connect(bp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.08);
   }
-  function playCH(time){
-    const out = drumGains.ch;
+  function playCH(time, outGain){
+    const out = outGain || buses.drum;
     const src = ctx.createBufferSource();
     src.buffer = getNoiseBuffer();
     const hp = ctx.createBiquadFilter();
@@ -2266,8 +2367,8 @@ input[type="range"]{
     src.connect(hp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.06);
   }
-  function playOH(time){
-    const out = drumGains.oh;
+  function playOH(time, outGain){
+    const out = outGain || buses.drum;
     const src = ctx.createBufferSource();
     src.buffer = getNoiseBuffer();
     const hp = ctx.createBiquadFilter();
@@ -2280,8 +2381,8 @@ input[type="range"]{
     src.connect(hp).connect(gain).connect(out);
     src.start(time); src.stop(time + 0.22);
   }
-  function playTom(time){
-    const out = drumGains.tom;
+  function playTom(time, outGain){
+    const out = outGain || buses.drum;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     const lp = ctx.createBiquadFilter();
@@ -2298,8 +2399,8 @@ input[type="range"]{
     osc.start(time);
     osc.stop(time + 0.25);
   }
-  function playRide(time){
-    const out = drumGains.ride;
+  function playRide(time, outGain){
+    const out = outGain || buses.drum;
     const src = ctx.createBufferSource();
     src.buffer = getNoiseBuffer();
     const hp = ctx.createBiquadFilter();
@@ -2317,8 +2418,8 @@ input[type="range"]{
     src.start(time);
     src.stop(time + 0.40);
   }
-  function playCrash(time){
-    const out = drumGains.crash;
+  function playCrash(time, outGain){
+    const out = outGain || buses.drum;
     const src = ctx.createBufferSource();
     src.buffer = getNoiseBuffer();
     const bp1 = ctx.createBiquadFilter();
@@ -2342,6 +2443,296 @@ input[type="range"]{
   }
 
   // ---------- Sequencer utilities ----------
+
+  // ---------- Extra Drum Sounds + Dispatcher ----------
+  function playDrumSound(key, time, out){
+    switch(key){
+      case "kick":      return playKick(time, out);
+      case "kick808":   return play808Kick(time, out);
+      case "snare":     return playSnare(time, out);
+      case "snare808":  return play808Snare(time, out);
+      case "clap":      return playClap(time, out);
+      case "shaker":    return playShaker(time, out);
+      case "ch":        return playCH(time, out);
+      case "oh":        return playOH(time, out);
+      case "tom":       return playTom(time, out);
+      case "ride":      return playRide(time, out);
+      case "crash":     return playCrash(time, out);
+
+      case "rim":       return playRim(time, out);
+      case "cowbell":   return playCowbell(time, out);
+
+      case "click":     return playClick(time, out);
+      case "blip":      return playBlip(time, out);
+      case "zap":       return playZap(time, out);
+      case "laser":     return playLaser(time, out);
+
+      case "brushkick": return playBrushKick(time, out);
+      case "brushsn":   return playBrushSnare(time, out);
+      case "brushhat":  return playBrushHat(time, out);
+
+      case "noise":     return playNoiseBurst(time, out);
+      default:          return playClick(time, out);
+    }
+  }
+
+  function play808Kick(time, outGain){
+    const out = outGain || buses.drum;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+
+    // classic 808-ish drop
+    osc.frequency.setValueAtTime(120, time);
+    osc.frequency.exponentialRampToValueAtTime(42, time + 0.18);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(0.9, time + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.85);
+
+    // subtle drive via waveshaper
+    const shaper = ctx.createWaveShaper();
+    const curve = new Float32Array(256);
+    for (let i=0;i<curve.length;i++){
+      const x = (i/(curve.length-1))*2 - 1;
+      curve[i] = Math.tanh(2.1*x);
+    }
+    shaper.curve = curve;
+
+    osc.connect(gain);
+    gain.connect(shaper);
+    shaper.connect(out);
+
+    osc.start(time);
+    osc.stop(time + 0.9);
+  }
+
+  function play808Snare(time, outGain){
+    const out = outGain || buses.drum;
+
+    // noise body
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(1800, time);
+    bp.Q.value = 0.9;
+
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.0001, time);
+    nGain.gain.exponentialRampToValueAtTime(0.7, time + 0.004);
+    nGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.22);
+
+    // tone
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(330, time);
+    const tGain = ctx.createGain();
+    tGain.gain.setValueAtTime(0.0001, time);
+    tGain.gain.exponentialRampToValueAtTime(0.35, time + 0.004);
+    tGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
+
+    src.connect(bp);
+    bp.connect(nGain);
+    nGain.connect(out);
+
+    osc.connect(tGain);
+    tGain.connect(out);
+
+    src.start(time);
+    src.stop(time + 0.3);
+    osc.start(time);
+    osc.stop(time + 0.25);
+  }
+
+  function playRim(time, outGain){
+    const out = outGain || buses.drum;
+
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(1800, time);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(0.55, time + 0.0015);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.06);
+
+    // little click tone
+    const osc = ctx.createOscillator();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(950, time);
+    const tg = ctx.createGain();
+    tg.gain.setValueAtTime(0.0001, time);
+    tg.gain.exponentialRampToValueAtTime(0.25, time + 0.001);
+    tg.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+
+    src.connect(hp); hp.connect(g); g.connect(out);
+    osc.connect(tg); tg.connect(out);
+
+    src.start(time); src.stop(time+0.08);
+    osc.start(time); osc.stop(time+0.06);
+  }
+
+  function playCowbell(time, outGain){
+    const out = outGain || buses.drum;
+
+    const o1 = ctx.createOscillator();
+    const o2 = ctx.createOscillator();
+    o1.type = "square"; o2.type = "square";
+    o1.frequency.setValueAtTime(540, time);
+    o2.frequency.setValueAtTime(800, time);
+
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(1200, time);
+    bp.Q.value = 0.7;
+
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(0.55, time + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
+
+    o1.connect(bp); o2.connect(bp);
+    bp.connect(g); g.connect(out);
+
+    o1.start(time); o2.start(time);
+    o1.stop(time+0.2); o2.stop(time+0.2);
+  }
+
+  function playClick(time, outGain){
+    const out = outGain || buses.drum;
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(6000, time);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(0.35, time + 0.001);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.02);
+    src.connect(hp); hp.connect(g); g.connect(out);
+    src.start(time); src.stop(time+0.03);
+  }
+
+  function playBlip(time, outGain){
+    const out = outGain || buses.drum;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(920, time);
+    osc.frequency.exponentialRampToValueAtTime(520, time + 0.05);
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(0.35, time + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.08);
+    osc.connect(g); g.connect(out);
+    osc.start(time); osc.stop(time+0.1);
+  }
+
+  function playZap(time, outGain){
+    const out = outGain || buses.drum;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(8000, time);
+    lp.frequency.exponentialRampToValueAtTime(1200, time + 0.14);
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(1600, time);
+    osc.frequency.exponentialRampToValueAtTime(180, time + 0.14);
+
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(0.55, time + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
+
+    osc.connect(lp); lp.connect(g); g.connect(out);
+    osc.start(time); osc.stop(time+0.2);
+  }
+
+  function playLaser(time, outGain){
+    const out = outGain || buses.drum;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(220, time);
+    osc.frequency.exponentialRampToValueAtTime(2200, time + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(420, time + 0.24);
+
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(0.5, time + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.28);
+
+    osc.connect(g); g.connect(out);
+    osc.start(time); osc.stop(time+0.3);
+  }
+
+  function playBrushKick(time, outGain){
+    const out = outGain || buses.drum;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(1200, time);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(110, time);
+    osc.frequency.exponentialRampToValueAtTime(65, time + 0.16);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(0.5, time + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.55);
+
+    osc.connect(lp); lp.connect(gain); gain.connect(out);
+    osc.start(time); osc.stop(time+0.6);
+  }
+
+  function playBrushSnare(time, outGain){
+    const out = outGain || buses.drum;
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(3200, time);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(0.42, time + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.32);
+    src.connect(lp); lp.connect(g); g.connect(out);
+    src.start(time); src.stop(time+0.4);
+  }
+
+  function playBrushHat(time, outGain){
+    const out = outGain || buses.drum;
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(7000, time);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(0.28, time + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.12);
+    src.connect(hp); hp.connect(g); g.connect(out);
+    src.start(time); src.stop(time+0.15);
+  }
+
+  function playNoiseBurst(time, outGain){
+    const out = outGain || buses.drum;
+    const src = ctx.createBufferSource();
+    src.buffer = getNoiseBuffer();
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(2400, time);
+    bp.Q.value = 0.9;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(0.35, time + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.08);
+    src.connect(bp); bp.connect(g); g.connect(out);
+    src.start(time); src.stop(time+0.1);
+  }
+
+
   function rangesOverlap(aStart, aLen, bStart, bLen){
     const aEnd = aStart + aLen;
     const bEnd = bStart + bLen;
@@ -2364,41 +2755,43 @@ input[type="range"]{
     const rot = (-135 + pct * 270);
     return { fillDeg: `${deg}deg`, rotDeg: `${rot}deg` };
   }
-  function setRowKnobValue(knobEl, valEl, v, track){
-    const vv = clamp(Math.round(v), 0, 100);
-    valEl.textContent = String(vv);
-    const st = knobStyleForValue(vv);
-    knobEl.style.setProperty("--knobDeg", st.fillDeg);
-    knobEl.style.setProperty("--knobRot", st.rotDeg);
-    project.drumVols[track] = vv;
-    if (track && drumGains[track]){
-      const x = vv / 100;
-      drumGains[track].gain.value = x * x;
-    }
+  
+  // (legacy) row-knob helpers were previously keyed by drum name.
+  // Drums are now dynamic rows with per-row knobs built in buildDrumGrid().
+  function setRowKnobValue(){ /* no-op */ }
+  function attachRowKnob(){ /* no-op */ }
+
+
+  function addDrumRow(soundKey){
+    if (project.drumRows.length >= MAX_DRUM_ROWS) return;
+    const defVolBySound = {
+      kick:100, kick808:92, clap:85, snare:92, ch:62, oh:70, ride:66, crash:70,
+      snare808:88, rim:70, cowbell:72, shaker:65, tom:78,
+      click:55, blip:60, zap:65, laser:70, brushkick:80, brushsn:78, brushhat:62, noise:58
+    };
+    const labelFor = (key) => (DRUM_SOUNDS.find(d => d.key === key)?.label) || key;
+
+    const row = {
+      id: (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random())),
+      soundKey,
+      label: labelFor(soundKey),
+      steps: new Array(MASTER_STEPS).fill(false),
+      vol: (defVolBySound[soundKey] ?? 80)
+    };
+    project.drumRows.push(row);
+    ensureDrumRowGains();
+    buildDrumGrid();
+    refreshDrumUI();
+    saveToLocal();
   }
-  function attachRowKnob(knobEl, valEl, track){
-    let active = false, pid = null, startVal = 100, startY = 0;
-    const onDown = async (e) => {
-      e.preventDefault();
-      await ensureRunning();
-      active = true;
-      pid = e.pointerId;
-      startY = e.clientY;
-      startVal = Number(valEl.textContent) || 100;
-      knobEl.setPointerCapture(pid);
-    };
-    const onMove = (e) => {
-      if (!active || e.pointerId !== pid) return;
-      e.preventDefault();
-      const dy = startY - e.clientY;
-      setRowKnobValue(knobEl, valEl, startVal + dy * 0.35, track);
-    };
-    const onUp = (e) => { if (!active || e.pointerId !== pid) return; active = false; pid = null; };
-    knobEl.addEventListener("pointerdown", onDown, {passive:false});
-    knobEl.addEventListener("pointermove", onMove, {passive:false});
-    knobEl.addEventListener("pointerup", onUp);
-    knobEl.addEventListener("pointercancel", onUp);
-    knobEl.addEventListener("lostpointercapture", () => { active=false; pid=null; });
+
+  function removeDrumRow(index){
+    if (project.drumRows.length <= 1) return;
+    project.drumRows.splice(index, 1);
+    ensureDrumRowGains(true);
+    buildDrumGrid();
+    refreshDrumUI();
+    saveToLocal();
   }
 
   function buildDrumGrid(){
@@ -2410,21 +2803,51 @@ input[type="range"]{
     const stepsCol = document.createElement("div");
     stepsCol.className = "steps";
 
-    drumKeys.forEach((key, idx) => {
+    project.drumRows.forEach((row, idx) => {
+      // --- name / controls column ---
       const nameRow = document.createElement("div");
       nameRow.className = "trackName";
 
-      const label = document.createElement("div");
-      label.className = "trackLabel";
-      label.textContent = drumNames[idx];
-      label.dataset.drum = key;
-      drumLabelEls[key] = label;
+      const del = document.createElement("button");
+      del.className = "miniBtn";
+      del.title = "Delete row";
+      del.textContent = "×";
+      del.style.padding = "6px 10px";
+      del.style.borderRadius = "999px";
+      del.style.opacity = "0.85";
+      del.addEventListener("click", () => removeDrumRow(idx));
 
-      attachDoubleTap(label, () => {
-        const start = theme.drums[key] || "#888888";
-        openColorPicker(start, (hex) => applyDrumColor(key, hex));
+      const select = document.createElement("select");
+      select.className = "input";
+      select.style.maxWidth = "160px";
+      select.style.padding = "8px 10px";
+      select.style.borderRadius = "999px";
+      select.style.cursor = "pointer";
+      select.setAttribute("aria-label", "Drum sound");
+      DRUM_SOUNDS.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.key;
+        opt.textContent = d.label;
+        select.appendChild(opt);
       });
-      updateDrumLabelStyles(key);
+      select.value = row.soundKey;
+      select.addEventListener("change", () => {
+        row.soundKey = select.value;
+        row.label = (DRUM_SOUNDS.find(d => d.key === row.soundKey)?.label) || row.soundKey;
+        refreshDrumUI(); // recolor
+        saveToLocal();
+      });
+
+      const label = document.createElement("span");
+      label.className = "label";
+      label.textContent = row.label;
+
+      // color picker on label (per sound type)
+      attachDoubleTap(label, () => {
+        const key = row.soundKey;
+        const start = theme.drums[key] || "#888888";
+        openColorPicker(start, (hex) => { theme.drums[key] = hex; refreshDrumUI(); saveTheme(); });
+      });
 
       const knobWrap = document.createElement("div");
       knobWrap.style.display = "flex";
@@ -2433,62 +2856,100 @@ input[type="range"]{
 
       const knob = document.createElement("div");
       knob.className = "knob";
-      knob.style.setProperty("--knobFill", cssVar("--knobFillDrum"));
-      knob.style.setProperty("--knobGlow", cssVar("--knobGlowDrum"));
-      knob.appendChild(Object.assign(document.createElement("div"), { className:"knobDot" }));
+      knob.dataset.row = String(idx);
 
-      const val = document.createElement("div");
-      val.className = "kbd";
-      val.style.minWidth = "34px";
-      val.style.textAlign = "center";
-      val.textContent = String(project.drumVols[key] ?? 100);
-
-      const init = knobStyleForValue(Number(val.textContent));
-      knob.style.setProperty("--knobDeg", init.fillDeg);
-      knob.style.setProperty("--knobRot", init.rotDeg);
+      const knobLabel = document.createElement("div");
+      knobLabel.className = "small";
+      knobLabel.textContent = `${row.vol|0}%`;
 
       knobWrap.appendChild(knob);
-      knobWrap.appendChild(val);
+      knobWrap.appendChild(knobLabel);
 
-      nameRow.appendChild(label);
-      nameRow.appendChild(knobWrap);
+      // knob interaction (volume)
+      let dragging = false, startY=0, startVal=0;
+      const setVol = (v) => {
+        row.vol = Math.max(0, Math.min(120, v));
+        knob.style.setProperty("--knob", (row.vol/120).toFixed(3));
+        knobLabel.textContent = `${row.vol|0}%`;
+        if (drumRowGains[idx]) drumRowGains[idx].gain.value = (row.vol/100);
+      };
+      setVol(row.vol);
+
+      knob.addEventListener("pointerdown", (e) => {
+        dragging = true; startY = e.clientY; startVal = row.vol;
+        knob.setPointerCapture(e.pointerId);
+      });
+      knob.addEventListener("pointermove", (e) => {
+        if (!dragging) return;
+        const dy = (startY - e.clientY);
+        setVol(startVal + dy * 0.35);
+        saveToLocal();
+      });
+      knob.addEventListener("pointerup", () => { dragging = false; });
+      knob.addEventListener("lostpointercapture", () => { dragging = false; });
+
+      // layout row
+      const left = document.createElement("div");
+      left.style.display = "flex";
+      left.style.alignItems = "center";
+      left.style.gap = "8px";
+      left.appendChild(del);
+      left.appendChild(label);
+
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.alignItems = "center";
+      right.style.gap = "8px";
+      right.appendChild(select);
+      right.appendChild(knobWrap);
+
+      nameRow.appendChild(left);
+      nameRow.appendChild(right);
+
       namesCol.appendChild(nameRow);
 
-      attachRowKnob(knob, val, key);
-
-      const row = document.createElement("div");
-      row.className = "rowSteps";
-      row.style.gridTemplateColumns = `repeat(${LOOP_STEPS}, minmax(0, 1fr))`;
+      // --- steps column ---
+      const rowSteps = document.createElement("div");
+      rowSteps.className = "rowSteps";
+      rowSteps.dataset.row = String(idx);
 
       for (let s=0; s<LOOP_STEPS; s++){
         const cell = document.createElement("div");
         cell.className = "cell";
-        const group = Math.floor(s / 4) % 2;
-        cell.classList.add(group === 0 ? "groupA" : "groupB");
-        cell.classList.add(key);
-        if ((s+1) % 4 === 0 && s !== LOOP_STEPS-1) cell.classList.add("beatDivider");
-        cell.dataset.track = key;
+        cell.dataset.row = String(idx);
         cell.dataset.step = String(s);
-        cell.ondragstart = () => false;
-        row.appendChild(cell);
+        rowSteps.appendChild(cell);
       }
-      stepsCol.appendChild(row);
+
+      stepsCol.appendChild(rowSteps);
     });
 
     drumGridEl.appendChild(namesCol);
     drumGridEl.appendChild(stepsCol);
-
-    enableDrumPainting(stepsCol);
-    refreshDrumUI();
   }
 
-  function refreshDrumUI(){
+  
+
+    function refreshDrumUI(){
     const rows = drumGridEl.querySelectorAll(".rowSteps");
-    drumKeys.forEach((k, r) => {
-      const row = rows[r];
+    rows.forEach((rowEl, rIdx) => {
+      const row = project.drumRows[rIdx];
       if (!row) return;
+      const color = theme.drums[row.soundKey] || "#58a6ff";
       for (let s=0; s<LOOP_STEPS; s++){
-        row.children[s].classList.toggle("on", !!project.drums[k][s]);
+        const cell = rowEl.children[s];
+        if (!cell) continue;
+        const on = !!row.steps[s];
+        cell.classList.toggle("on", on);
+        if (on) {
+          cell.style.background = color;
+          cell.style.borderColor = color;
+          cell.style.boxShadow = "0 0 0 1px rgba(0,0,0,.0), 0 10px 26px rgba(0,0,0,.20)";
+        } else {
+          cell.style.background = "";
+          cell.style.borderColor = "";
+          cell.style.boxShadow = "";
+        }
       }
     });
   }
@@ -2497,14 +2958,13 @@ input[type="range"]{
     drumGridEl.querySelectorAll(".cell").forEach(c => c.classList.remove("playhead"));
     if (step < 0) return;
     const rows = drumGridEl.querySelectorAll(".rowSteps");
-    drumKeys.forEach((_, rIdx) => {
-      const row = rows[rIdx];
-      const cell = row && row.children[step];
+    rows.forEach((rowEl) => {
+      const cell = rowEl.children[step];
       if (cell) cell.classList.add("playhead");
     });
   }
 
-  let drumPaint = { active:false, pointerId:null, value:true, visited:new Set(), track:null };
+  let drumPaint = { active:false, pointerId:null, value:true, visited:new Set(), row:null };
 
   function cellFromPoint(clientX, clientY){
     const el = document.elementFromPoint(clientX, clientY);
@@ -2514,15 +2974,31 @@ input[type="range"]{
   function clearDragHover(){
     drumGridEl.querySelectorAll(".cell.drag-hover").forEach(c => c.classList.remove("drag-hover"));
   }
-  function applyDrumCell(cell, value){
-    const key = cell.dataset.track;
-    if (drumPaint.track && key !== drumPaint.track) return;
+  fu  function applyDrumCell(cell, value){
+    const rowIdx = Number(cell.dataset.row);
+    if (Number.isNaN(rowIdx)) return;
+    if (drumPaint.row !== null && rowIdx !== drumPaint.row) return;
+
     const step = Number(cell.dataset.step);
-    const id = `${key}:${step}`;
+    const id = `${rowIdx}:${step}`;
     if (drumPaint.visited.has(id)) return;
     drumPaint.visited.add(id);
-    project.drums[key][step] = value;
+
+    const row = project.drumRows[rowIdx];
+    if (!row) return;
+    row.steps[step] = value;
+
+    const color = theme.drums[row.soundKey] || "#58a6ff";
     cell.classList.toggle("on", value);
+    if (value){
+      cell.style.background = color;
+      cell.style.borderColor = color;
+      cell.style.boxShadow = "0 0 0 1px rgba(0,0,0,.0), 0 10px 26px rgba(0,0,0,.20)";
+    } else {
+      cell.style.background = "";
+      cell.style.borderColor = "";
+      cell.style.boxShadow = "";
+    }
     cell.classList.add("drag-hover");
   }
 
@@ -2535,51 +3011,132 @@ input[type="range"]{
       drumPaint.active = true;
       drumPaint.pointerId = e.pointerId;
       drumPaint.visited.clear();
-      clearDragHover();
+      drumPaint.row = Number(cell.dataset.row);
+      const row = project.drumRows[drumPaint.row];
+      if (!row) return;
 
-      const key = cell.dataset.track;
       const step = Number(cell.dataset.step);
-
-      drumPaint.track = key;
-      drumPaint.value = !project.drums[key][step];
+      drumPaint.value = !row.steps[step];
+      applyDrumCell(cell, drumPaint.value);
 
       container.setPointerCapture(e.pointerId);
-      applyDrumCell(cell, drumPaint.value);
-    }, {passive:false});
+    });
 
     container.addEventListener("pointermove", (e) => {
-      if (!drumPaint.active) return;
-      if (drumPaint.pointerId !== e.pointerId) return;
-      e.preventDefault();
-      const cell = cellFromPoint(e.clientX, e.clientY);
+      if (!drumPaint.active || e.pointerId !== drumPaint.pointerId) return;
+      const cell = document.elementFromPoint(e.clientX, e.clientY)?.closest?.(".cell");
       if (!cell) return;
       applyDrumCell(cell, drumPaint.value);
-    }, {passive:false});
+    });
 
-    const end = (e) => {
-      if (!drumPaint.active) return;
-      if (drumPaint.pointerId !== e.pointerId) return;
+    container.addEventListener("pointerup", (e) => {
+      if (e.pointerId !== drumPaint.pointerId) return;
       drumPaint.active = false;
       drumPaint.pointerId = null;
-      drumPaint.track = null;
+      drumPaint.row = null;
       drumPaint.visited.clear();
-      setTimeout(clearDragHover, 40);
-    };
+      container.releasePointerCapture(e.pointerId);
+      saveToLocal();
+    });
 
-    container.addEventListener("pointerup", end);
-    container.addEventListener("pointercancel", end);
     container.addEventListener("lostpointercapture", () => {
       drumPaint.active = false;
       drumPaint.pointerId = null;
-      drumPaint.track = null;
+      drumPaint.row = null;
       drumPaint.visited.clear();
-      setTimeout(clearDragHover, 40);
     });
   }
 
-  // ---------- Piano roll drawing/editing ----------
-  const KEY_PAD = 128;
-  function isBlackKey(midi){
+  enableDrumPainting(drumGridEl);
+
+  const addDrumRowBtn = document.getElementById("addDrumRowBtn");
+  function openAddDrumRowMenu(anchorEl){
+    if (!anchorEl) return;
+    if (project.drumRows.length >= MAX_DRUM_ROWS){
+      flashMessage(`Max ${MAX_DRUM_ROWS} drum rows reached`, 1200);
+      return;
+    }
+
+    // Remove existing menu if any
+    document.getElementById("addDrumRowMenu")?.remove();
+
+    const menu = document.createElement("div");
+    menu.id = "addDrumRowMenu";
+    menu.className = "card";
+    menu.style.position = "fixed";
+    menu.style.zIndex = "999999";
+    menu.style.padding = "10px";
+    menu.style.borderRadius = "14px";
+    menu.style.width = "220px";
+    menu.style.backdropFilter = "blur(14px)";
+    menu.style.boxShadow = "0 16px 60px rgba(0,0,0,.45)";
+    menu.style.pointerEvents = "auto";
+
+    const title = document.createElement("div");
+    title.className = "small";
+    title.style.marginBottom = "8px";
+    title.textContent = "Add drum sound";
+    menu.appendChild(title);
+
+    const sel = document.createElement("select");
+    sel.className = "input";
+    sel.style.width = "100%";
+    sel.style.borderRadius = "999px";
+    sel.style.padding = "10px 12px";
+    DRUM_SOUNDS.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value = d.key;
+      opt.textContent = d.label;
+      sel.appendChild(opt);
+    });
+    menu.appendChild(sel);
+
+    const btnRow = document.createElement("div");
+    btnRow.style.display = "flex";
+    btnRow.style.justifyContent = "flex-end";
+    btnRow.style.gap = "8px";
+    btnRow.style.marginTop = "10px";
+
+    const cancel = document.createElement("button");
+    cancel.className = "miniBtn";
+    cancel.textContent = "Cancel";
+    cancel.addEventListener("click", () => menu.remove());
+
+    const add = document.createElement("button");
+    add.className = "miniBtn primary";
+    add.textContent = "Add";
+    add.addEventListener("click", () => { addDrumRow(sel.value); menu.remove(); });
+
+    btnRow.appendChild(cancel);
+    btnRow.appendChild(add);
+    menu.appendChild(btnRow);
+
+    document.body.appendChild(menu);
+
+    const r = anchorEl.getBoundingClientRect();
+    const x = Math.min(window.innerWidth - 240, Math.max(12, r.left));
+    const y = Math.min(window.innerHeight - 200, Math.max(12, r.bottom + 8));
+    menu.style.left = x + "px";
+    menu.style.top  = y + "px";
+
+    const onDoc = (ev) => {
+      if (!menu.contains(ev.target) && ev.target !== anchorEl){
+        menu.remove();
+        document.removeEventListener("pointerdown", onDoc, true);
+      }
+    };
+    document.addEventListener("pointerdown", onDoc, true);
+  }
+
+  addDrumRowBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openAddDrumRowMenu(addDrumRowBtn);
+  });
+
+
+
+  nction isBlackKey(midi){
     const pc = midi % 12;
     return pc === 1 || pc === 3 || pc === 6 || pc === 8 || pc === 10;
   }
@@ -2790,15 +3347,13 @@ input[type="range"]{
   }
 
   function scheduleStep(step, time){
-    if (project.drums.kick[step])   playKick(time);
-    if (project.drums.snare[step])  playSnare(time);
-    if (project.drums.clap[step])   playClap(time);
-    if (project.drums.shaker[step]) playShaker(time);
-    if (project.drums.ch[step])     playCH(time);
-    if (project.drums.oh[step])     playOH(time);
-    if (project.drums.tom[step])    playTom(time);
-    if (project.drums.ride[step])   playRide(time);
-    if (project.drums.crash[step])  playCrash(time);
+    // Drums (dynamic rows)
+    for (let r=0; r<project.drumRows.length; r++){
+      const row = project.drumRows[r];
+      if (!row || !row.steps[step]) continue;
+      const out = drumRowGains[r] || buses.drum;
+      playDrumSound(row.soundKey, time, out);
+    }
 
     const sp = secondsPerStep();
 
@@ -2841,11 +3396,7 @@ input[type="range"]{
 
   async function startFromCurrentStep(){
     await ensureRunning();
-    for (const k of drumKeys){
-      const vv = project.drumVols[k] ?? 100;
-      const x = vv / 100;
-      if (drumGains[k]) drumGains[k].gain.value = x * x;
-    }
+    ensureDrumRowGains();
 
     isPlaying = true;
     isPaused = false;
@@ -3408,8 +3959,7 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
       resolutionIndex: currentResIndex,
       loopSteps: LOOP_STEPS,
       project: {
-        drums: project.drums,
-        drumVols: project.drumVols,
+        drumRows: project.drumRows,
         lanes: Object.fromEntries(LANES.map(l => [l.key, project[l.key]])),
       },
       theme: JSON.parse(JSON.stringify(theme)),
@@ -3458,15 +4008,14 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
       }
     }
     if (t.drums){
-      for (const k of drumKeys){
+      for (const k of Object.keys(t.drums)){
         if (typeof t.drums[k] === "string") applyDrumColor(k, t.drums[k]);
       }
     }
     if (t.labelText){
       theme.labelText = t.labelText;
       for (const lane of LANES) updateLaneLabelStyles(lane.key);
-      for (const dk of drumKeys) updateDrumLabelStyles(dk);
-      updateActiveTabStyles();
+updateActiveTabStyles();
     }
   }
 
@@ -3494,21 +4043,45 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
     if (loopSelectDrum) loopSelectDrum.value = String(currentResIndex);
     if (loopSelectRoll) loopSelectRoll.value = String(currentResIndex);
     
-    const srcDrums = data.project?.drums ?? data.drums;
-    if (srcDrums){
-      for (const k of drumKeys){
-        const src = srcDrums[k];
-        if (Array.isArray(src)){
-          for (let i=0; i<MASTER_STEPS; i++) project.drums[k][i] = !!src[i];
+        // --- drums ---
+    const srcRows = data.project?.drumRows ?? data.drumRows ?? null;
+    if (Array.isArray(srcRows)){
+      // New format: array of rows
+      project.drumRows = srcRows.slice(0, MAX_DRUM_ROWS).map(r => ({
+        id: (r.id ?? (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()))),
+        soundKey: String(r.soundKey ?? "kick"),
+        label: String(r.label ?? ((DRUM_SOUNDS.find(d=>d.key===r.soundKey)?.label) || r.soundKey || "Kick")),
+        steps: Array.isArray(r.steps) ? r.steps.slice(0, MASTER_STEPS).map(Boolean).concat(new Array(Math.max(0, MASTER_STEPS-(r.steps?.length||0))).fill(false)) : new Array(MASTER_STEPS).fill(false),
+        vol: clampInt((r.vol ?? 80), 0, 120),
+      }));
+    } else {
+      // Legacy: object of named drum arrays (+ optional drumVols)
+      const srcDrums = data.project?.drums ?? data.drums;
+      const dv = data.project?.drumVols ?? data.drumVols ?? {};
+      if (srcDrums && typeof srcDrums === "object"){
+        const legacyKeys = Object.keys(srcDrums);
+        const rows = [];
+        for (const key of legacyKeys){
+          const arr = srcDrums[key];
+          if (!Array.isArray(arr)) continue;
+          rows.push({
+            id: (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random())),
+            soundKey: key,
+            label: (DRUM_SOUNDS.find(d=>d.key===key)?.label) || key,
+            steps: arr.slice(0, MASTER_STEPS).map(Boolean).concat(new Array(Math.max(0, MASTER_STEPS-arr.length)).fill(false)),
+            vol: clampInt((dv?.[key] ?? 80), 0, 120),
+          });
         }
+        project.drumRows = (rows.length ? rows : DEFAULT_DRUM_ROWS.map(k => ({
+          id: (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random())),
+          soundKey: k,
+          label: (DRUM_SOUNDS.find(d=>d.key===k)?.label) || k,
+          steps: new Array(MASTER_STEPS).fill(false),
+          vol: 80,
+        }))).slice(0, MAX_DRUM_ROWS);
       }
     }
-    const dv = data.project?.drumVols ?? data.drumVols;
-    if (dv){
-      for (const k of drumKeys){
-        project.drumVols[k] = clampInt(dv[k] ?? project.drumVols[k] ?? 100, 0, 100);
-      }
-    }
+    ensureDrumRowGains(true);
 
     const lanesObj = data.project?.lanes ?? data.lanes ?? null;
     function loadGrid(dst, src){
@@ -3545,14 +4118,26 @@ importMidiArrayBufferToActiveLane(ab, { fit: !!fitToLoop.checked });
   function clearProject(){
     stopTransportOnly();
     const fresh = makeEmptyProject();
-    for (const k of drumKeys) project.drums[k] = fresh.drums[k].slice();
+    // drums
+    project.drumRows = fresh.drumRows.map(r => ({
+      id: r.id,
+      soundKey: r.soundKey,
+      label: r.label,
+      steps: r.steps.slice(),
+      vol: r.vol
+    }));
+    ensureDrumRowGains(true);
+
+    // lanes
     for (let p=0; p<ROLL_PITCHES; p++){
       for (const lane of LANES) project[lane.key][p] = fresh[lane.key][p].slice();
     }
-    project.drumVols = { ...fresh.drumVols };
+
     buildDrumGrid();
+    refreshDrumUI();
     drawRoll(-1);
-  }
+    saveToLocal();
+  }}
   clearProjectBtn.addEventListener("click", clearProject);
 
   async function loadDemoFromJson(){
@@ -3757,7 +4342,7 @@ function initModules(){
 
   applyBgColor(theme.bgBase);
   for (const lane of LANES) if (theme.lanes[lane.key]) applyLaneColor(lane.key, theme.lanes[lane.key]);
-  for (const dk of drumKeys) if (theme.drums[dk]) applyDrumColor(dk, theme.drums[dk]);
+  for (const dk of Object.keys(theme.drums)) if (theme.drums[dk]) applyDrumColor(dk, theme.drums[dk]);
 
   buildLoopDropdowns();
   buildTabs();
