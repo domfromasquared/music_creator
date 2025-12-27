@@ -1119,6 +1119,13 @@ input[type="range"]{
   button{ transition:none !important; }
 }
 
+
+/* Drum Sequencer: ensure sound dropdown text is visible */
+#drumModule .trackSelect,
+#drumModule .trackSelect option{
+  color: #e6edf3 !important;
+}
+
 </style>
 </head>
 
@@ -4278,6 +4285,8 @@ updateActiveTabStyles();
       // ignore if user is trying to interact with controls inside header
       const tag = (e.target?.tagName || "").toLowerCase();
       if (tag === "button" || tag === "input" || tag === "select" || tag === "textarea") return;
+
+      if (e.target && e.target.closest && e.target.closest(".tabs, .tab, .miniBtn, .pill, .kbd")) return;
 
       e.preventDefault();
       dragging = true;
