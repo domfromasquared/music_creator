@@ -1,0 +1,1142 @@
+:root{
+--bg:#0f1115;
+--ink:#e9eef5;
+--muted:#97a3b6;
+
+--btn:#22283a;
+--btn2:#2a3150;
+--shadow: 0 10px 30px rgba(0,0,0,.35);
+
+--groupA:#121a28;
+--groupB:#211a2f;
+--inactiveOverlay: rgba(0,0,0,0.38);
+--playheadOutline: rgba(255,255,255,0.30);
+--beatDivider: rgba(255,255,255,0.18);
+--dragOutline: rgba(255,255,255,0.45);
+--dragFill: rgba(255,255,255,0.10);
+
+--userBg: #0f1115;
+
+--kick: #ff8b5a;
+--snare:#58a6ff;
+--clap: #ffffff;
+
+--shaker:#ba8cff;
+--ch:#7cffb2;
+--oh:#ffd278;
+
+--tom:#ff78c8;
+--ride:#78d2ff;
+--crash:#ff7878;
+
+--rollBg: rgba(0,0,0,.18);
+--rollStrip: rgba(0,0,0,.32);
+--gridLine: rgba(255,255,255,.06);
+--gridBeat: rgba(255,255,255,.14);
+
+--whiteKeyA: rgba(255,255,255,0.92);
+--whiteKeyB: rgba(255,255,255,0.82);
+--blackKeyA: rgba(12,14,20,0.98);
+--blackKeyB: rgba(22,24,32,0.98);
+--keyBorder: rgba(0,0,0,0.35);
+
+--rowWhiteA: rgba(255,255,255,.03);
+--rowWhiteB: rgba(255,255,255,.015);
+--rowBlack: rgba(0,0,0,.22);
+
+--pianoNote: rgba(124,255,178,.85);
+--epNote: rgba(255, 215, 120, .82);
+--polyNote: rgba(120, 255, 240, .76);
+--bellNote: rgba(255, 150, 230, .76);
+--synthNote: rgba(255,139,90,.78);
+--bassNote: rgba(88,166,255,.80);
+--padNote: rgba(186,140,255,.72);
+
+--knobBg: rgba(0,0,0,.30);
+
+--knobFillPiano: rgba(124,255,178,.95);
+--knobGlowPiano: rgba(124,255,178,.28);
+
+--knobFillEP: rgba(255, 215, 120, .95);
+--knobGlowEP: rgba(255, 215, 120, .24);
+
+--knobFillPoly: rgba(120,255,240,.95);
+--knobGlowPoly: rgba(120,255,240,.22);
+
+--knobFillBell: rgba(255,150,230,.95);
+--knobGlowBell: rgba(255,150,230,.22);
+
+--knobFillSynth: rgba(255,139,90,.95);
+--knobGlowSynth: rgba(255,139,90,.28);
+
+--knobFillBass: rgba(88,166,255,.95);
+--knobGlowBass: rgba(88,166,255,.28);
+
+--knobFillPad: rgba(186,140,255,.95);
+--knobGlowPad: rgba(186,140,255,.26);
+
+--knobFillDrum: rgba(255,255,255,.92);
+--knobGlowDrum: rgba(255,255,255,.18);
+
+--knobFillFx: rgba(186,140,255,.92);
+--knobGlowFx: rgba(186,140,255,.22);
+}
+
+*{box-sizing:border-box}
+body{
+margin:0;
+background:
+radial-gradient(1200px 600px at 20% -10%, #1b2040 0%, transparent 60%),
+radial-gradient(900px 500px at 90% 0%, #223022 0%, transparent 55%),
+var(--userBg);
+color:var(--ink);
+font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+padding: 18px;
+}
+h1{margin:0 0 6px 0; font-size:18px; letter-spacing:.2px}
+.sub{color:var(--muted); margin:0 0 16px 0; font-size:13px}
+
+.wrap{
+display:grid;
+grid-template-columns: 440px 1fr;
+gap: 14px;
+align-items:start;
+}
+@media (max-width: 980px){
+.wrap{grid-template-columns:1fr}
+}
+
+.card{
+background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+border:1px solid rgba(255,255,255,.07);
+border-radius: 14px;
+box-shadow: 0 10px 30px rgba(0,0,0,.35);
+overflow:hidden;
+}
+.card .hd{
+padding: 12px 12px 10px 12px;
+border-bottom:1px solid rgba(255,255,255,.06);
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+}
+.hd .left{display:flex; align-items:center; gap:10px;}
+
+.title{
+font-size:13px;
+color:var(--muted);
+text-transform:uppercase;
+letter-spacing:.12em
+}
+.bd{padding: 12px}
+
+button{
+background: linear-gradient(180deg, var(--btn2), var(--btn));
+color:var(--ink);
+border:1px solid rgba(255,255,255,.10);
+border-radius: 12px;
+padding: 9px 12px;
+font-weight: 700;
+cursor:pointer;
+user-select:none;
+-webkit-tap-highlight-color: transparent;
+}
+button:disabled{opacity:.5; cursor:not-allowed}
+
+.btnRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+.pill{
+background: rgba(255,255,255,.06);
+border:1px solid rgba(255,255,255,.08);
+border-radius: 999px;
+padding: 7px 10px;
+font-size: 12px;
+color: var(--muted);
+display:flex; gap:8px; align-items:center;
+}
+input[type="range"]{width: 150px}
+.kbd{
+font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+padding:1px 6px;
+border:1px solid rgba(255,255,255,.14);
+border-radius:8px;
+background: rgba(0,0,0,.25);
+color: var(--ink);
+}
+.hint{color:var(--muted); font-size:12px; margin-top:10px; line-height:1.35}
+
+.msBtn{
+padding: 6px 9px;
+border-radius: 10px;
+font-size: 12px;
+line-height: 1;
+border:1px solid rgba(255,255,255,.12);
+background: rgba(0,0,0,.25);
+color: var(--muted);
+user-select:none;
+}
+.msBtn.active{
+color: var(--ink);
+border-color: rgba(255,255,255,.28);
+background: rgba(255,255,255,.10);
+}
+.msBtn.mute.active{
+background: rgba(255,80,80,.18);
+border-color: rgba(255,80,80,.35);
+}
+.msBtn.solo.active{
+background: rgba(124,255,178,.14);
+border-color: rgba(124,255,178,.30);
+}
+
+/* --- Compact Mixer --- */
+.mixer{
+margin-top: 10px;
+padding: 10px;
+border-radius: 14px;
+border: 1px solid rgba(255,255,255,.08);
+background: rgba(0,0,0,.18);
+overflow-x: auto;
+}
+.mixerTop{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+margin-bottom: 10px;
+}
+.mixerTitle{
+font-size:12px;
+color: var(--muted);
+text-transform: uppercase;
+letter-spacing: .12em;
+}
+.mixerGrid{
+display:grid;
+grid-template-columns: repeat(8, minmax(230px, 1fr));
+gap: 10px;
+min-width: 1600px;
+}
+@media (max-width: 980px){
+.mixerGrid{
+grid-template-columns: repeat(2, minmax(240px, 1fr));
+min-width: unset;
+}
+}
+
+.strip{
+border-radius: 16px;
+border:1px solid rgba(255,255,255,.08);
+background: rgba(0,0,0,.16);
+padding: 12px;
+min-width: 0;
+overflow:hidden;
+}
+.stripHd{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:8px;
+margin-bottom: 10px;
+}
+.stripName{
+font-weight: 800;
+font-size: 12px;
+letter-spacing: .06em;
+color: var(--ink);
+white-space:nowrap;
+overflow:hidden;
+text-overflow: ellipsis;
+cursor: pointer;
+padding: 4px 8px;
+border-radius: 10px;
+border: 1px solid rgba(255,255,255,.10);
+background: rgba(0,0,0,.18);
+}
+
+.stripBody{
+display:grid;
+grid-template-columns: 56px 1fr;
+gap: 12px;
+align-items: stretch;
+min-width: 0;
+}
+
+.faderCol{
+width: 56px;
+min-width: 56px;
+border-radius: 14px;
+border:1px solid rgba(255,255,255,.08);
+background: rgba(0,0,0,.16);
+padding: 10px 7px;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:flex-start;
+gap: 8px;
+}
+.faderLbl{
+font-size: 10px;
+color: var(--muted);
+letter-spacing:.10em;
+text-transform: uppercase;
+user-select:none;
+}
+.faderVal{
+font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+font-size: 11px;
+padding: 2px 6px;
+border-radius: 999px;
+border:1px solid rgba(255,255,255,.12);
+background: rgba(0,0,0,.22);
+color: var(--ink);
+width: 44px;
+text-align:center;
+user-select:none;
+}
+.vFaderWrap{
+height: 138px;
+width: 34px;
+display:flex;
+align-items:center;
+justify-content:center;
+touch-action:none;
+}
+.vFader{
+width: 138px;
+height: 32px;
+transform: rotate(-90deg);
+transform-origin: center;
+-webkit-appearance: none;
+appearance: none;
+background: transparent;
+}
+.vFader::-webkit-slider-runnable-track{
+height: 10px;
+background: rgba(255,255,255,.12);
+border-radius: 999px;
+border: 1px solid rgba(255,255,255,.10);
+}
+.vFader::-webkit-slider-thumb{
+-webkit-appearance:none;
+appearance:none;
+width: 18px;
+height: 18px;
+border-radius: 999px;
+border: 1px solid rgba(255,255,255,.22);
+box-shadow: 0 6px 16px rgba(0,0,0,.35);
+margin-top: -5px;
+background: rgba(0,140,255,.95);
+}
+.vFader::-moz-range-track{
+height: 10px;
+background: rgba(255,255,255,.12);
+border-radius: 999px;
+border: 1px solid rgba(255,255,255,.10);
+}
+.vFader::-moz-range-thumb{
+width: 18px;
+height: 18px;
+border-radius: 999px;
+border: 1px solid rgba(255,255,255,.22);
+box-shadow: 0 6px 16px rgba(0,0,0,.35);
+background: rgba(0,140,255,.95);
+}
+
+.faderCol[data-inst="piano"] .vFader::-webkit-slider-thumb{ background: var(--knobFillPiano); }
+.faderCol[data-inst="ep"]    .vFader::-webkit-slider-thumb{ background: var(--knobFillEP); }
+.faderCol[data-inst="poly"]  .vFader::-webkit-slider-thumb{ background: var(--knobFillPoly); }
+.faderCol[data-inst="bell"]  .vFader::-webkit-slider-thumb{ background: var(--knobFillBell); }
+.faderCol[data-inst="synth"] .vFader::-webkit-slider-thumb{ background: var(--knobFillSynth); }
+.faderCol[data-inst="bass"]  .vFader::-webkit-slider-thumb{ background: var(--knobFillBass); }
+.faderCol[data-inst="pad"]   .vFader::-webkit-slider-thumb{ background: var(--knobFillPad); }
+.faderCol[data-inst="drum"]  .vFader::-webkit-slider-thumb{ background: var(--knobFillDrum); }
+
+.faderCol[data-inst="piano"] .vFader::-moz-range-thumb{ background: var(--knobFillPiano); }
+.faderCol[data-inst="ep"]    .vFader::-moz-range-thumb{ background: var(--knobFillEP); }
+.faderCol[data-inst="poly"]  .vFader::-moz-range-thumb{ background: var(--knobFillPoly); }
+.faderCol[data-inst="bell"]  .vFader::-moz-range-thumb{ background: var(--knobFillBell); }
+.faderCol[data-inst="synth"] .vFader::-moz-range-thumb{ background: var(--knobFillSynth); }
+.faderCol[data-inst="bass"]  .vFader::-moz-range-thumb{ background: var(--knobFillBass); }
+.faderCol[data-inst="pad"]   .vFader::-moz-range-thumb{ background: var(--knobFillPad); }
+.faderCol[data-inst="drum"]  .vFader::-moz-range-thumb{ background: var(--knobFillDrum); }
+
+.faderMS{
+display:flex;
+gap:6px;
+margin-top: 2px;
+}
+
+.knob{
+width:34px;
+height:34px;
+border-radius:999px;
+background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.10), rgba(0,0,0,.24)), var(--knobBg);
+border:1px solid rgba(255,255,255,.10);
+box-shadow: inset 0 0 0 1px rgba(0,0,0,.25), 0 0 0 2px rgba(0,0,0,.12);
+position:relative;
+touch-action:none;
+user-select:none;
+-webkit-tap-highlight-color: transparent;
+--knobDeg: 0deg;
+--knobRot: -135deg;
+--knobFill: rgba(0,140,255,.95);
+--knobGlow: rgba(0,140,255,.28);
+}
+.knob::before{
+content:"";
+position:absolute;
+inset:4px;
+border-radius:999px;
+background:
+conic-gradient(from 225deg,
+var(--knobFill) 0deg,
+var(--knobFill) var(--knobDeg),
+rgba(255,255,255,.10) var(--knobDeg),
+rgba(255,255,255,.10) 270deg
+);
+filter: drop-shadow(0 0 10px var(--knobGlow));
+mask: radial-gradient(circle, transparent 55%, #000 56%);
+-webkit-mask: radial-gradient(circle, transparent 55%, #000 56%);
+}
+.knobDot{
+position:absolute;
+left:50%;
+top:50%;
+width:4px;
+height:10px;
+border-radius:999px;
+background: rgba(255,255,255,.85);
+transform-origin: 50% calc(100% + 4px);
+transform: translate(-50%,-90%) rotate(var(--knobRot));
+opacity:.9;
+}
+.kCol{
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:4px;
+width: 56px;
+min-width: 56px;
+}
+.kLbl{
+font-size: 10px;
+color: var(--muted);
+letter-spacing: .08em;
+text-transform: uppercase;
+user-select:none;
+}
+.kMiniVal{
+font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+font-size: 11px;
+padding: 2px 6px;
+border-radius: 999px;
+border:1px solid rgba(255,255,255,.12);
+background: rgba(0,0,0,.22);
+color: var(--ink);
+width: 48px;
+text-align:center;
+user-select:none;
+}
+.stripKnobs{
+/* PAN (top) / LPF (middle) / VERB (bottom) — locked to one vertical column */
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:flex-start;
+gap: 10px;
+min-width: 0;
+}
+.stripKnobs .kCol{
+/* Force all three knob modules to share the same width so their centers align perfectly */
+width: 64px;
+align-items:center;
+}
+
+/* Drum */
+.drumGrid{
+display:grid;
+grid-template-columns: var(--drumControlsW, 320px) minmax(0, 1fr);
+gap:10px;
+align-items:start;
+touch-action: none;
+}
+.stepsWrap{
+overflow-x:auto;
+overflow-y:hidden;
+border-radius: 12px;
+min-width: 0;
+/* Make visible pattern width ~ pattern height (square-ish) */
+width: 100%;
+max-width: 100%;
+padding-bottom: 2px;
+}
+.trackNames{display:grid; gap:8px;}
+.trackName{
+height: var(--drumRowH, 44px);
+border-radius: 12px;
+background: rgba(0,0,0,.25);
+border: 1px solid rgba(255,255,255,.08);
+padding: 6px 8px;
+user-select:none;
+display:grid;
+grid-template-columns: 28px 1fr 44px;
+align-items:center;
+gap:10px;
+min-width: 0;
+}
+.trackLabel{
+font-size:12px;
+      color: var(--muted);
+      color: rgba(233,238,245,.86);
+text-transform:uppercase;
+letter-spacing:.08em;
+line-height:1;
+flex: 1 1 auto;
+min-width: 0;
+cursor:pointer;
+padding: 4px 8px;
+border-radius: 10px;
+border: 1px solid rgba(255,255,255,.10);
+background: rgba(0,0,0,.18);
+}
+
+.rowDel{
+width:26px; height:26px;
+border-radius:999px;
+border: 1px solid rgba(255,255,255,.10);
+background: rgba(0,0,0,.22);
+color: var(--muted);
+display:inline-flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+.rowDel:hover{ background: rgba(0,0,0,.34); border-color: rgba(255,255,255,.18); transform: translateY(-1px); }
+.rowDel:active{ transform: translateY(0); }
+
+.trackSelect{
+appearance:none;
+-webkit-appearance:none;
+width:100%;
+min-width: 0;
+height: 36px;
+border-radius: 10px;
+padding: 0 28px 0 12px;
+font-weight: 600;
+font-size: 14px;
+min-width: 140px;
+color: #e9eef5;
+background: rgba(255,255,255,.06);
+border: 1px solid rgba(255,255,255,.14);
+cursor:pointer;
+outline:none;
+}
+.trackSelect:focus{ box-shadow: 0 0 0 2px rgba(88,166,255,.25); border-color: rgba(88,166,255,.35); }
+.trackSelect option{ color:#111; background:#fff; }
+
+.trackSelectWrap{
+position:relative;
+min-width:0;
+}
+.trackSelectWrap::after{
+content:"";
+position:absolute;
+right:10px;
+top:50%;
+width: 0; height: 0;
+border-left: 5px solid transparent;
+border-right: 5px solid transparent;
+border-top: 6px solid rgba(233,238,245,.70);
+transform: translateY(-30%);
+pointer-events:none;
+opacity:.85;
+}
+
+.knob{
+position:relative;
+}
+.knobVal{
+position:absolute;
+inset:0;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:10px;
+font-weight:700;
+color: rgba(233,238,245,.82);
+pointer-events:none;
+text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+
+.steps{
+display:grid;
+gap:8px;
+border-radius: 12px;
+min-width: 0;
+width: max-content;
+}
+.rowSteps{
+display:grid;
+gap:6px;
+height: var(--drumRowH, 44px);
+align-items:stretch;
+touch-action: none;
+width: 100%;
+min-width: 0;
+}
+.drumGrid .cell{
+border-radius: 10px;
+border: 1px solid rgba(255,255,255,.10);
+position:relative;
+overflow:hidden;
+cursor:pointer;
+user-select:none;
+-webkit-tap-highlight-color: transparent;
+touch-action: none;
+width: var(--cellW, 35px);
+height: var(--cellH, 44px);
+min-width: 0;
+}
+.cell.groupA{ background: var(--groupA); }
+.cell.groupB{ background: var(--groupB); }
+.cell::after{
+content:"";
+position:absolute;
+inset:0;
+background: var(--inactiveOverlay);
+opacity:.55;
+pointer-events:none;
+}
+.cell.on::after{opacity:.07}
+
+.cell.on.kick{  background: linear-gradient(180deg, var(--kick), rgba(255,139,90,0.45)); border-color: rgba(255,139,90,0.75); }
+.cell.on.snare{ background: linear-gradient(180deg, var(--snare),rgba(88,166,255,0.30)); border-color: rgba(88,166,255,0.65); }
+.cell.on.clap{  background: linear-gradient(180deg, var(--clap), rgba(255,255,255,0.18)); border-color: rgba(255,255,255,0.45); }
+.cell.on.shaker{ background: linear-gradient(180deg, var(--shaker), rgba(186,140,255,0.28)); border-color: rgba(186,140,255,0.60); }
+.cell.on.ch{     background: linear-gradient(180deg, var(--ch), rgba(124,255,178,0.30)); border-color: rgba(124,255,178,0.65); }
+.cell.on.oh{     background: linear-gradient(180deg, var(--oh), rgba(255,210,120,0.24)); border-color: rgba(255,210,120,0.60); }
+.cell.on.tom{    background: linear-gradient(180deg, var(--tom), rgba(255,120,200,0.22)); border-color: rgba(255,120,200,0.60); }
+.cell.on.ride{   background: linear-gradient(180deg, var(--ride), rgba(120,210,255,0.18)); border-color: rgba(120,210,255,0.55); }
+.cell.on.crash{  background: linear-gradient(180deg, var(--crash), rgba(255,120,120,0.18)); border-color: rgba(255,120,120,0.55); }
+
+.cell.beatDivider{ box-shadow: inset -2px 0 0 var(--beatDivider); }
+.cell.playhead{ outline: 2px solid var(--playheadOutline); outline-offset: 1px; }
+.cell.drag-hover{
+outline: 2px solid var(--dragOutline);
+outline-offset: -2px;
+box-shadow: inset 0 0 0 999px var(--dragFill);
+}
+
+/* Piano roll */
+.rollHeaderRight{
+display:flex;
+gap:10px;
+align-items:center;
+flex-wrap:wrap;
+justify-content:flex-end;
+}
+.tabs{display:flex; gap:8px; flex-wrap:wrap}
+.tab{
+padding: 7px 14px;
+border-radius: 999px;
+font-size:14px;
+border:1px solid rgba(255,255,255,.10);
+background: rgba(0,0,0,.22);
+color: var(--muted);
+cursor:pointer;
+user-select:none;
+-webkit-tap-highlight-color: transparent;
+transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.tab.active{ color: var(--ink); }
+
+.trKnobs{
+display:flex;
+gap:10px;
+align-items:center;
+flex-wrap:wrap;
+}
+.trGroup{
+display:flex;
+align-items:center;
+gap:8px;
+padding: 6px 10px;
+border-radius: 999px;
+border:1px solid rgba(255,255,255,.08);
+background: rgba(0,0,0,.20);
+}
+.trLabel{
+font-size:12px;
+color: var(--muted);
+letter-spacing:.04em;
+user-select:none;
+white-space:nowrap;
+}
+.trKnob{ width:30px; height:30px; }
+.trVal{ width: 42px; }
+
+.rollWrap{
+background: rgba(0,0,0,.22);
+border:1px solid rgba(255,255,255,.08);
+border-radius: 14px;
+overflow:hidden;
+touch-action: none;
+}
+canvas{display:block; width:100%; height:auto; touch-action:none}
+
+#midiFile{display:none}
+#projectFile{display:none}
+#colorPicker{display:none}
+
+/* ---------------- MIDI LIBRARY MODAL ---------------- */
+.modalOverlay{
+position:fixed;
+inset:0;
+background: rgba(0,0,0,.55);
+display:none;
+align-items:center;
+justify-content:center;
+padding: 16px;
+z-index: 9999;
+}
+.modalOverlay.show{ display:flex; }
+.modal{
+width: min(980px, 100%);
+max-height: min(78vh, 720px);
+overflow:hidden;
+border-radius: 18px;
+border:1px solid rgba(255,255,255,.12);
+background: linear-gradient(180deg, rgba(20,22,34,.98), rgba(10,10,15,.98));
+box-shadow: 0 18px 60px rgba(0,0,0,.55);
+display:flex;
+flex-direction:column;
+}
+.modalHd{
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding: 12px 14px;
+border-bottom:1px solid rgba(255,255,255,.08);
+gap: 10px;
+}
+.modalTitle{
+font-weight: 900;
+letter-spacing: .06em;
+text-transform: uppercase;
+font-size: 12px;
+color: var(--muted);
+display:flex;
+align-items:center;
+gap:10px;
+}
+.modalControls{
+display:flex;
+gap:10px;
+align-items:center;
+flex-wrap:wrap;
+justify-content:flex-end;
+}
+.modalBd{
+display:grid;
+grid-template-columns: 260px 1fr;
+min-height: 360px;
+overflow:hidden;
+}
+@media (max-width: 820px){
+.modalBd{ grid-template-columns: 1fr; }
+}
+.libLeft{
+border-right:1px solid rgba(255,255,255,.08);
+padding: 12px;
+overflow:auto;
+background: rgba(0,0,0,.18);
+}
+.libRight{
+padding: 12px;
+overflow:auto;
+}
+.searchRow{
+display:flex;
+gap:10px;
+align-items:center;
+margin-bottom: 10px;
+flex-wrap:wrap;
+}
+.input{
+flex: 1 1 220px;
+min-width: 160px;
+padding: 10px 12px;
+border-radius: 12px;
+border:1px solid rgba(255,255,255,.12);
+background: rgba(0,0,0,.24);
+color: var(--ink);
+outline:none;
+}
+.toggle{
+display:flex;
+gap:8px;
+align-items:center;
+padding: 8px 10px;
+border-radius: 999px;
+border:1px solid rgba(255,255,255,.10);
+background: rgba(0,0,0,.20);
+color: var(--muted);
+font-size: 12px;
+user-select:none;
+}
+.toggle input{ transform: translateY(1px); }
+.pack{
+padding: 10px 10px;
+border-radius: 14px;
+border:1px solid rgba(255,255,255,.08);
+background: rgba(255,255,255,.03);
+cursor:pointer;
+user-select:none;
+margin-bottom: 10px;
+}
+.pack.active{
+border-color: rgba(124,255,178,.30);
+background: rgba(124,255,178,.08);
+}
+.packName{
+font-weight: 900;
+font-size: 13px;
+}
+.packMeta{
+color: var(--muted);
+font-size: 12px;
+margin-top: 4px;
+}
+.fileRow{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap: 10px;
+padding: 10px 10px;
+border-radius: 14px;
+border:1px solid rgba(255,255,255,.08);
+background: rgba(255,255,255,.03);
+margin-bottom: 10px;
+}
+.fileName{
+font-weight: 850;
+font-size: 13px;
+min-width: 0;
+overflow:hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+.fileBtns{
+display:flex;
+gap: 8px;
+flex-wrap:wrap;
+justify-content:flex-end;
+}
+.miniBtn{
+padding: 7px 10px;
+border-radius: 12px;
+font-size: 12px;
+border:1px solid rgba(255,255,255,.12);
+background: rgba(0,0,0,.26);
+color: var(--ink);
+cursor:pointer;
+}
+.miniBtn.primary{
+border-color: rgba(124,255,178,.28);
+background: rgba(124,255,178,.12);
+}
+.status{
+color: var(--muted);
+font-size: 12px;
+margin-top: 8px;
+line-height: 1.35;
+}
+
+/* --- Modular workspace --- */
+#transportCard{
+position: fixed;
+top: 12px;
+left: 12px;
+right: 12px;
+width: calc(100% - 24px);
+z-index: 2147483647;
+}
+.workspace{
+position: relative;
+}
+#transportSpacer{ height: 140px; }
+
+#transportCard .hd.transportHd{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+flex-wrap:wrap;
+}
+#transportCard .transportLeft{
+display:flex;
+align-items:center;
+gap:10px;
+min-width: 120px;
+}
+#transportCard .transportRight{
+display:flex;
+align-items:center;
+gap:10px;
+flex-wrap:wrap;
+justify-content:flex-end;
+}
+#transportCard .bd.transportBd{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+flex-wrap:wrap;
+}
+#transportCard .transportHint{
+margin:0;
+max-width: 640px;
+}
+
+.card.module{
+display:flex;
+flex-direction:column;
+resize: both;
+overflow: hidden;
+min-width: 320px;
+min-height: 220px;
+}
+.card.module .hd{
+cursor: grab;
+touch-action: none;
+user-select:none;
+}
+.card.module.dragging .hd{ cursor: grabbing; }
+.card.module .bd{
+flex: 1 1 auto;
+overflow: auto;
+}
+
+
+/* ===========================
+  Premium UI Facelift (CSS-only)
+  Keeps all functionality intact
+  =========================== */
+
+:root{
+--userBg: #0b0f17;
+--bg:#0b0f17;
+--ink:#eef3fb;
+--muted:#a9b4c8;
+
+--btn:#171d2b;
+--btn2:#222b44;
+
+--shadow: 0 18px 60px rgba(0,0,0,.55);
+
+--groupA: rgba(18,26,40,0.90);
+--groupB: rgba(28,20,45,0.90);
+--inactiveOverlay: rgba(0,0,0,0.42);
+--playheadOutline: rgba(255,255,255,0.36);
+--beatDivider: rgba(255,255,255,0.16);
+--dragOutline: rgba(255,255,255,0.55);
+--dragFill: rgba(255,255,255,0.10);
+
+--rollBg: rgba(0,0,0,.20);
+--rollStrip: rgba(0,0,0,.36);
+--gridLine: rgba(255,255,255,.06);
+--gridBeat: rgba(255,255,255,.16);
+
+--knobBg: rgba(0,0,0,.30);
+}
+
+/* subtle premium background */
+body{
+background:
+radial-gradient(900px 520px at 15% -10%, rgba(115,140,255,.22) 0%, transparent 60%),
+radial-gradient(880px 520px at 90% 0%, rgba(124,255,178,.16) 0%, transparent 55%),
+radial-gradient(900px 520px at 70% 110%, rgba(186,140,255,.18) 0%, transparent 55%),
+linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0) 40%),
+var(--userBg);
+letter-spacing: .2px;
+}
+
+/* global typography polish */
+h1{
+font-weight: 900;
+letter-spacing: .5px;
+}
+.sub{
+color: rgba(233,240,255,.70);
+}
+
+/* premium “glass” cards without changing layout */
+.card{
+background:
+radial-gradient(1200px 600px at 10% 0%, rgba(255,255,255,.06) 0%, rgba(255,255,255,.02) 55%, rgba(0,0,0,.06) 100%),
+linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+border:1px solid rgba(255,255,255,.10);
+box-shadow: 0 18px 60px rgba(0,0,0,.55);
+backdrop-filter: blur(10px);
+-webkit-backdrop-filter: blur(10px);
+}
+
+/* tighter, more premium header */
+.card .hd{
+background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,0));
+border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+/* transport bar: stays “executive” */
+#transportCard{
+background:
+radial-gradient(1200px 600px at 0% 0%, rgba(255,255,255,.07) 0%, rgba(255,255,255,.02) 55%, rgba(0,0,0,.10) 100%),
+linear-gradient(180deg, rgba(18,22,34,.88), rgba(10,10,15,.70));
+border: 1px solid rgba(255,255,255,.14);
+box-shadow: 0 22px 90px rgba(0,0,0,.65);
+backdrop-filter: blur(14px);
+-webkit-backdrop-filter: blur(14px);
+}
+
+/* module shells: match transport “glass” feel */
+.module{
+background:
+radial-gradient(1200px 600px at 10% 0%, rgba(255,255,255,.06) 0%, rgba(255,255,255,.02) 55%, rgba(0,0,0,.10) 100%),
+linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.016));
+border:1px solid rgba(255,255,255,.11);
+box-shadow: 0 18px 60px rgba(0,0,0,.55);
+backdrop-filter: blur(10px);
+-webkit-backdrop-filter: blur(10px);
+}
+.module .hd{
+background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,0));
+border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+/* buttons: premium hover/focus; no layout changes */
+button{
+border-color: rgba(255,255,255,.14);
+box-shadow: 0 8px 24px rgba(0,0,0,.30);
+transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;
+}
+button:hover{
+transform: translateY(-1px);
+filter: brightness(1.06);
+box-shadow: 0 12px 34px rgba(0,0,0,.36);
+border-color: rgba(255,255,255,.22);
+}
+button:active{
+transform: translateY(0px);
+filter: brightness(0.98);
+box-shadow: 0 8px 22px rgba(0,0,0,.30);
+}
+button:focus-visible{
+outline: none;
+box-shadow: 0 0 0 3px rgba(124,255,178,.20), 0 12px 34px rgba(0,0,0,.36);
+border-color: rgba(124,255,178,.35);
+}
+
+/* pills + kbd feel more “product” */
+.pill{
+background: rgba(255,255,255,.07);
+border-color: rgba(255,255,255,.12);
+box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.kbd{
+border-color: rgba(255,255,255,.18);
+background: rgba(0,0,0,.30);
+}
+
+/* tabs: more premium selection */
+.tab{
+background: rgba(255,255,255,.04);
+border-color: rgba(255,255,255,.12);
+}
+.tab:hover{
+background: rgba(255,255,255,.06);
+border-color: rgba(255,255,255,.18);
+}
+
+/* knobs: more depth */
+.knob{
+border-color: rgba(255,255,255,.14);
+box-shadow: inset 0 0 0 1px rgba(0,0,0,.30), 0 10px 28px rgba(0,0,0,.35);
+}
+.knob::before{
+filter: drop-shadow(0 0 12px var(--knobGlow));
+}
+
+/* sliders: nicer track/thumb */
+input[type="range"]{
+accent-color: rgba(124,255,178,.92);
+}
+.vFader::-webkit-slider-runnable-track{
+background: rgba(255,255,255,.14);
+border-color: rgba(255,255,255,.12);
+}
+.vFader::-webkit-slider-thumb{
+border-color: rgba(255,255,255,.22);
+box-shadow: 0 10px 24px rgba(0,0,0,.40);
+}
+.vFader::-moz-range-track{
+background: rgba(255,255,255,.14);
+border-color: rgba(255,255,255,.12);
+}
+.vFader::-moz-range-thumb{
+border-color: rgba(255,255,255,.22);
+box-shadow: 0 10px 24px rgba(0,0,0,.40);
+}
+
+/* drum cells: crisp */
+.cell{
+border-color: rgba(255,255,255,.12);
+}
+.cell.playhead{
+outline-color: rgba(255,255,255,.44);
+}
+
+/* scrollbars (webkit) */
+*::-webkit-scrollbar{ height: 10px; width: 10px; }
+*::-webkit-scrollbar-track{ background: rgba(255,255,255,.04); border-radius: 999px; }
+*::-webkit-scrollbar-thumb{
+background: rgba(255,255,255,.14);
+border: 1px solid rgba(255,255,255,.10);
+border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.20); }
+
+/* reduce motion support */
+@media (prefers-reduced-motion: reduce){
+button{ transition:none !important; }
+}
+
+
+
+/* =========================================
+  Drum Sequencer – Custom Label Dropdown
+  (THIS is the real text)
+  ========================================= */
+
+/* Closed label text */
+#drumModule .trackSelect,
+#drumModule .trackSelect .dropdownLabel {
+color: #0b0f14 !important;   /* dark readable text */
+}
+
+/* Dropdown menu container */
+#drumModule .dropdownMenu {
+color: #0b0f14;
+}
+
+/* Individual menu items */
+#drumModule .dropdownItem {
+color: #0b0f14;
+}
+
+/* Hover / selected state */
+#drumModule .dropdownItem:hover,
+#drumModule .dropdownItem.active {
+color: #ffffff;
+}

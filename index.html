@@ -1,55 +1,163 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Music Creator</title>
-  <link rel="stylesheet" href="src/css/styles.css" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>RetroLoop Studio — Drum Sequencer + Piano Roll</title>
+<link rel="stylesheet" href="src/css/styles.css"/>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">Music Creator</div>
-    <div class="transport">
-      <button id="playBtn" class="btn">Play</button>
-      <button id="stopBtn" class="btn">Stop</button>
-      <label class="field">
-        <span>BPM</span>
-        <input id="bpmInput" type="number" min="40" max="240" value="120" />
-      </label>
-      <label class="field">
-        <span>Steps</span>
-        <select id="stepsSelect">
-          <option>8</option>
-          <option selected>16</option>
-          <option>32</option>
-        </select>
-      </label>
-    </div>
-  </header>
+<h1>RetroLoop Studio</h1>
+<p class="sub">
+4/4 • Drum sequencer + piano roll • Loop size:
+<span class="kbd" id="resText">1/64</span> • Keys: C3 → C5
+</p>
 
-  <main class="layout">
-    <section class="panel">
-      <h2>Drum Sequencer</h2>
+<div class="wrap workspace">
+<div class="card" id="transportCard" style="grid-column: 1 / -1;">
+<div class="hd transportHd">
+<div class="transportLeft">
+<div class="title">Transport</div>
+</div>
 
-      <div class="sequencer">
-        <div id="trackNames" class="trackNames" aria-label="Track labels"></div>
-        <div class="gridWrap">
-          <div id="drumGrid" class="drumGrid" aria-label="Drum step grid"></div>
-          <div id="playhead" class="playhead" aria-hidden="true"></div>
-        </div>
-      </div>
+<div class="btnRow transportBtns">
+<button id="playBtn">Play</button>
+<button id="pauseBtn" disabled>Pause</button>
+<button id="stopBtn" disabled>Stop</button>
+</div>
 
-      <div class="hint">
-        Click steps to toggle. Labels are rendered with <code>.trackLabel</code> inside <code>.trackName</code>.
-      </div>
-    </section>
+<div class="transportRight">
+<div class="pill">
+<span style="min-width:38px;">BPM</span>
+<input id="bpm" type="range" min="70" max="180" value="115"/>
+<span id="bpmLabel" class="kbd">115</span>
+</div>
+</div>
+</div>
 
-    <section class="panel">
-      <h2>Debug</h2>
-      <pre id="debugLog" class="debug"></pre>
-    </section>
-  </main>
+<div class="bd transportBd">
+<div class="btnRow transportActions">
+<button id="loadDemo">Reload Demo</button>
+<button id="clearProject">Clear Project</button>
 
-  <script type="module" src="src/js/main.js"></script>
+<button id="saveProjectBtn">Save Project</button>
+<button id="loadProjectBtn">Load Project</button>
+<input id="projectFile" type="file" accept=".json,application/json"/>
+
+<button id="importMidiBtn">Import MIDI</button>
+<input id="midiFile" type="file" accept=".mid,.midi" />
+
+<button id="midiLibraryBtn">MIDI Library</button>
+
+<button id="bgBtn">Background</button>
+</div>
+
+<p class="hint transportHint">
+<span class="kbd">Space</span> toggles Play/Pause (desktop).
+Double-click / double-tap any <span class="kbd">instrument</span> or <span class="kbd">drum label</span> to customize its color.
+</p>
+</div>
+</div>
+
+<div id="transportSpacer" aria-hidden="true"></div>
+
+<div class="card module" id="mixerModule" style="grid-column: 1 / -1;">
+<div class="hd">
+<div class="title">Mixer</div>
+<div class="pill" style="padding:6px 10px;">
+<span>Reverb</span><span class="kbd">Return</span>
+</div>
+</div>
+<div class="bd">
+<div class="mixer" style="margin-top:0;">
+<div class="mixerTop" style="display:none;">
+<div class="mixerTitle">Mixer</div>
+<div class="pill" style="padding:6px 10px;">
+<span>Reverb</span><span class="kbd">Return</span>
+</div>
+</div>
+
+<div class="mixerGrid" id="mixerGrid"></div>
+</div>
+
+</div>
+</div>
+
+<div class="card module" id="drumModule">
+<div class="hd">
+<div class="left">
+<button class="miniBtn" id="addDrumRowBtn" title="Add drum row" style="border-radius:999px; padding:6px 12px;">+</button>
+<div class="title">Drum Sequencer</div>
+</div>
+<div class="pill"><span>Loop</span><select class="kbd" id="loopSelectDrum"></select></div>
+</div>
+<div class="bd">
+<div class="drumGrid" id="drumGrid"></div>
+</div>
+</div>
+
+<div class="card module" id="rollModule" style="grid-column: 1 / -1;">
+<div class="hd">
+<div class="title">Piano Roll</div>
+<div class="rollHeaderRight">
+<div class="tabs" id="tabs"></div>
+<div class="trKnobs" id="trKnobs" aria-label="Transpose knobs"></div>
+<div class="pill" style="padding:6px 10px;"><span>Loop</span><select class="kbd" id="loopSelectRoll"></select></div></div>
+</div>
+
+<div class="bd">
+<div class="rollWrap">
+<canvas id="roll" width="1280" height="560"></canvas>
+</div>
+</div>
+</div>
+</div>
+
+<input id="colorPicker" type="color" style="display:none;" />
+
+<!-- MIDI LIBRARY MODAL -->
+<div class="modalOverlay" id="midiModalOverlay" aria-hidden="true">
+<div class="modal" role="dialog" aria-modal="true" aria-label="MIDI Library">
+<div class="modalHd">
+<div class="modalTitle">
+<span>MIDI Library</span>
+<span class="kbd" id="targetLaneBadge">Target: Piano</span>
+</div>
+<div class="modalControls">
+<div class="pill" id="laneSuggestPill" style="display:none; padding:6px 10px;">
+<span>Suggested</span>
+<span class="kbd" id="laneSuggestText">—</span>
+<button class="miniBtn primary" id="applyLaneSuggestion" style="padding:6px 10px; border-radius:999px;">Switch</button>
+</div>
+<button class="miniBtn" id="refreshMidiIndex">Refresh</button>
+<button class="miniBtn" id="closeMidiModal">Close</button>
+</div>
+</div>
+<div class="modalBd">
+<div class="libLeft">
+<div class="searchRow">
+<input class="input" id="midiSearch" placeholder="Search packs / files..." />
+<label class="toggle">
+<input type="checkbox" id="fitToLoop" checked />
+Fit to loop
+</label>
+</div>
+<div id="packList"></div>
+<div class="status" id="midiIndexStatus"></div>
+</div>
+<div class="libRight">
+<div id="fileList"></div>
+<div class="status" id="midiFileStatus"></div>
+</div>
+</div>
+</div>
+</div>
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.js"></script>
+<script src="src/js/app.js"></script>
 </body>
 </html>
