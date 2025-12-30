@@ -1,0 +1,184 @@
+/* Minimal, clean stylesheet. */
+:root{
+  --bg:#0f1115;
+  --panel:#151a22;
+  --muted:#8ea0b5;
+  --text:#e7eef9;
+  --border:#273143;
+  --accent:#7aa2ff;
+  --cell:#1b2230;
+  --cellOn:#2a3a63;
+  --cellPlay:#3a4b78;
+  --danger:#ff6b6b;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background:var(--bg);
+  color:var(--text);
+}
+
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  background:#0c0f14;
+  position:sticky;
+  top:0;
+  z-index:5;
+}
+.brand{font-weight:700; letter-spacing:.2px;}
+.transport{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.btn{
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:transparent;
+  color:var(--text);
+  cursor:pointer;
+}
+.btn:hover{border-color:var(--accent)}
+.field{display:flex; align-items:center; gap:6px; color:var(--muted); font-size:12px}
+.field input,.field select{
+  width:80px;
+  padding:6px 8px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--text);
+}
+
+.layout{
+  display:grid;
+  grid-template-columns: 1.5fr .9fr;
+  gap:16px;
+  padding:16px;
+}
+@media (max-width: 900px){
+  .layout{grid-template-columns:1fr;}
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+}
+.panel h2{margin:0 0 12px 0; font-size:16px; color:#dbe7ff}
+
+.sequencer{
+  display:grid;
+  grid-template-columns: 220px 1fr;
+  gap:10px;
+  align-items:start;
+}
+
+/* Track label column (matches your original CSS naming) */
+.trackNames{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.trackName{
+  display:grid;
+  grid-template-columns: 36px 1fr 34px;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  background:#121824;
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+.rowDel{
+  border:none;
+  width:32px;
+  height:32px;
+  border-radius:10px;
+  background:#1a2130;
+  color:var(--danger);
+  cursor:pointer;
+}
+.msBtn{
+  border:none;
+  width:32px;
+  height:32px;
+  border-radius:10px;
+  background:#1a2130;
+  color:var(--text);
+  cursor:pointer;
+}
+.msBtn.active{outline:2px solid var(--accent)}
+/* This is the key: the label element that was "not showing" */
+.trackLabel{
+  font-size:13px;
+  font-weight:700;
+  color:var(--text);
+  padding:6px 8px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#0f1520;
+  display:block;
+  width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.gridWrap{
+  position:relative;
+  overflow:auto;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:10px;
+  background:#0f141e;
+}
+.drumGrid{
+  display:grid;
+  gap:8px;
+}
+.drumRow{
+  display:grid;
+  gap:8px;
+}
+.step{
+  width:28px;
+  height:28px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--cell);
+  cursor:pointer;
+}
+.step.on{background:var(--cellOn); border-color:rgba(122,162,255,.55)}
+.step.playing{background:var(--cellPlay); border-color:rgba(122,162,255,.85)}
+.playhead{
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:2px;
+  background:rgba(122,162,255,.7);
+  pointer-events:none;
+  transform:translateX(-9999px);
+}
+
+.hint{
+  margin-top:12px;
+  color:var(--muted);
+  font-size:12px;
+}
+.debug{
+  height:260px;
+  overflow:auto;
+  background:#0c0f14;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  margin:0;
+  color:#cfe0ff;
+  font-size:12px;
+}
