@@ -1,0 +1,169 @@
+{
+  "drums": [
+    {
+      "key": "sb_808_fuccin_swag_808_c",
+      "label": "808s / Fuccin Swag 808 C",
+      "url": "soundbank/808s/Fuccin Swag 808 C.wav"
+    },
+    {
+      "key": "sb_808_robust_808_c_2",
+      "label": "808s / Robust 808 C 2",
+      "url": "soundbank/808s/Robust 808 C 2.wav"
+    },
+    {
+      "key": "sb_808_the_decap_808_c",
+      "label": "808s / The DECAP 808 C",
+      "url": "soundbank/808s/The DECAP 808 C.wav"
+    },
+    {
+      "key": "sb_loop_decap_bounce_drum_loop_92",
+      "label": "Drum Loops / DECAP Bounce Drum Loop 92",
+      "url": "soundbank/Drum Loops/DECAP Bounce Drum Loop 92.wav"
+    },
+    {
+      "key": "sb_loop_feel_like_it_drum_loop_115",
+      "label": "Drum Loops / Feel Like It Drum Loop 115",
+      "url": "soundbank/Drum Loops/Feel Like It Drum Loop 115.wav"
+    },
+    {
+      "key": "sb_loop_he_spazzed_drum_loop_142",
+      "label": "Drum Loops / He Spazzed Drum Loop 142",
+      "url": "soundbank/Drum Loops/He Spazzed Drum Loop 142.wav"
+    },
+    {
+      "key": "sb_loop_decap_bounce_hihat_loop_92",
+      "label": "Hihat Loops / DECAP Bounce Hihat Loop 92",
+      "url": "soundbank/Hihat Loops/DECAP Bounce Hihat Loop 92.wav"
+    },
+    {
+      "key": "sb_loop_galactic_moves_hihat_loop_105",
+      "label": "Hihat Loops / Galactic Moves Hihat Loop 105",
+      "url": "soundbank/Hihat Loops/Galactic Moves Hihat Loop 105.wav"
+    },
+    {
+      "key": "sb_loop_need_it_all_hihat_loop_1_115",
+      "label": "Hihat Loops / Need It All Hihat Loop 1 115",
+      "url": "soundbank/Hihat Loops/Need It All Hihat Loop 1 115.wav"
+    },
+    {
+      "key": "sb_loop_need_it_all_hihat_loop_2_115",
+      "label": "Hihat Loops / Need It All Hihat Loop 2 115",
+      "url": "soundbank/Hihat Loops/Need It All Hihat Loop 2 115.wav"
+    },
+    {
+      "key": "sb_loop_trade_up_hihat_loop_120",
+      "label": "Hihat Loops / Trade Up Hihat Loop 120",
+      "url": "soundbank/Hihat Loops/Trade Up Hihat Loop 120.wav"
+    },
+    {
+      "key": "sb_hat_main_event_hihat",
+      "label": "Hihats / Main Event Hihat",
+      "url": "soundbank/Hihats/Main Event Hihat.wav"
+    },
+    {
+      "key": "sb_hat_nd_hihat_2",
+      "label": "Hihats / ND Hihat 2",
+      "url": "soundbank/Hihats/ND Hihat 2.wav"
+    },
+    {
+      "key": "sb_hat_nd_hihat_roll",
+      "label": "Hihats / ND Hihat Roll",
+      "url": "soundbank/Hihats/ND Hihat Roll.wav"
+    },
+    {
+      "key": "sb_hat_nd_hihat",
+      "label": "Hihats / ND Hihat",
+      "url": "soundbank/Hihats/ND Hihat.wav"
+    },
+    {
+      "key": "sb_kick_nuckin_futs_kick",
+      "label": "Kicks / Nuckin Futs Kick",
+      "url": "soundbank/Kicks/Nuckin Futs Kick.wav"
+    },
+    {
+      "key": "sb_kick_staythefuckhome_kick",
+      "label": "Kicks / StayTheFuckHome Kick",
+      "url": "soundbank/Kicks/StayTheFuckHome Kick.wav"
+    },
+    {
+      "key": "sb_kick_triage_kick",
+      "label": "Kicks / Triage Kick",
+      "url": "soundbank/Kicks/Triage Kick.wav"
+    },
+    {
+      "key": "sb_melo_bang_bang_melodic_loop_1_93_cmin",
+      "label": "Melodic Loops / Bang Bang Melodic Loop 1 93 CMIN",
+      "url": "soundbank/Melodic_Loops/Bang Bang Melodic Loop 1 93 CMIN.wav"
+    },
+    {
+      "key": "sb_melo_bang_bang_melodic_loop_2_93_cmin",
+      "label": "Melodic Loops / Bang Bang Melodic Loop 2 93 CMIN",
+      "url": "soundbank/Melodic_Loops/Bang Bang Melodic Loop 2 93 CMIN.wav"
+    },
+    {
+      "key": "sb_melo_juice_melodic_loop_1_emin_142",
+      "label": "Melodic Loops / Juice Melodic Loop 1 EMIN 142",
+      "url": "soundbank/Melodic_Loops/Juice Melodic Loop 1 EMIN 142.wav"
+    },
+    {
+      "key": "sb_melo_juice_melodic_loop_2_emin_142",
+      "label": "Melodic Loops / Juice Melodic Loop 2 EMIN 142",
+      "url": "soundbank/Melodic_Loops/Juice Melodic Loop 2 EMIN 142.wav"
+    },
+    {
+      "key": "sb_perc_respekt_percussion_loop_1_153",
+      "label": "Percussion Loops / Respekt Percussion Loop 1 153",
+      "url": "soundbank/Percussion_Loops/Respekt Percussion Loop 1 153.wav"
+    },
+    {
+      "key": "sb_perc_respekt_percussion_loop_2_153",
+      "label": "Percussion Loops / Respekt Percussion Loop 2 153",
+      "url": "soundbank/Percussion_Loops/Respekt Percussion Loop 2 153.wav"
+    },
+    {
+      "key": "sb_perc_respekt_percussion_loop_3_153",
+      "label": "Percussion Loops / Respekt Percussion Loop 3 153",
+      "url": "soundbank/Percussion_Loops/Respekt Percussion Loop 3 153.wav"
+    },
+    {
+      "key": "sb_perc_respekt_percussion_loop_4_153",
+      "label": "Percussion Loops / Respekt Percussion Loop 4 153",
+      "url": "soundbank/Percussion_Loops/Respekt Percussion Loop 4 153.wav"
+    },
+    {
+      "key": "sb_riser_chillin_w_dad_riser",
+      "label": "Risers / Chillin W Dad Riser",
+      "url": "soundbank/Risers/Chillin W Dad Riser.wav"
+    },
+    {
+      "key": "sb_shout_knock_shout",
+      "label": "Shouts / Knock Shout",
+      "url": "soundbank/Shouts/Knock Shout.wav"
+    },
+    {
+      "key": "sb_snr_pisht_snare",
+      "label": "Snares/Claps/Rimshots / Pisht Snare",
+      "url": "soundbank/Snares_Claps_Rimshots/Pisht Snare.wav"
+    },
+    {
+      "key": "sb_snr_short_rim",
+      "label": "Snares/Claps/Rimshots / Short Rim",
+      "url": "soundbank/Snares_Claps_Rimshots/Short Rim.wav"
+    },
+    {
+      "key": "sb_snr_silky_clap",
+      "label": "Snares/Claps/Rimshots / Silky Clap",
+      "url": "soundbank/Snares_Claps_Rimshots/Silky Clap.wav"
+    },
+    {
+      "key": "sb_snr_wonka_snare",
+      "label": "Snares/Claps/Rimshots / WONKA Snare",
+      "url": "soundbank/Snares_Claps_Rimshots/WONKA Snare.wav"
+    },
+    {
+      "key": "sb_snr_whatta_rimshot",
+      "label": "Snares/Claps/Rimshots / Whatta Rimshot",
+      "url": "soundbank/Snares_Claps_Rimshots/Whatta Rimshot.wav"
+    }
+  ]
+}

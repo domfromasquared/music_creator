@@ -16,3 +16,8 @@ Because this project uses fetch() for demo/midi assets, serve it with a local se
 python -m http.server 8080
 # then open http://localhost:8080
 ```
+
+
+## Soundbank WAVs
+This build loads `soundbank/manifest.json` at startup and adds those WAVs to the Drum Sequencer dropdown.
+If a selected drum sound has a `url`, it is played as a decoded AudioBuffer sample.
