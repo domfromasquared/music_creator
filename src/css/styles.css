@@ -1,4 +1,2 @@
-/* Aggregated styles (split-friendly).
-   legacy.css contains the original single-block CSS moved out of index.html.
-   You can progressively split sections into separate files later. */
 @import url("./legacy.css");
+@import url("./transport.css");

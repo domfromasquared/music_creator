@@ -1,6 +1,3 @@
-/* RetroLoop Studio — extracted from index.html
-   Fix included: Drum row dropdown options now use DRUM_SOUNDS[].label (was .name causing blank labels).
-*/
 (() => {
 const RES_OPTIONS = [
 { label: "1/16", steps: 16 },
@@ -45,33 +42,41 @@ const DRUM_SOUNDS = [
 { key:"brushsn",   label:"Brush Snare" },
 { key:"brushhat",  label:"Brush Hat" },
 { key:"noise",     label:"Noise Burst" },
-];// --- Soundbank WAV support ---
-// We can't list directories from the browser, so we load a manifest file:
-//   soundbank/manifest.json  -> { drums: [{key,label,url}, ...] }
-const SOUND_BANK_MANIFEST = "soundbank/manifest.json";
-const SAMPLE_URL_BY_KEY = new Map();      // key -> url
-const SAMPLE_BUF_BY_KEY = new Map();      // key -> AudioBuffer
-const SAMPLE_LOAD_BY_KEY = new Map();     // key -> Promise<AudioBuffer>
+];
+
+/* =========================
+   Soundbank (WAV) support
+   - Requires soundbank/manifest.json
+   - Adds entries into DRUM_SOUNDS dropdown
+   - Plays selected WAV via AudioBufferSourceNode
+   ========================= */
+
+const SOUNDBANK = {
+  manifestUrl: "soundbank/manifest.json",
+  itemsByKey: new Map(),      // key -> {key,label,url,category}
+  bufferByUrl: new Map(),     // url -> AudioBuffer
+};
 
 async function loadSoundbankManifest(){
   try{
-    const res = await fetch(SOUND_BANK_MANIFEST, { cache: "no-store" });
+    const res = await fetch(SOUNDBANK.manifestUrl, { cache: "no-store" });
     if (!res.ok) return;
-    const bank = await res.json();
-    const items = Array.isArray(bank?.drums) ? bank.drums : [];
+    const data = await res.json();
+    const items = Array.isArray(data?.drums) ? data.drums : [];
     const existing = new Set(DRUM_SOUNDS.map(d => d.key));
 
     for (const it of items){
       if (!it?.key || !it?.url) continue;
-      const key = String(it.key);
-      const label = it.label ? String(it.label) : key;
-      const url = String(it.url);
-
-      SAMPLE_URL_BY_KEY.set(key, url);
-
-      if (!existing.has(key)){
-        DRUM_SOUNDS.push({ key, label, url });
-        existing.add(key);
+      const entry = {
+        key: String(it.key),
+        label: String(it.label || it.key),
+        url: String(it.url),
+        category: String(it.category || "Soundbank")
+      };
+      SOUNDBANK.itemsByKey.set(entry.key, entry);
+      if (!existing.has(entry.key)){
+        DRUM_SOUNDS.push({ key: entry.key, label: `${entry.category} / ${entry.label}` });
+        existing.add(entry.key);
       }
     }
   }catch(e){
@@ -79,38 +84,40 @@ async function loadSoundbankManifest(){
   }
 }
 
-function primeSampleForKey(key){
-  if (!key) return;
-  if (!SAMPLE_URL_BY_KEY.has(key)) return; // built-in synth sounds
-  if (SAMPLE_BUF_BY_KEY.has(key)) return;
-  if (SAMPLE_LOAD_BY_KEY.has(key)) return;
-
-  ensureAudio(); // creates ctx
-  const url = SAMPLE_URL_BY_KEY.get(key);
-
-  const p = fetch(url)
-    .then(r => r.arrayBuffer())
-    .then(ab => ctx.decodeAudioData(ab))
-    .then(buf => {
-      SAMPLE_BUF_BY_KEY.set(key, buf);
-      return buf;
-    })
-    .catch(err => {
-      console.warn("Failed to load sample:", key, url, err);
-      SAMPLE_LOAD_BY_KEY.delete(key);
-    });
-
-  SAMPLE_LOAD_BY_KEY.set(key, p);
+async function _getSampleBuffer(url){
+  if (SOUNDBANK.bufferByUrl.has(url)) return SOUNDBANK.bufferByUrl.get(url);
+  const res = await fetch(url);
+  const arr = await res.arrayBuffer();
+  const buf = await ctx.decodeAudioData(arr);
+  SOUNDBANK.bufferByUrl.set(url, buf);
+  return buf;
 }
 
-function playSampleKey(key, time, out){
-  const buf = SAMPLE_BUF_BY_KEY.get(key);
-  if (!buf) return; // not loaded yet
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  src.connect(out);
-  src.start(time);
+async function _primeSampleKey(key){
+  const it = SOUNDBANK.itemsByKey.get(key);
+  if (!it) return;
+  try{ await _getSampleBuffer(it.url); }catch(e){ console.warn("Sample decode failed:", it.url, e); }
 }
+
+function _playSampleKey(key, time, outGain){
+  const it = SOUNDBANK.itemsByKey.get(key);
+  if (!it) return false;
+  const out = outGain || buses.drum;
+
+  // Schedule async buffer fetch/decode; start once ready.
+  // If not ready at scheduled time, it will start as soon as buffer resolves.
+  _getSampleBuffer(it.url).then(buf=>{
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(out);
+    // schedule at 'time' if possible
+    const t = Math.max(time || ctx.currentTime, ctx.currentTime);
+    try{ src.start(t); }catch(_){ src.start(); }
+  }).catch(e=>console.warn("Play sample failed:", it.url, e));
+  return true;
+}
+
+
 
 const DEFAULT_DRUM_ROWS = ["kick","kick808","clap","snare","ch","oh","ride","crash"];
 const MAX_DRUM_ROWS = 16;
@@ -1311,13 +1318,8 @@ src.stop(time + 0.90);
 
 // ---------- Extra Drum Sounds + Dispatcher ----------
 function playDrumSound(key, time, out){
-  // If this key maps to a WAV in /soundbank, play it.
-  if (SAMPLE_URL_BY_KEY.has(key)) {
-    // start loading if needed; if not ready, this tick will be silent.
-    primeSampleForKey(key);
-    return playSampleKey(key, time, out);
-  }
-  switch(key){
+  if (SOUNDBANK.itemsByKey?.has?.(key)) { _playSampleKey(key, time, out); return; }
+switch(key){
 case "kick":      return playKick(time, out);
 case "kick808":   return play808Kick(time, out);
 case "snare":     return playSnare(time, out);
@@ -1651,7 +1653,7 @@ vol: (defVolBySound[soundKey] ?? 80)
 };
 project.drumRows.push(row);
 ensureDrumRowGains();
-// buildDrumGrid() is called after soundbank manifest load
+buildDrumGrid();
 refreshDrumUI();
 saveToLocal();
 }
@@ -3219,16 +3221,25 @@ buildLoopDropdowns();
 buildTabs();
 buildTransposeKnobs();
 buildMixer();
+await loadSoundbankManifest();
 buildDrumGrid();
 drawRoll(-1);
 
 initModules();
 
 (async () => {
-  await loadSoundbankManifest();
-  buildDrumGrid();
-  try{ await loadDemoFromJson(); }
-  catch (e){ console.warn("Auto demo JSON load failed; starting empty.", e); }
+try{ await loadDemoFromJson(); }
+catch (e){ console.warn("Auto demo JSON load failed; starting empty.", e); }
 })();
 
 })();
+
+/* Prime WAV samples when selecting from dropdown (best-effort) */
+document.addEventListener("change", (e)=>{
+  const el = e.target;
+  if (el && el.classList && el.classList.contains("trackSelect")){
+    const key = el.value;
+    if (SOUNDBANK.itemsByKey.has(key)) _primeSampleKey(key);
+  }
+});
+

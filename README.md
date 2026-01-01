@@ -1,23 +1,25 @@
-# RetroLoop Studio (refactor)
+# RetroLoop Studio — Refactor (Transport + Soundbank)
 
-This refactor moves all inline CSS + JS out of `index.html` into:
-- `src/css/legacy.css` (original CSS moved as-is)
-- `src/css/styles.css` (aggregator)
-- `src/js/app.js` (original JS moved as-is)
+## What changed
+- Inline CSS moved to `src/css/legacy.css`
+- Added DAW-style transport facelift in `src/css/transport.css`
+- Inline JS moved to `src/js/app.js`
+- Fixed drum dropdown label bug (`s.name` -> `s.label`)
+- Added Soundbank WAV support via `soundbank/manifest.json`
 
-## Fix included
-- Drum row dropdown options now display correctly:
-  - changed `DRUM_SOUNDS` option text from `.name` -> `.label`
+## Generate the soundbank manifest
+From repo root:
+
+```bash
+node tools/gen-manifest.mjs
+```
+
+This will scan `soundbank/**.wav` and write `soundbank/manifest.json`.
 
 ## Run locally
-Because this project uses fetch() for demo/midi assets, serve it with a local server:
+Use a local server (required for fetch/decode of WAV files):
 
 ```bash
 python -m http.server 8080
-# then open http://localhost:8080
+# open http://localhost:8080
 ```
-
-
-## Soundbank WAVs
-This build loads `soundbank/manifest.json` at startup and adds those WAVs to the Drum Sequencer dropdown.
-If a selected drum sound has a `url`, it is played as a decoded AudioBuffer sample.

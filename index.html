@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-<title>RetroLoop Studio — Drum Sequencer + Piano Roll</title>
+<title>RetroLoop Studio</title>
 <link rel="stylesheet" href="src/css/styles.css"/>
 </head>
 <body>
@@ -15,48 +15,41 @@
 
 <div class="wrap workspace">
 <div class="card" id="transportCard" style="grid-column: 1 / -1;">
-<div class="hd transportHd">
-<div class="transportLeft">
-<div class="title">Transport</div>
-</div>
+  <div class="transport-bar">
+    <div class="transport-group controls" aria-label="Transport controls">
+      <button id="stopBtn" class="icon-btn stop" disabled title="Stop">
+        <span class="icon">■</span>
+      </button>
+      <button id="playBtn" class="icon-btn play" title="Play">
+        <span class="icon">▶</span>
+      </button>
+      <button id="pauseBtn" class="icon-btn pause" disabled title="Pause">
+        <span class="icon">❚❚</span>
+      </button>
+    </div>
 
-<div class="btnRow transportBtns">
-<button id="playBtn">Play</button>
-<button id="pauseBtn" disabled>Pause</button>
-<button id="stopBtn" disabled>Stop</button>
-</div>
+    <div class="transport-group time" aria-label="Time display">
+      <div id="timeDisplay" class="time-main">000.1</div>
+      <div class="time-sub"><span>BAR</span><span>BEAT</span></div>
+    </div>
 
-<div class="transportRight">
-<div class="pill">
-<span style="min-width:38px;">BPM</span>
-<input id="bpm" type="range" min="70" max="180" value="115"/>
-<span id="bpmLabel" class="kbd">115</span>
-</div>
-</div>
-</div>
+    <div class="transport-group tempo" aria-label="Tempo">
+      <div class="tempo-main"><span id="bpmLabel" class="tempo-value">115</span><span class="tempo-unit">BPM</span></div>
+      <input id="bpm" class="tempo-slider" type="range" min="70" max="180" value="115"/>
+    </div>
 
-<div class="bd transportBd">
-<div class="btnRow transportActions">
-<button id="loadDemo">Reload Demo</button>
-<button id="clearProject">Clear Project</button>
+    <div class="transport-group meta" aria-label="Signature and key">
+      <div class="meta-row">
+        <span class="pill small">4/4</span>
+        <span class="pill small">Cmaj</span>
+      </div>
+      <div class="meta-hint">Space: Play/Pause</div>
+    </div>
 
-<button id="saveProjectBtn">Save Project</button>
-<button id="loadProjectBtn">Load Project</button>
-<input id="projectFile" type="file" accept=".json,application/json"/>
-
-<button id="importMidiBtn">Import MIDI</button>
-<input id="midiFile" type="file" accept=".mid,.midi" />
-
-<button id="midiLibraryBtn">MIDI Library</button>
-
-<button id="bgBtn">Background</button>
-</div>
-
-<p class="hint transportHint">
-<span class="kbd">Space</span> toggles Play/Pause (desktop).
-Double-click / double-tap any <span class="kbd">instrument</span> or <span class="kbd">drum label</span> to customize its color.
-</p>
-</div>
+    <div class="transport-group meter" aria-label="Master meter">
+      <div class="meter-bar"><span id="meterFill"></span></div>
+    </div>
+  </div>
 </div>
 
 <div id="transportSpacer" aria-hidden="true"></div>
