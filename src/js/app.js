@@ -3221,8 +3221,7 @@ buildLoopDropdowns();
 buildTabs();
 buildTransposeKnobs();
 buildMixer();
-await loadSoundbankManifest();
-buildDrumGrid();
+loadSoundbankManifest().then(()=>{ buildDrumGrid(); }).catch(()=>{ buildDrumGrid(); });
 drawRoll(-1);
 
 initModules();
