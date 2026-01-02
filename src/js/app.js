@@ -401,17 +401,17 @@ pendingPick = { onPick };
 colorPicker.value = normalizeHex(startHex);
 colorPicker.click();
 }
-if (colorPicker) colorPicker.addEventListener("input", () => {
+if (colorPicker) colorPicker?.addEventListener("input", () => {
 if (!pendingPick || !pendingPick.onPick) return;
 pendingPick.onPick(colorPicker.value);
 });
-if (colorPicker) colorPicker.addEventListener("change", () => { pendingPick = null; });
+if (colorPicker) colorPicker?.addEventListener("change", () => { pendingPick = null; });
 
 function attachDoubleTap(el, handler){
   if (!el) return;
-el.addEventListener("dblclick", (e) => { e.preventDefault(); handler(e); });
+el?.addEventListener("dblclick", (e) => { e.preventDefault(); handler(e); });
 let lastTap = 0;
-el.addEventListener("pointerup", (e) => {
+el?.addEventListener("pointerup", (e) => {
 if (e.pointerType !== "touch") return;
 const now = performance.now();
 const dt = now - lastTap;
@@ -469,7 +469,7 @@ t.className = "tab" + (idx===0 ? " active" : "");
 t.textContent = l.label;
 t.dataset.roll = l.key;
 
-t.addEventListener("click", () => {
+t?.addEventListener("click", () => {
 document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
 t.classList.add("active");
 activeRoll = l.key;
@@ -529,12 +529,12 @@ const dy = startY - e.clientY;
 setTranspose(inst, startVal + dy/12);
 };
 const onUp = (e) => { if (!active || e.pointerId !== pid) return; active=false; pid=null; };
-knobEl.addEventListener("pointerdown", onDown, {passive:false});
-knobEl.addEventListener("pointermove", onMove, {passive:false});
-knobEl.addEventListener("pointerup", onUp);
-knobEl.addEventListener("pointercancel", onUp);
-knobEl.addEventListener("lostpointercapture", ()=>{active=false;pid=null;});
-knobEl.addEventListener("dblclick", (e)=>{e.preventDefault(); setTranspose(inst,0);});
+knobEl?.addEventListener("pointerdown", onDown, {passive:false});
+knobEl?.addEventListener("pointermove", onMove, {passive:false});
+knobEl?.addEventListener("pointerup", onUp);
+knobEl?.addEventListener("pointercancel", onUp);
+knobEl?.addEventListener("lostpointercapture", ()=>{active=false;pid=null;});
+knobEl?.addEventListener("dblclick", (e)=>{e.preventDefault(); setTranspose(inst,0);});
 }
 function buildTransposeKnobs(){
 trKnobsEl.innerHTML = "";
@@ -568,7 +568,7 @@ attachTransposeKnob(knob, l.key);
 }
 
 // ---------- Transport ----------
-bpmEl.addEventListener("input", () => {
+bpmEl?.addEventListener("input", () => {
 bpm = Number(bpmEl.value);
 bpmLabel.textContent = String(bpm);
 });
@@ -577,7 +577,7 @@ if (!el) return false;
 const tag = (el.tagName || "").toLowerCase();
 return tag === "input" || tag === "textarea" || el.isContentEditable;
 }
-window.addEventListener("keydown", (e) => {
+window?.addEventListener("keydown", (e) => {
 if (e.code !== "Space") return;
 if (isTypingTarget(document.activeElement)) return;
 e.preventDefault();
@@ -585,7 +585,7 @@ togglePlayPause();
 }, {passive:false});
 
 attachDoubleTap(bgBtn, () => openColorPicker(theme.bgBase || "#0f1115", (hex) => applyBgColor(hex)));
-bgBtn.addEventListener("click", () => openColorPicker(theme.bgBase || "#0f1115", (hex) => applyBgColor(hex)));
+bgBtn?.addEventListener("click", () => openColorPicker(theme.bgBase || "#0f1115", (hex) => applyBgColor(hex)));
 
 
 // ---------- Loop dropdowns ----------
@@ -600,7 +600,7 @@ o.textContent = opt.label;
 sel.appendChild(o);
 });
 sel.value = String(currentResIndex);
-sel.addEventListener("change", () => {
+sel?.addEventListener("change", () => {
 const idx = Number(sel.value);
 const opt = RES_OPTIONS[idx] || RES_OPTIONS[currentResIndex];
 currentResIndex = idx;
@@ -905,13 +905,13 @@ setValue(startVal + delta);
 };
 const onUp = (e) => { if (!active || e.pointerId !== pid) return; active=false; pid=null; };
 
-knobEl.addEventListener("pointerdown", onDown, {passive:false});
-knobEl.addEventListener("pointermove", onMove, {passive:false});
-knobEl.addEventListener("pointerup", onUp);
-knobEl.addEventListener("pointercancel", onUp);
-knobEl.addEventListener("lostpointercapture", ()=>{active=false;pid=null;});
+knobEl?.addEventListener("pointerdown", onDown, {passive:false});
+knobEl?.addEventListener("pointermove", onMove, {passive:false});
+knobEl?.addEventListener("pointerup", onUp);
+knobEl?.addEventListener("pointercancel", onUp);
+knobEl?.addEventListener("lostpointercapture", ()=>{active=false;pid=null;});
 if (dblClickReset !== undefined){
-knobEl.addEventListener("dblclick", (e)=>{e.preventDefault(); setValue(dblClickReset);});
+knobEl?.addEventListener("dblclick", (e)=>{e.preventDefault(); setValue(dblClickReset);});
 }
 return { get:()=>value, set:setValue };
 }
@@ -932,18 +932,18 @@ busOrder.forEach(k => { busUI[k].fVal.textContent = Number(busUI[k].fader.value)
 }
 
 busOrder.forEach(k => {
-busUI[k].fader.addEventListener("input", () => {
+busUI[k].fader?.addEventListener("input", () => {
 syncVolReadouts();
 applyBusRouting();
 });
 
-busUI[k].mute.addEventListener("click", async (e) => {
+busUI[k].mute?.addEventListener("click", async (e) => {
 e.preventDefault(); await ensureRunning();
 busState[k].mute = !busState[k].mute;
 busUI[k].mute.classList.toggle("active", busState[k].mute);
 applyBusRouting();
 });
-busUI[k].solo.addEventListener("click", async (e) => {
+busUI[k].solo?.addEventListener("click", async (e) => {
 e.preventDefault(); await ensureRunning();
 busState[k].solo = !busState[k].solo;
 busUI[k].solo.classList.toggle("active", busState[k].solo);
@@ -1701,7 +1701,7 @@ const del = document.createElement("button");
 del.className = "rowDel";
 del.title = "Delete row";
 del.textContent = "×";
-del.addEventListener("click", () => removeDrumRow(idx));
+del?.addEventListener("click", () => removeDrumRow(idx));
 
 const selectWrap = document.createElement("div");
 selectWrap.className = "trackSelectWrap";
@@ -1715,7 +1715,7 @@ opt.textContent = s.label;
 select.appendChild(opt);
 });
 select.value = row.soundKey || "kick";
-select.addEventListener("change", () => {
+select?.addEventListener("change", () => {
 row.soundKey = select.value;
 refreshDrumUI();
 saveToLocal();
@@ -1740,18 +1740,18 @@ if (drumRowGains[idx]) drumRowGains[idx].gain.value = (row.vol/100);
 };
 setVol(row.vol);
 
-knob.addEventListener("pointerdown", (e) => {
+knob?.addEventListener("pointerdown", (e) => {
 dragging = true; startY = e.clientY; startVal = row.vol;
 knob.setPointerCapture(e.pointerId);
 });
-knob.addEventListener("pointermove", (e) => {
+knob?.addEventListener("pointermove", (e) => {
 if (!dragging) return;
 const dy = startY - e.clientY;
 setVol(startVal + dy * 0.25);
 });
-knob.addEventListener("pointerup", () => dragging = false);
-knob.addEventListener("pointercancel", () => dragging = false);
-knob.addEventListener("dblclick", () => { setVol(80); saveToLocal(); });
+knob?.addEventListener("pointerup", () => dragging = false);
+knob?.addEventListener("pointercancel", () => dragging = false);
+knob?.addEventListener("dblclick", () => { setVol(80); saveToLocal(); });
 
 nameRow.appendChild(del);
 nameRow.appendChild(selectWrap);
@@ -1859,7 +1859,7 @@ cell.classList.add("drag-hover");
 }
 
 function enableDrumPainting(container){
-container.addEventListener("pointerdown", (e) => {
+container?.addEventListener("pointerdown", (e) => {
 const cell = e.target.closest(".cell");
 if (!cell) return;
 e.preventDefault();
@@ -1878,14 +1878,14 @@ applyDrumCell(cell, drumPaint.value);
 container.setPointerCapture(e.pointerId);
 });
 
-container.addEventListener("pointermove", (e) => {
+container?.addEventListener("pointermove", (e) => {
 if (!drumPaint.active || e.pointerId !== drumPaint.pointerId) return;
 const cell = document.elementFromPoint(e.clientX, e.clientY)?.closest?.(".cell");
 if (!cell) return;
 applyDrumCell(cell, drumPaint.value);
 });
 
-container.addEventListener("pointerup", (e) => {
+container?.addEventListener("pointerup", (e) => {
 if (e.pointerId !== drumPaint.pointerId) return;
 drumPaint.active = false;
 drumPaint.pointerId = null;
@@ -1895,7 +1895,7 @@ container.releasePointerCapture(e.pointerId);
 saveToLocal();
 });
 
-container.addEventListener("lostpointercapture", () => {
+container?.addEventListener("lostpointercapture", () => {
 drumPaint.active = false;
 drumPaint.pointerId = null;
 drumPaint.row = null;
@@ -1956,12 +1956,12 @@ btnRow.style.marginTop = "10px";
 const cancel = document.createElement("button");
 cancel.className = "miniBtn";
 cancel.textContent = "Cancel";
-cancel.addEventListener("click", () => menu.remove());
+cancel?.addEventListener("click", () => menu.remove());
 
 const add = document.createElement("button");
 add.className = "miniBtn primary";
 add.textContent = "Add";
-add.addEventListener("click", () => { addDrumRow(sel.value); menu.remove(); });
+add?.addEventListener("click", () => { addDrumRow(sel.value); menu.remove(); });
 
 btnRow.appendChild(cancel);
 btnRow.appendChild(add);
@@ -1981,7 +1981,7 @@ menu.remove();
 document.removeEventListener("pointerdown", onDoc, true);
 }
 };
-document.addEventListener("pointerdown", onDoc, true);
+document?.addEventListener("pointerdown", onDoc, true);
 }
 
 addDrumRowBtn?.addEventListener("click", (e) => {
@@ -2143,7 +2143,7 @@ row[start] = len;
 
 let noteDrag = {active:false, pointerId:null, grid:null, pitch:0, start:0};
 
-rollCanvas.addEventListener("pointerdown", async (e) => {
+rollCanvas?.addEventListener("pointerdown", async (e) => {
 e.preventDefault();
 const hit = rollHitTest(e.clientX, e.clientY);
 if (!hit) return;
@@ -2172,7 +2172,7 @@ rollCanvas.setPointerCapture(e.pointerId);
 drawRoll(isPlaying ? currentStep : -1);
 }, {passive:false});
 
-rollCanvas.addEventListener("pointermove", (e) => {
+rollCanvas?.addEventListener("pointermove", (e) => {
 if (!noteDrag.active) return;
 if (noteDrag.pointerId !== e.pointerId) return;
 e.preventDefault();
@@ -2189,9 +2189,9 @@ if (noteDrag.pointerId !== e.pointerId) return;
 noteDrag.active = false;
 noteDrag.pointerId = null;
 };
-rollCanvas.addEventListener("pointerup", endNoteDrag);
-rollCanvas.addEventListener("pointercancel", endNoteDrag);
-rollCanvas.addEventListener("lostpointercapture", () => {
+rollCanvas?.addEventListener("pointerup", endNoteDrag);
+rollCanvas?.addEventListener("pointercancel", endNoteDrag);
+rollCanvas?.addEventListener("lostpointercapture", () => {
 noteDrag.active = false;
 noteDrag.pointerId = null;
 });
@@ -2294,9 +2294,9 @@ if (isPlaying) pause();
 else startFromCurrentStep();
 }
 
-playBtn.addEventListener("click", () => { currentStep = 0; startFromCurrentStep(); });
-pauseBtn.addEventListener("click", pause);
-stopBtn.addEventListener("click", stopTransportOnly);
+playBtn?.addEventListener("click", () => { currentStep = 0; startFromCurrentStep(); });
+pauseBtn?.addEventListener("click", pause);
+stopBtn?.addEventListener("click", stopTransportOnly);
 
 function applyLoopSize(newLoopSteps, label){
 stopTransportOnly();
@@ -2317,8 +2317,8 @@ drawRoll(-1);
 }
 
 // ---------- MIDI IMPORT (file picker) -> active lane ----------
-importMidiBtn.addEventListener("click", () => midiFileInput.click());
-midiFileInput.addEventListener("change", async () => {
+importMidiBtn?.addEventListener("click", () => midiFileInput.click());
+midiFileInput?.addEventListener("change", async () => {
 const file = midiFileInput.files && midiFileInput.files[0];
 if (!file) return;
 const arr = await file.arrayBuffer();
@@ -2375,19 +2375,19 @@ previewStopper.stop = true;
 previewStopper = { stop:false };
 }
 
-midiLibraryBtn.addEventListener("click", showMidiModal);
-closeMidiModal.addEventListener("click", hideMidiModal);
-midiModalOverlay.addEventListener("click", (e) => {
+midiLibraryBtn?.addEventListener("click", showMidiModal);
+closeMidiModal?.addEventListener("click", hideMidiModal);
+midiModalOverlay?.addEventListener("click", (e) => {
 if (e.target === midiModalOverlay) hideMidiModal();
 });
-refreshMidiIndex.addEventListener("click", () => loadMidiIndex(true));
-window.addEventListener("keydown", (e) => {
+refreshMidiIndex?.addEventListener("click", () => loadMidiIndex(true));
+window?.addEventListener("keydown", (e) => {
 if (!midiModalOverlay.classList.contains("show")) return;
 if (e.key === "Escape") hideMidiModal();
 });
 
-midiSearch.addEventListener("input", () => renderMidiLibrary());
-fitToLoop.addEventListener("change", () => { /* preference only */ });
+midiSearch?.addEventListener("input", () => renderMidiLibrary());
+fitToLoop?.addEventListener("change", () => { /* preference only */ });
 
 async function loadMidiIndex(force=false){
 midiIndexStatus.textContent = "Loading MIDI index…";
@@ -2440,7 +2440,7 @@ el.innerHTML = `
        <div class="packName">${escapeHtml(pack.name || `Pack ${idx+1}`)}</div>
        <div class="packMeta">${(pack.files?.length ?? 0)} files • /midi/${escapeHtml(pack.path || "")}</div>
      `;
-el.addEventListener("click", () => {
+el?.addEventListener("click", () => {
 activePackIdx = idx;
 renderMidiLibrary();
 });
@@ -2483,11 +2483,11 @@ const importBtn = document.createElement("button");
 importBtn.className = "miniBtn primary";
 importBtn.textContent = `Import → ${LANES.find(l=>l.key===activeRoll)?.label ?? "Piano"}`;
 
-previewBtn.addEventListener("click", async () => {
+previewBtn?.addEventListener("click", async () => {
 await previewMidiFromLibrary(pack, f);
 });
 
-importBtn.addEventListener("click", async () => {
+importBtn?.addEventListener("click", async () => {
 await importMidiFromLibrary(pack, f);
 });
 
@@ -2838,14 +2838,14 @@ a.click();
 a.remove();
 URL.revokeObjectURL(url);
 }
-saveProjectBtn.addEventListener("click", async () => {
+saveProjectBtn?.addEventListener("click", async () => {
 await ensureRunning().catch(()=>{});
 const payload = buildSavePayload();
 const name = `RetroLoop_Project_${(new Date()).toISOString().replace(/[:.]/g,"-")}.json`;
 downloadJson(name, payload);
 });
-loadProjectBtn.addEventListener("click", () => projectFileInput.click());
-projectFileInput.addEventListener("change", async () => {
+loadProjectBtn?.addEventListener("click", () => projectFileInput.click());
+projectFileInput?.addEventListener("change", async () => {
 const file = projectFileInput.files && projectFileInput.files[0];
 if (!file) return;
 const text = await file.text();
@@ -3013,7 +3013,7 @@ refreshDrumUI();
 drawRoll(-1);
 saveToLocal();
 }
-clearProjectBtn.addEventListener("click", clearProject);
+clearProjectBtn?.addEventListener("click", clearProject);
 
 async function loadDemoFromJson(){
 const url = new URL(DEMO_JSON_PATH, window.location.href).toString();
@@ -3022,7 +3022,7 @@ if (!res.ok) throw new Error(`Failed to fetch demo JSON (${res.status})`);
 const data = await res.json();
 applyLoadedProject(data);
 }
-loadDemoBtn.addEventListener("click", async () => {
+loadDemoBtn?.addEventListener("click", async () => {
 try { await loadDemoFromJson(); }
 catch (e){ console.warn("Demo JSON load failed.", e); }
 });
@@ -3168,11 +3168,11 @@ card.classList.remove("dragging");
 saveModuleLayout();
 };
 
-hd.addEventListener("pointerdown", onDown, {passive:false});
-hd.addEventListener("pointermove", onMove, {passive:false});
-hd.addEventListener("pointerup", onUp);
-hd.addEventListener("pointercancel", onUp);
-hd.addEventListener("lostpointercapture", () => {
+hd?.addEventListener("pointerdown", onDown, {passive:false});
+hd?.addEventListener("pointermove", onMove, {passive:false});
+hd?.addEventListener("pointerup", onUp);
+hd?.addEventListener("pointercancel", onUp);
+hd?.addEventListener("lostpointercapture", () => {
 if (!dragging) return;
 dragging=false; pid=null;
 card.classList.remove("dragging");
@@ -3180,7 +3180,7 @@ saveModuleLayout();
 });
 
 // persist resize (best-effort): watch pointerup anywhere on card
-card.addEventListener("pointerup", () => saveModuleLayout());
+card?.addEventListener("pointerup", () => saveModuleLayout());
 }
 
 
@@ -3201,7 +3201,7 @@ makeModuleDraggable(el);
 });
 
 // Save on window resize as well
-window.addEventListener("resize", () => { saveModuleLayout(); syncTransportSpacer(); });
+window?.addEventListener("resize", () => { saveModuleLayout(); syncTransportSpacer(); });
 loadModuleLayout();
 syncTransportSpacer();
 }
@@ -3238,7 +3238,7 @@ catch (e){ console.warn("Auto demo JSON load failed; starting empty.", e); }
 })();
 
 /* Prime WAV samples when selecting from dropdown (best-effort) */
-document.addEventListener("change", (e)=>{
+document?.addEventListener("change", (e)=>{
   const el = e.target;
   if (el && el.classList && el.classList.contains("trackSelect")){
     const key = el.value;
