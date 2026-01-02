@@ -410,22 +410,30 @@ if (dt < 300) { e.preventDefault(); handler(e); }
 }
 
 // ---------- Tabs ----------
-function updateActiveTabStyles(){
-document.querySelectorAll(".tab").forEach(tab => {
-const key = tab.dataset.roll;
-const hex = theme.lanes[key] || "#888888";
-if (tab.classList.contains("active")){
-tab.style.background = hexToRgba(hex, 0.16);
-tab.style.borderColor = hexToRgba(hex, 0.45);
-tab.style.boxShadow = `0 0 0 2px ${hexToRgba(hex, 0.12)} inset`;
-tab.style.color = "var(--ink)";
-} else {
-tab.style.background = "rgba(0,0,0,.22)";
-tab.style.borderColor = "rgba(255,255,255,.10)";
-tab.style.boxShadow = "none";
-tab.style.color = "var(--muted)";
-}
-});
+function updateActiveTabsStyles(){
+  if (!window.theme || !theme.lanes) return;
+
+  const tabs = document.querySelectorAll(".tab");
+  if (!tabs.length) return;
+
+  tabs.forEach(tab => {
+    const key = tab.dataset.roll;
+    if (!key) return;
+
+    const hex = theme.lanes[key] || "#888888";
+
+    if (tab.classList.contains("active")){
+      tab.style.background = hexToRgba(hex, 0.16);
+      tab.style.borderColor = hexToRgba(hex, 0.45);
+      tab.style.boxShadow = `0 0 0 2px ${hexToRgba(hex, 0.12)} inset`;
+      tab.style.color = "var(--ink)";
+    } else {
+      tab.style.background = "rgba(0,0,0,.22)";
+      tab.style.borderColor = "rgba(255,255,255,.10)";
+      tab.style.boxShadow = "none";
+      tab.style.color = "var(--muted)";
+    }
+  });
 }
 
 const laneStripLabelEls = {};
