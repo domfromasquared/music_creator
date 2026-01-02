@@ -88,6 +88,7 @@ async function _getSampleBuffer(url){
   if (SOUNDBANK.bufferByUrl.has(url)) return SOUNDBANK.bufferByUrl.get(url);
   const res = await fetch(url);
   const arr = await res.arrayBuffer();
+  if (!ctx) throw new Error('AudioContext not initialized');
   const buf = await ctx.decodeAudioData(arr);
   SOUNDBANK.bufferByUrl.set(url, buf);
   return buf;
@@ -96,12 +97,14 @@ async function _getSampleBuffer(url){
 async function _primeSampleKey(key){
   const it = SOUNDBANK.itemsByKey.get(key);
   if (!it) return;
+  if (!ctx) return; // only prime after audio is initialized
   try{ await _getSampleBuffer(it.url); }catch(e){ console.warn("Sample decode failed:", it.url, e); }
 }
 
 function _playSampleKey(key, time, outGain){
   const it = SOUNDBANK.itemsByKey.get(key);
   if (!it) return false;
+  if (!ctx) return false; // require audio context
   const out = outGain || buses.drum;
 
   // Schedule async buffer fetch/decode; start once ready.
@@ -398,13 +401,14 @@ pendingPick = { onPick };
 colorPicker.value = normalizeHex(startHex);
 colorPicker.click();
 }
-colorPicker.addEventListener("input", () => {
+if (colorPicker) colorPicker.addEventListener("input", () => {
 if (!pendingPick || !pendingPick.onPick) return;
 pendingPick.onPick(colorPicker.value);
 });
-colorPicker.addEventListener("change", () => { pendingPick = null; });
+if (colorPicker) colorPicker.addEventListener("change", () => { pendingPick = null; });
 
 function attachDoubleTap(el, handler){
+  if (!el) return;
 el.addEventListener("dblclick", (e) => { e.preventDefault(); handler(e); });
 let lastTap = 0;
 el.addEventListener("pointerup", (e) => {
